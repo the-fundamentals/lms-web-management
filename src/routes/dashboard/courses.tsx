@@ -5,7 +5,12 @@ export const Route = createFileRoute('/dashboard/courses')({
 })
 
 const MOCK_COURSES = [
-  { id: '1', title: 'Intro to Product Design', students: 320, status: 'Published' },
+  {
+    id: '1',
+    title: 'Intro to Product Design',
+    students: 320,
+    status: 'Published',
+  },
   { id: '2', title: 'Advanced TypeScript', students: 186, status: 'Published' },
   { id: '3', title: 'Ops for Founders', students: 54, status: 'Draft' },
 ]
