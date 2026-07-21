@@ -1,5 +1,6 @@
 import {
   HeadContent,
+  Outlet,
   Scripts,
   createRootRouteWithContext,
 } from '@tanstack/react-router'
@@ -7,7 +8,8 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import type { QueryClient } from '@tanstack/react-query'
 
-import appCss from '../styles.css?url'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import appCss from '@/styles.css?url'
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
@@ -22,7 +24,7 @@ export const Route = createRootRouteWithContext<{
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'TanStack Start Starter',
+        title: 'LMS Management',
       },
     ],
     links: [
@@ -32,8 +34,17 @@ export const Route = createRootRouteWithContext<{
       },
     ],
   }),
+  component: RootComponent,
   shellComponent: RootDocument,
 })
+
+function RootComponent() {
+  return (
+    <TooltipProvider>
+      <Outlet />
+    </TooltipProvider>
+  )
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
