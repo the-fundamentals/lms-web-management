@@ -16,6 +16,9 @@ const config = defineConfig({
     viteReact(),
     babel({ presets: [reactCompilerPreset()] }),
   ],
+  server: {
+    watch: null, // disable hot module reloading
+  }
 })
 
 export default config

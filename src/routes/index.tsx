@@ -1,33 +1,72 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Loader2Icon } from 'lucide-react'
 
 import { LoginForm } from '@/components/auth/login-form'
-import { isAuthenticated } from '@/utils/auth'
+import { FundamentalsLogo } from '@/components/brand/fundamentals-logo'
+import { redirectIfAuthenticated, useAuth } from '#/features/auth'
+
+/** Avoid flashing a loader when the session check finishes quickly. */
+const LOADER_DELAY_MS = 300
 
 export const Route = createFileRoute('/')({
-  beforeLoad: () => {
-    if (isAuthenticated()) {
-      throw redirect({ to: '/dashboard' })
-    }
-  },
+  beforeLoad: () => redirectIfAuthenticated(),
   component: LoginPage,
 })
 
 function LoginPage() {
+  const { status, isAuthenticated } = useAuth()
+  const navigate = useNavigate()
+  const [showLoader, setShowLoader] = useState(false)
+
+  const isPending = status === 'loading' || isAuthenticated
+
+  // When auth already has a session, leave the login page and go to the dashboard.
+  useEffect(() => {
+    if (isAuthenticated) {
+      void navigate({ to: '/dashboard' })
+    }
+  }, [isAuthenticated, navigate])
+
+  // Delay showing the spinner so a quick session check does not flash a loader on screen.
+  // Clear the timer if the check finishes first or the component unmounts.
+  useEffect(() => {
+    if (!isPending) {
+      setShowLoader(false)
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setShowLoader(true)
+    }, LOADER_DELAY_MS)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [isPending])
+
+  if (isPending) {
+    return (
+      <main className="login-shell">
+        <div className="login-shell__atmosphere" aria-hidden />
+        {showLoader ? (
+          <Loader2Icon
+            className="relative z-10 size-8 animate-spin text-primary"
+            aria-label="Loading"
+          />
+        ) : null}
+      </main>
+    )
+  }
+
   return (
-    <main className="relative flex min-h-svh items-center justify-center overflow-hidden bg-muted/40 px-4 py-10">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_oklch(0.92_0.02_250)_0%,_transparent_55%),radial-gradient(ellipse_at_bottom_right,_oklch(0.94_0.03_80)_0%,_transparent_45%)]"
-      />
-      <div className="relative z-10 flex w-full max-w-md flex-col items-center gap-8">
-        <div className="text-center">
-          <p className="text-sm font-medium tracking-[0.2em] text-muted-foreground uppercase">
-            LMS
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-            Management Console
-          </h1>
-        </div>
+    <main className="login-shell">
+      <div className="login-shell__atmosphere" aria-hidden />
+      <div className="login-shell__content">
+        <header className="login-shell__header">
+          <FundamentalsLogo as="h1" size="lg" />
+          <p className="login-shell__kicker">Management Console</p>
+        </header>
         <LoginForm />
       </div>
     </main>
