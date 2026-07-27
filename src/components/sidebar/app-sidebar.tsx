@@ -1,13 +1,10 @@
 import {
   AudioLinesIcon,
-  BookOpenIcon,
-  BotIcon,
   FrameIcon,
   GalleryVerticalEndIcon,
-  LayoutDashboardIcon,
   MapIcon,
   PieChartIcon,
-  Settings2Icon,
+  SchoolIcon,
   TerminalIcon,
   UsersIcon,
 } from 'lucide-react'
@@ -44,87 +41,26 @@ const data = {
   ],
   navMain: [
     {
-      title: 'Overview',
-      url: '/dashboard',
-      icon: <LayoutDashboardIcon />,
+      title: 'Teaching',
+      url: '/dashboard/classrooms',
+      icon: <SchoolIcon />,
       isActive: true,
       items: [
         {
           title: 'Dashboard',
-          url: '/dashboard',
+          url: '/dashboard/classrooms',
         },
         {
-          title: 'Users',
-          url: '/dashboard/users',
+          title: 'Classrooms',
+          url: '/dashboard/classrooms/list',
         },
         {
-          title: 'Courses',
-          url: '/dashboard/courses',
-        },
-      ],
-    },
-    {
-      title: 'Models',
-      url: '#',
-      icon: <BotIcon />,
-      items: [
-        {
-          title: 'Genesis',
-          url: '/dashboard',
+          title: 'Students',
+          url: '/dashboard/classrooms/students',
         },
         {
-          title: 'Explorer',
-          url: '/dashboard',
-        },
-        {
-          title: 'Quantum',
-          url: '/dashboard',
-        },
-      ],
-    },
-    {
-      title: 'Documentation',
-      url: '#',
-      icon: <BookOpenIcon />,
-      items: [
-        {
-          title: 'Introduction',
-          url: '/dashboard',
-        },
-        {
-          title: 'Get Started',
-          url: '/dashboard',
-        },
-        {
-          title: 'Tutorials',
-          url: '/dashboard',
-        },
-        {
-          title: 'Changelog',
-          url: '/dashboard',
-        },
-      ],
-    },
-    {
-      title: 'Settings',
-      url: '/dashboard/settings',
-      icon: <Settings2Icon />,
-      items: [
-        {
-          title: 'General',
-          url: '/dashboard/settings',
-        },
-        {
-          title: 'Team',
-          url: '/dashboard/settings',
-        },
-        {
-          title: 'Billing',
-          url: '/dashboard/settings',
-        },
-        {
-          title: 'Limits',
-          url: '/dashboard/settings',
+          title: 'Schedule',
+          url: '/dashboard/classrooms/schedule',
         },
       ],
     },
