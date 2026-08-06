@@ -1,6 +1,6 @@
 # LMS Web Management
 
-Management console for The Fundamentals LMS — TanStack Start (React 19) + Bun + Vite 8.
+Management console for The Fundamentals LMS — TanStack Router (React 19) + Bun + Vite 8. Client-side SPA; no SSR.
 
 ## Getting started
 
@@ -15,7 +15,7 @@ bun --bun run dev      # http://localhost:3000
 | Script | Purpose |
 |--------|---------|
 | `bun --bun run dev` | Dev server (port 3000) |
-| `bun --bun run build` | Production build |
+| `bun --bun run build` | Production static build |
 | `bun --bun run preview` | Preview production build |
 | `bun --bun run lint` | ESLint (enforced quality gate) |
 | `bun --bun run generate-routes` | Regenerate `src/routeTree.gen.ts` |
@@ -24,7 +24,10 @@ bun --bun run dev      # http://localhost:3000
 ## Project layout
 
 ```text
+index.html         # SPA shell
 src/
+  main.tsx         # Client entry (RouterProvider + QueryClientProvider)
+  router.tsx       # Router instance
   routes/          # File-based routes (thin wiring)
   features/        # Product domains (auth today; more as pages grow)
   components/
@@ -47,6 +50,8 @@ Cognito OIDC via `oidc-client-ts`. Config is loaded from `VITE_COGNITO_*` env va
 
 TanStack Router file-based routes in `src/routes/`. Do not edit `src/routeTree.gen.ts` by hand — run `generate-routes` or start the dev server.
 
+Deploy as a static SPA: configure your host/CDN to rewrite unknown paths to `index.html` so client-side routes work on direct navigation.
+
 ## Styling
 
 Tailwind CSS v4 + shadcn/ui (radix-nova). Theme tokens live in `src/styles.css`. Add shadcn components with:
@@ -57,5 +62,5 @@ bunx --bun shadcn@latest add <name>
 
 ## Learn more
 
-- [TanStack Start](https://tanstack.com/start)
 - [TanStack Router](https://tanstack.com/router)
+- [Vite](https://vite.dev)

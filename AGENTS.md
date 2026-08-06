@@ -2,7 +2,7 @@
 
 ## Cursor Cloud specific instructions
 
-This is a single-package **TanStack Start** (React 19) app using **Bun** as the package manager and **Vite 8** as the bundler. There is no backend service; the dev server handles SSR + client.
+This is a single-package **client-side SPA** (React 19) using **TanStack Router**, **Bun** as the package manager, and **Vite 8** as the bundler. There is no co-located API service in this repo — the LMS backend is deployed separately; this app calls it from the browser.
 
 ### Running / building / testing
 
@@ -15,6 +15,7 @@ This is a single-package **TanStack Start** (React 19) app using **Bun** as the 
 
 - File-based routing. Route files live in `src/routes/`; `src/routeTree.gen.ts` is auto-generated — do not edit it by hand.
 - The dev server regenerates the route tree automatically. When adding routes outside the dev server (e.g. before a standalone `build`/typecheck), run `bun --bun run generate-routes`.
+- Client entry is `src/main.tsx`; `index.html` is the SPA shell.
 
 ### Styling / shadcn/ui
 
@@ -26,4 +27,4 @@ This is a single-package **TanStack Start** (React 19) app using **Bun** as the 
 
 ### TanStack Query
 
-- `@tanstack/react-query` is wired into the router in `src/router.tsx` via `setupRouterSsrQueryIntegration`, which auto-injects `QueryClientProvider`. The `queryClient` is available in the router/route context (`createRootRouteWithContext`), so components can use `useQuery` directly without adding another provider.
+- `@tanstack/react-query` is wired in `src/main.tsx` via `QueryClientProvider`. The `queryClient` is also on router context (`createRootRouteWithContext` in `src/router.tsx`), so components can use `useQuery` directly.
