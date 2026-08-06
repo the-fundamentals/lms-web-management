@@ -5,6 +5,18 @@ import type {
   ResolvedDataTableSorting,
 } from '@/components/table/types'
 
+/**
+ * Sorting helpers for DataTable.
+ *
+ * - `resolveSortingOptions` — normalize `boolean | DataTableSortingOptions`
+ * - `applySortableColumns` — set `enableSorting` from the columns whitelist
+ * - `sortingStateToApiParams` — map TanStack state → `{ sortBy, sortOrder }`
+ * - `getColumnDefId` — resolve a ColumnDef’s id for whitelist matching
+ *
+ * Wired from `data-table.tsx`; features usually only need
+ * `sortingStateToApiParams` (via `@/components/table`) for server sort APIs.
+ */
+
 const UTILITY_COLUMN_IDS = new Set(['numbering', 'select'])
 
 /**

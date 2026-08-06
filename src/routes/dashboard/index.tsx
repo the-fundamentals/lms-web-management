@@ -4,6 +4,7 @@ export const Route = createFileRoute('/dashboard/')({
   component: DashboardHomePage,
 })
 
+/** PLACEHOLDER: mock dashboard overview until real metrics/API land. */
 function DashboardHomePage() {
   return (
     <div className="flex flex-col gap-6">

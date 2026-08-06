@@ -4,6 +4,7 @@ export const Route = createFileRoute('/dashboard/settings')({
   component: SettingsPage,
 })
 
+/** PLACEHOLDER: organization settings until preferences API exists. */
 function SettingsPage() {
   return (
     <div className="flex flex-col gap-6">

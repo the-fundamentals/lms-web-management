@@ -3,6 +3,13 @@ import type {
   ResolvedDataTableStriped,
 } from '@/components/table/types'
 
+/**
+ * Zebra-stripe helpers for DataTable rows.
+ *
+ * `resolveStripedOptions` normalizes the `striped` prop;
+ * `getStripedRowClassName` picks odd/even classes for each body row.
+ */
+
 const DEFAULT_ODD_CLASS = ''
 const DEFAULT_EVEN_CLASS = 'bg-muted/40'
 

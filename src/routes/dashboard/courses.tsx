@@ -4,6 +4,7 @@ export const Route = createFileRoute('/dashboard/courses')({
   component: CoursesPage,
 })
 
+/** PLACEHOLDER: mock course catalog until course management is implemented. */
 const MOCK_COURSES = [
   {
     id: '1',
@@ -15,6 +16,7 @@ const MOCK_COURSES = [
   { id: '3', title: 'Ops for Founders', students: 54, status: 'Draft' },
 ]
 
+/** PLACEHOLDER: courses page shell with mock catalog cards. */
 function CoursesPage() {
   return (
     <div className="flex flex-col gap-6">

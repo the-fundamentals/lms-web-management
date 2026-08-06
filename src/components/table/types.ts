@@ -1,6 +1,22 @@
 import type { SortingState } from '@tanstack/react-table'
 
 /**
+ * Option bags and resolved configs for the DataTable kit.
+ *
+ * Public props accept `boolean | OptionsObject` (Ant Design–style).
+ * Sibling helpers (`sorting.ts`, `striped.ts`, `padding.ts`,
+ * `create-number-column.tsx`) normalize those into the `Resolved*` types
+ * consumed by `data-table.tsx`.
+ *
+ * Contents:
+ * - Sorting — `DataTableSortingOptions` / `ResolvedDataTableSorting`
+ * - Numbering — `DataTableNumberingOptions` / `ResolvedDataTableNumbering`
+ * - Striped rows — `DataTableStripedOptions` / `ResolvedDataTableStriped`
+ * - Padding — `DataTablePaddingValue` / `DataTablePaddingOptions` / resolved
+ * - Column meta — `DataTableColumnMeta` (shrink + className hooks on ColumnDef)
+ */
+
+/**
  * Sorting option bag (Ant Design–style).
  *
  * Two modes (TanStack-compatible):

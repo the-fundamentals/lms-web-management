@@ -6,9 +6,9 @@ import {
   type ReactNode,
 } from 'react'
 
-import type { AuthPort } from '#/features/auth/auth-port'
-import { getAuth } from '#/features/auth/create-auth'
-import type { AuthSession, AuthStatus } from '#/features/auth/types'
+import type { AuthPort } from '@/features/auth/auth-port'
+import { getAuth } from '@/features/auth/create-auth'
+import type { AuthSession, AuthStatus } from '@/features/auth/types'
 
 /**
  * Value exposed by {@link AuthProvider} through {@link useAuth}.

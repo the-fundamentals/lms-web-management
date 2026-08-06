@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Loader2Icon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { useAuth } from '#/features/auth'
+import { useAuth } from '@/features/auth/AuthContext'
 
 export function LoginForm() {
   const { login } = useAuth()

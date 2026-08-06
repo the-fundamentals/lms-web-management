@@ -6,6 +6,14 @@ import type {
   ResolvedDataTablePadding,
 } from '@/components/table/types'
 
+/**
+ * Cell / header padding helpers for DataTable.
+ *
+ * Parents pass pixel numbers (or `{ x, y }` / `{ cell, header }` bags).
+ * `resolvePaddingOptions` normalizes them; `paddingToStyle` turns an axis
+ * into inline CSS applied on `TableHead` / `TableCell` in `data-table.tsx`.
+ */
+
 const DEFAULT_PADDING_X = 16
 const DEFAULT_PADDING_Y = 14
 

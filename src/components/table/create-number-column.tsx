@@ -5,6 +5,14 @@ import type {
   ResolvedDataTableNumbering,
 } from '@/components/table/types'
 
+/**
+ * Leading row-number / index column for DataTable.
+ *
+ * Prefer the `numbering` prop on `<DataTable />` over calling
+ * `createNumberColumn` yourself. This file also owns
+ * `resolveNumberingOptions` (boolean | options → config | null).
+ */
+
 const DEFAULT_NUMBERING_TITLE = '#'
 
 /** Horizontal padding baked into the numbering column (px-4 on both sides). */

@@ -1,5 +1,29 @@
 'use no memo'
 
+/**
+ * DataTable composer — the main entry for the shared table kit.
+ *
+ * Prefer importing from `@/components/table`, not this file path.
+ *
+ * ## What lives here
+ *
+ * 1. Option resolution (sorting / striped / padding / numbering)
+ * 2. Column assembly (prepend numbering, apply sortable whitelist)
+ * 3. React state + `useReactTable`
+ * 4. Layout: toolbar → bordered grid → pagination
+ *
+ * Presentational pieces and option helpers live in sibling files
+ * (see the folder map on `index.ts`).
+ *
+ * ## `"use no memo"`
+ *
+ * React Compiler + TanStack Table are incompatible — `useReactTable()` returns
+ * a stable `table` object that mutates in place, so memoized children never see
+ * pagination / visibility / filter updates.
+ *
+ * @see https://github.com/facebook/react/issues/33057
+ */
+
 import * as React from 'react'
 import {
   flexRender,
@@ -61,12 +85,6 @@ function functionalUpdate<T>(updater: Updater<T>, previous: T): T {
 
 /**
  * Reusable TanStack Table shell.
- *
- * NOTE: This file (and the table subcomponents) use `"use no memo"`.
- * React Compiler + TanStack Table are incompatible — `useReactTable()` returns
- * a stable `table` object that mutates in place, so memoized children never see
- * pagination / visibility / filter updates. See:
- * https://github.com/facebook/react/issues/33057
  *
  * Customizations use Ant Design–style option objects:
  * - `numbering={{ title: 'No.' }}`
@@ -156,11 +174,12 @@ export function DataTable<TData, TValue>({
   striped: stripedProp,
   padding: paddingProp,
 }: DataTableProps<TData, TValue>) {
+  // --- 1. Normalize option bags ---------------------------------------------
   const sortingConfig = resolveSortingOptions(sortingProp)
   const stripedConfig = resolveStripedOptions(stripedProp)
   const paddingConfig = resolvePaddingOptions(paddingProp)
 
-  // Numbering column + sortable-column whitelist applied up front.
+  // --- 2. Build columns (numbering + sortable whitelist) --------------------
   const tableColumns = React.useMemo<ColumnDef<TData, TValue>[]>(() => {
     const numberingConfig = resolveNumberingOptions(numbering)
     const resolvedSorting = resolveSortingOptions(sortingProp)
@@ -174,8 +193,7 @@ export function DataTable<TData, TValue>({
     return applySortableColumns(withNumbering, resolvedSorting)
   }, [columns, numbering, sortingProp])
 
-  // Real React state — also passed into child UI as props so those children
-  // re-render even though the `table` object reference is stable.
+  // --- 3. Table UI state (also passed to children as props for Compiler) ----
   const [internalSorting, setInternalSorting] = React.useState<SortingState>(
     sortingConfig.initialSorting,
   )
@@ -197,6 +215,7 @@ export function DataTable<TData, TValue>({
   const isServerSorting = sortingConfig.mode === 'server'
   const sortingEnabled = sortingConfig.enabled
 
+  // --- 4. TanStack table instance -------------------------------------------
   const table = useReactTable({
     data,
     columns: tableColumns,
@@ -246,6 +265,7 @@ export function DataTable<TData, TValue>({
   const resolvedShowSelectionCount =
     showSelectionCount ?? hasSelectableRows
 
+  // --- 5. Render: toolbar → grid → pagination -------------------------------
   return (
     <div className={cn('flex w-full flex-col gap-4', className)}>
       {!hideToolbar ? (

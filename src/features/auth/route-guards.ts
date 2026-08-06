@@ -1,6 +1,6 @@
 import { redirect } from '@tanstack/react-router'
 
-import { getAuth } from '#/features/auth/create-auth'
+import { getAuth } from '@/features/auth/create-auth'
 
 /**
  * TanStack Router helpers for {@code beforeLoad}.

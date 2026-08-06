@@ -4,6 +4,7 @@ export const Route = createFileRoute('/dashboard/users')({
   component: UsersPage,
 })
 
+/** PLACEHOLDER: mock user directory until admin management is implemented. */
 const MOCK_USERS = [
   { id: '1', name: 'Alice Nguyen', role: 'Instructor', status: 'Active' },
   { id: '2', name: 'Brian Cole', role: 'Student', status: 'Active' },
@@ -11,6 +12,7 @@ const MOCK_USERS = [
   { id: '4', name: 'Diego Ruiz', role: 'Student', status: 'Suspended' },
 ]
 
+/** PLACEHOLDER: users page shell with mock table data. */
 function UsersPage() {
   return (
     <div className="flex flex-col gap-6">

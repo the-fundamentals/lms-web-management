@@ -9,7 +9,7 @@ import { TanStackDevtools } from '@tanstack/react-devtools'
 import type { QueryClient } from '@tanstack/react-query'
 
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { AuthProvider } from '#/features/auth'
+import { AuthProvider } from '@/features/auth'
 import appCss from '@/styles.css?url'
 
 export const Route = createRootRouteWithContext<{

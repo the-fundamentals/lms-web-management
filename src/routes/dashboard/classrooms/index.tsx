@@ -10,6 +10,7 @@ export const Route = createFileRoute('/dashboard/classrooms/')({
   component: ClassroomsDashboardPage,
 })
 
+/** PLACEHOLDER: mock classroom type/data until classrooms feature + API exist. */
 type Classroom = {
   id: string
   name: string
@@ -19,6 +20,7 @@ type Classroom = {
   status: 'Active' | 'Archived'
 }
 
+/** PLACEHOLDER: mock classroom rows for the DataTable demo. */
 const MOCK_CLASSROOMS: Classroom[] = [
   {
     id: '1',

@@ -1,6 +1,6 @@
-import type { AuthPort } from '#/features/auth/auth-port'
-import { loadAuthConfig } from '#/features/auth/config'
-import { createOidcAuthAdapter } from '#/features/auth/oidc-auth-adapter'
+import type { AuthPort } from '@/features/auth/auth-port'
+import { loadAuthConfig } from '@/features/auth/config'
+import { createOidcAuthAdapter } from '@/features/auth/oidc-auth-adapter'
 
 /**
  * Module-level singleton. One {@link AuthPort} shared by React, route guards, and
