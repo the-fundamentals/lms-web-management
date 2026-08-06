@@ -20,7 +20,8 @@ This is a single-package **TanStack Start** (React 19) app using **Bun** as the 
 
 - Tailwind CSS **v4** (via `@tailwindcss/vite`). There is intentionally **no `tailwind.config.js`**; `components.json` has an empty `tailwind.config`.
 - shadcn/ui is configured in `components.json` (radix-nova preset, `@/*` alias → `src/*`). Add components with `bunx --bun shadcn@latest add <name>`.
-- `src/styles.css` imports `shadcn/tailwind.css`, so the `shadcn` npm package is a required build dependency (do not remove it from `dependencies`).
+- Use the `@/` import alias for all app code (`src/`). Do not introduce a second alias.
+- Prefer barrels for features (`@/features/auth`) and shared kits (`@/components/table`) over deep imports.- `src/styles.css` imports `shadcn/tailwind.css`, so the `shadcn` npm package is a required build dependency (do not remove it from `dependencies`).
 - The shadcn CLI init flow is interactive (`@clack` prompts) and requires a real TTY; piping stdin does not work. It is already initialized, so re-init is not needed.
 
 ### TanStack Query

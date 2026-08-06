@@ -1,6 +1,6 @@
-import { Outlet, createFileRoute } from '@tanstack/react-router'
+import { Link, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
 
-import { AppSidebar } from '@/components/sidebar/app-sidebar'
+import { AppSidebar } from '@/components/layout/app-sidebar'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -15,12 +15,67 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
-import { requireAuthenticated } from '#/features/auth'
+import { requireAuthenticated } from '@/features/auth'
 
 export const Route = createFileRoute('/dashboard')({
   beforeLoad: () => requireAuthenticated(),
   component: DashboardLayout,
 })
+
+const PAGE_LABELS: Record<string, string> = {
+  '/dashboard': 'Overview',
+  '/dashboard/users': 'Users',
+  '/dashboard/courses': 'Courses',
+  '/dashboard/settings': 'Settings',
+  '/dashboard/classrooms': 'Overview',
+  '/dashboard/classrooms/list': 'Classrooms',
+  '/dashboard/classrooms/students': 'Students',
+  '/dashboard/classrooms/schedule': 'Schedule',
+}
+
+function normalizePath(pathname: string) {
+  if (pathname !== '/' && pathname.endsWith('/')) {
+    return pathname.slice(0, -1)
+  }
+  return pathname
+}
+
+function DashboardBreadcrumbs() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const path = normalizePath(pathname)
+  const pageLabel = PAGE_LABELS[path] ?? 'Dashboard'
+  const isTeaching = path.startsWith('/dashboard/classrooms')
+
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem className="hidden md:block">
+          <BreadcrumbLink asChild>
+            <Link to="/dashboard">Dashboard</Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator className="hidden md:block" />
+        {isTeaching ? (
+          <>
+            <BreadcrumbItem className="hidden md:block">
+              <BreadcrumbLink asChild>
+                <Link to="/dashboard/classrooms">Teaching</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator className="hidden md:block" />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{pageLabel}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </>
+        ) : (
+          <BreadcrumbItem>
+            <BreadcrumbPage>{pageLabel}</BreadcrumbPage>
+          </BreadcrumbItem>
+        )}
+      </BreadcrumbList>
+    </Breadcrumb>
+  )
+}
 
 function DashboardLayout() {
   return (
@@ -34,19 +89,7 @@ function DashboardLayout() {
               orientation="vertical"
               className="mr-2 data-vertical:h-4 data-vertical:self-auto"
             />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="/dashboard">
-                    Build Your Application
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
+            <DashboardBreadcrumbs />
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">

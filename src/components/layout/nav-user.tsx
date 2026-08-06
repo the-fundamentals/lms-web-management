@@ -1,17 +1,14 @@
+import { Link } from '@tanstack/react-router'
 import {
-  BadgeCheckIcon,
-  BellIcon,
   ChevronsUpDownIcon,
-  CreditCardIcon,
   LogOutIcon,
-  SparklesIcon,
+  SettingsIcon,
 } from 'lucide-react'
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -23,14 +20,16 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { useAuth } from '#/features/auth'
+import { useAuth } from '@/features/auth/AuthContext'
 
 export function NavUser() {
   const { isMobile } = useSidebar()
   const { session, logout, status } = useAuth()
 
   const email = session?.user.email ?? 'Signed in'
-  const displayName = email.includes('@') ? email.split('@')[0]! : email
+  const displayName = email.includes('@')
+    ? (email.split('@')[0] ?? email)
+    : email
   const initials = displayName.slice(0, 2).toUpperCase()
 
   async function handleLogout() {
@@ -79,27 +78,12 @@ export function NavUser() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <SparklesIcon />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheckIcon />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
+            <DropdownMenuItem asChild>
+              <Link to="/dashboard/settings">
+                <SettingsIcon />
+                Settings
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => void handleLogout()}>
               <LogOutIcon />

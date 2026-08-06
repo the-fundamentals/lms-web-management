@@ -8,13 +8,13 @@ import {
 import type {
   AuthPort,
   LibrarySessionSubscriber,
-} from '#/features/auth/auth-port'
+} from '@/features/auth/auth-port'
 import {
   getAuthority,
   getHostedUiBaseUrl,
   type AuthConfig,
-} from '#/features/auth/config'
-import type { AuthSession, AuthUser } from '#/features/auth/types'
+} from '@/features/auth/config'
+import type { AuthSession, AuthUser } from '@/features/auth/types'
 
 /**
  * Cognito Hosted UI implementation of {@link AuthPort} using {@code oidc-client-ts}.

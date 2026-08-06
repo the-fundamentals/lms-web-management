@@ -4,6 +4,7 @@ export const Route = createFileRoute('/dashboard/classrooms/students')({
   component: ClassroomStudentsPage,
 })
 
+/** PLACEHOLDER: mock classroom students list until roster API exists. */
 const MOCK_STUDENTS = [
   {
     id: '1',
@@ -31,6 +32,7 @@ const MOCK_STUDENTS = [
   },
 ]
 
+/** PLACEHOLDER: students page shell with mock roster data. */
 function ClassroomStudentsPage() {
   return (
     <div className="flex flex-col gap-6">

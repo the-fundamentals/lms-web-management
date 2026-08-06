@@ -4,6 +4,7 @@ export const Route = createFileRoute('/dashboard/classrooms/schedule')({
   component: ClassroomSchedulePage,
 })
 
+/** PLACEHOLDER: mock classroom schedule until timetable API exists. */
 const MOCK_SESSIONS = [
   {
     id: '1',
@@ -31,6 +32,7 @@ const MOCK_SESSIONS = [
   },
 ]
 
+/** PLACEHOLDER: schedule page shell with mock session rows. */
 function ClassroomSchedulePage() {
   return (
     <div className="flex flex-col gap-6">

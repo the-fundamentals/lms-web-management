@@ -1,4 +1,4 @@
-import type { AuthSession } from '#/features/auth/types'
+import type { AuthSession } from '@/features/auth/types'
 
 /**
  * Auth "port" (interface) — the only auth API the rest of the app should depend on.

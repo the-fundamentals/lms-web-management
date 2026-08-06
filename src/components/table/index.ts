@@ -1,17 +1,19 @@
 /**
- * Reusable DataTable module (TanStack Table + shadcn UI).
+ * Shared DataTable kit (TanStack Table + shadcn UI).
+ *
+ * Public API — import only from `@/components/table` (this barrel).
+ * Files under this folder are internals; do not deep-import them from features/routes.
  *
  * ┌─ What to import ──────────────────────────────────────────────────────────┐
  * │ DataTable                 → drop-in table with sort / filter / pagination │
  * │ DataTableColumnHeader     → sortable headers                              │
- * │ DataTablePagination       → pagination footer                             │
- * │ DataTableToolbar          → filter + View                                 │
+ * │ DataTablePagination       → pagination footer (also composed by DataTable)│
+ * │ DataTableToolbar          → filter + View (also composed by DataTable)    │
  * │ DataTableViewOptions      → column visibility menu                        │
  * │ createSelectColumn        → checkbox select column                        │
  * │ createNumberColumn        → leading index column                          │
  * │ sortingStateToApiParams   → map SortingState → { sortBy, sortOrder }      │
- * │ DataTableSortingOptions   → client | server sorting option bag            │
- * │ DataTableNumberingOptions → numbering option bag                          │
+ * │ ColumnDef / SortingState  → re-exported from @tanstack/react-table        │
  * └───────────────────────────────────────────────────────────────────────────┘
  *
  * Sorting modes:
