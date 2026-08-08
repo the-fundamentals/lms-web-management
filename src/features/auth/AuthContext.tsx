@@ -1,9 +1,9 @@
+import type { ReactNode } from 'react'
 import {
   createContext,
   useContext,
   useEffect,
   useState,
-  type ReactNode,
 } from 'react'
 
 import type { AuthPort } from '@/features/auth/auth-port'
@@ -12,9 +12,6 @@ import type { AuthSession, AuthStatus } from '@/features/auth/types'
 
 /**
  * Value exposed by {@link AuthProvider} through {@link useAuth}.
- *
- * <p>Combines a live React projection of the session with imperative methods
- * that delegate to the shared {@link AuthPort}.
  */
 export type AuthContextValue = {
   /** Shared auth port (same instance as {@link getAuth}). */
@@ -25,11 +22,11 @@ export type AuthContextValue = {
   status: AuthStatus
   /** Convenience: {@code status === 'authenticated'}. */
   isAuthenticated: boolean
-  /** Start Cognito Hosted UI login (redirect). */
+  /** Start Hosted UI login (redirect). */
   login: AuthPort['login']
-  /** Local + Cognito logout (redirect). */
+  /** Local + IdP logout (redirect). */
   logout: AuthPort['logout']
-  /** Finish OIDC redirect on {@code /callback}. */
+  /** Finish redirect on {@code /callback}. */
   handleLoginCallback: AuthPort['handleLoginCallback']
   /** Bearer token for API calls. */
   getAccessToken: AuthPort['getAccessToken']
@@ -42,42 +39,30 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 /**
  * Provides auth session state to the React tree.
  *
- * <p>Wrap the app once (e.g. in the root route). Internally uses {@link getAuth}
- * — it does <em>not</em> create a second OIDC client.
- *
- * <p>On mount it seeds React state from the library, then subscribes so login,
- * logout, and token renew update components automatically.
- *
- * @param children - app UI that may call {@link useAuth}
+ * Wrap the app once (e.g. in the root route). Uses {@link getAuth} — it does
+ * not create a second auth client.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const auth = getAuth()
   const [session, setSession] = useState<AuthSession | null>(null)
   const [status, setStatus] = useState<AuthStatus>('loading')
 
-  // On mount: copy the current OIDC session into React state, then subscribe so later
-  // login/logout/token-renew events from the library keep that React state updated.
-  // On unmount: stop listening and ignore any late async result.
   useEffect(() => {
     let cancelled = false
 
-    const applyLibrarySessionToReactState = (
-      next: AuthSession | null,
-    ) => {
+    const applySession = (next: AuthSession | null) => {
       if (cancelled) return
       setSession(next)
       setStatus(next ? 'authenticated' : 'unauthenticated')
     }
 
-    void auth.getSession().then(applyLibrarySessionToReactState)
+    void auth.getSession().then(applySession)
 
-    const unsubscribeFromLibrarySession = auth.subscribeToLibrarySession(
-      applyLibrarySessionToReactState,
-    )
+    const unsubscribe = auth.subscribeToSession(applySession)
 
     return () => {
       cancelled = true
-      unsubscribeFromLibrarySession()
+      unsubscribe()
     }
   }, [auth])
 
@@ -99,11 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 /**
  * React hook for the current auth session and login/logout helpers.
  *
- * <p>Must be used under {@link AuthProvider}. For router {@code beforeLoad} or
+ * Must be used under {@link AuthProvider}. For router {@code beforeLoad} or
  * non-React code, use {@link getAuth} instead.
- *
- * @returns current {@link AuthContextValue}
- * @throws if called outside {@link AuthProvider}
  */
 export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext)

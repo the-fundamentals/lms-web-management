@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,} from '@/components/ui/sidebar'
-import {useAuth} from '@/features/auth/AuthContext'
+import { useAuth } from '@/features/auth'
 
 export function NavUser() {
   const { isMobile } = useSidebar()

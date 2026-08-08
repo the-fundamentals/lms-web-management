@@ -1,102 +1,72 @@
 import type { AuthSession } from '@/features/auth/types'
 
 /**
- * Auth "port" (interface) — the only auth API the rest of the app should depend on.
+ * Auth "port" — the only auth API the rest of the app should depend on.
  *
- * <p>Think of this like a Spring port: UI, route guards, and API clients talk to
- * {@link AuthPort}, not to Cognito or {@code oidc-client-ts} directly. The OIDC adapter
- * implements this interface.
- *
- * <h2>Typical flows</h2>
- * <ul>
- *   <li>Login button → {@link AuthPort.login} → Cognito Hosted UI (browser redirect)</li>
- *   <li>{@code /callback} → {@link AuthPort.handleLoginCallback} → tokens in localStorage</li>
- *   <li>Route {@code beforeLoad} → {@link AuthPort.isAuthenticated}</li>
- *   <li>React UI → subscribe via {@link AuthPort.subscribeToLibrarySession} (see AuthProvider)</li>
- * </ul>
+ * UI, route guards, and API clients talk to {@link AuthPort}, not to Cognito or
+ * the OIDC client library. The adapter under {@code oidc/} implements this.
  */
 
 /**
- * Listener invoked whenever the imperative OIDC library's session changes.
+ * Listener invoked whenever the signed-in session changes.
  *
  * @param session - current session, or {@code null} if logged out / expired
  */
-export type LibrarySessionSubscriber = (
-  session: AuthSession | null,
-) => void
+export type AuthSessionSubscriber = (session: AuthSession | null) => void
 
 /**
- * Contract for authentication against Cognito (Hosted UI + PKCE).
+ * Contract for authentication (Hosted UI login + tokens).
  */
 export interface AuthPort {
   /**
-   * Starts login by redirecting the browser to Cognito Hosted UI.
+   * Starts login by redirecting the browser to the identity provider.
    *
-   * <p>Does not return normally in the success path — the page navigates away.
-   * After the user signs in, Cognito sends them to {@code /callback}.
-   *
-   * @param returnUrl - optional path to remember for after login (stored in OIDC state)
+   * @param returnUrl - optional path to remember for after login
    */
-  login(returnUrl?: string): Promise<void>
+  login: (returnUrl?: string) => Promise<void>
 
   /**
-   * Finishes login on the {@code /callback} route.
-   *
-   * <p>Exchanges the authorization {@code code} from the URL for tokens and stores
-   * them (via oidc-client-ts, typically in {@code localStorage}).
+   * Finishes login on the {@code /callback} route (exchanges code for tokens).
    *
    * @returns the new {@link AuthSession}
    * @throws if the callback URL is invalid or no usable session was created
    */
-  handleLoginCallback(): Promise<AuthSession>
+  handleLoginCallback: () => Promise<AuthSession>
 
   /**
-   * Signs the user out locally, then redirects to Cognito logout.
-   *
-   * <p>Clears the local OIDC user, notifies subscribers with {@code null}, then
-   * sends the browser to Cognito's {@code /logout} so the Hosted UI session ends too.
+   * Signs the user out locally, then redirects to the identity provider logout.
    */
-  logout(): Promise<void>
+  logout: () => Promise<void>
 
   /**
-   * One-shot read of the current session from the OIDC library / storage.
+   * One-shot read of the current session.
    *
    * @returns the session, or {@code null} if missing or expired
    */
-  getSession(): Promise<AuthSession | null>
+  getSession: () => Promise<AuthSession | null>
 
   /**
-   * Access token for calling the API ({@code Authorization: Bearer ...}).
-   *
-   * @returns the token string, or {@code null} if not signed in
+   * Access token for API calls ({@code Authorization: Bearer ...}).
    */
-  getAccessToken(): Promise<string | null>
+  getAccessToken: () => Promise<string | null>
 
   /**
-   * ID token (needed by some API endpoints as {@code X-ID-Token}).
-   *
-   * @returns the token string, or {@code null} if not signed in
+   * ID token for API calls that need {@code X-ID-Token}.
    */
-  getIdToken(): Promise<string | null>
+  getIdToken: () => Promise<string | null>
 
   /**
    * Whether there is a non-expired local session.
    *
-   * <p>Safe for TanStack Router {@code beforeLoad} via {@link getAuth}.
+   * Safe for TanStack Router {@code beforeLoad} via {@link getAuth}.
    */
-  isAuthenticated(): Promise<boolean>
+  isAuthenticated: () => Promise<boolean>
 
   /**
-   * Subscribe to session updates from the imperative OIDC library.
-   *
-   * <p>OIDC is not React: when the user loads, unloads, or token renew fails, the
-   * library fires events. This method registers your callback so you can copy that
-   * into React state (see {@code AuthProvider}).
+   * Subscribe to session updates (login, logout, token renew).
    *
    * @param subscriber - called with the new session (or {@code null})
    * @returns unsubscribe function — call it on React unmount
    */
-  subscribeToLibrarySession(
-    subscriber: LibrarySessionSubscriber,
-  ): () => void
+  subscribeToSession: (subscriber: AuthSessionSubscriber) => () => void
 }

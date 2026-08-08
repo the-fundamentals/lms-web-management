@@ -3,9 +3,9 @@ import { useNavigate } from '@tanstack/react-router'
 import { Loader2Icon } from 'lucide-react'
 
 import { FundamentalsLogo } from '@/components/brand/fundamentals-logo'
-import { LoginForm } from '@/features/auth/components/login-form'
 import { useAuth } from '@/features/auth/AuthContext'
-import '@/features/auth/login.css'
+import { LoginForm } from '@/features/auth/components/login-form'
+import '@/features/auth/pages/login.css'
 
 /** Avoid flashing a loader when the session check finishes quickly. */
 const LOADER_DELAY_MS = 300
