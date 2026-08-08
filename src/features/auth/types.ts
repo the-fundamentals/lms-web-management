@@ -1,27 +1,18 @@
 /**
- * Domain types for the management-web auth feature.
- *
- * <p>These are our app-facing shapes (not raw oidc-client-ts types). The OIDC adapter
- * maps Cognito/OIDC users into {@link AuthSession} before the rest of the app sees them.
+ * App-facing auth types (not OIDC library shapes).
  */
 
-/**
- * The signed-in person, derived from the Cognito ID token claims.
- */
+/** The signed-in person, derived from ID token claims. */
 export type AuthUser = {
-  /** Cognito user id (`sub` claim). */
+  /** User id (`sub` claim). */
   sub: string
   /** Email from the token, if present. */
   email: string | null
-  /** Cognito groups (e.g. `ADMIN`, `USER`) from the `cognito:groups` claim. */
+  /** Groups (e.g. `ADMIN`, `USER`). */
   groups: string[]
 }
 
-/**
- * A valid signed-in session for this app.
- *
- * <p>{@code null} elsewhere means "no session" (logged out or expired).
- */
+/** A valid signed-in session. {@code null} elsewhere means logged out / expired. */
 export type AuthSession = {
   user: AuthUser
 }
@@ -29,10 +20,8 @@ export type AuthSession = {
 /**
  * React-facing auth lifecycle for {@link AuthProvider} / {@link useAuth}.
  *
- * <ul>
- *   <li>{@code loading} — we have not finished reading the library session yet</li>
- *   <li>{@code authenticated} — we have a non-expired session</li>
- *   <li>{@code unauthenticated} — no session</li>
- * </ul>
+ * - `loading` — session not read yet
+ * - `authenticated` — non-expired session
+ * - `unauthenticated` — no session
  */
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'

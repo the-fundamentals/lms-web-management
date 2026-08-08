@@ -5,17 +5,12 @@ import { getAuth } from '@/features/auth/create-auth'
 /**
  * TanStack Router helpers for {@code beforeLoad}.
  *
- * <p>These call {@link getAuth} (not React Context) because route loaders run
- * outside the React tree. Auth storage is browser {@code localStorage}, so on the
- * server these helpers no-op and let the client decide.
+ * These call {@link getAuth} (not React Context) because route loaders run
+ * outside the React tree. Auth storage is browser-only, so on the server these
+ * helpers no-op and let the client decide.
  */
 
-/**
- * Blocks a route unless the user has a valid local session.
- *
- * <p>Use on protected layouts (e.g. {@code /dashboard}).
- * Throws a redirect to {@code /} when not authenticated (browser only).
- */
+/** Blocks a route unless the user has a valid local session. */
 export async function requireAuthenticated() {
   if (typeof window === 'undefined') {
     return
@@ -25,17 +20,13 @@ export async function requireAuthenticated() {
   }
 }
 
-/**
- * Sends an already-signed-in user away from public auth pages.
- *
- * <p>Use on the login route ({@code /}). Throws a redirect to {@code /dashboard}
- * when a session already exists (browser only).
- */
+/** Sends an already-signed-in user away from public auth pages (e.g. login). */
 export async function redirectIfAuthenticated() {
   if (typeof window === 'undefined') {
     return
   }
   if (await getAuth().isAuthenticated()) {
-    throw redirect({ to: '/dashboard' })
+    // Destination is decided by profile status in `@/features/account`.
+    throw redirect({ to: '/onboarding' })
   }
 }

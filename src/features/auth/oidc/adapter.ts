@@ -1,41 +1,26 @@
 import {
-  User,
   UserManager,
   WebStorageStateStore,
-  type UserManagerSettings,
 } from 'oidc-client-ts'
+import type { User, UserManagerSettings } from 'oidc-client-ts'
 
 import type {
   AuthPort,
-  LibrarySessionSubscriber,
+  AuthSessionSubscriber,
 } from '@/features/auth/auth-port'
+import type { AuthConfig } from '@/features/auth/oidc/config'
 import {
   getAuthority,
   getHostedUiBaseUrl,
-  type AuthConfig,
-} from '@/features/auth/config'
+} from '@/features/auth/oidc/config'
 import type { AuthSession, AuthUser } from '@/features/auth/types'
 
 /**
  * Cognito Hosted UI implementation of {@link AuthPort} using {@code oidc-client-ts}.
  *
- * <p>This file is the <em>adapter</em> (infra). App code should not import it directly —
- * use {@link getAuth} / {@link useAuth} from the feature barrel instead.
- *
- * <h2>Responsibilities</h2>
- * <ul>
- *   <li>Redirect login / callback / logout against Cognito</li>
- *   <li>Persist tokens via oidc-client-ts ({@code localStorage})</li>
- *   <li>Auto-refresh tokens ({@code automaticSilentRenew})</li>
- *   <li>Forward library events to {@link AuthPort.subscribeToLibrarySession}</li>
- * </ul>
+ * App code must not import this — use {@link getAuth} / {@link useAuth} instead.
  */
 
-/**
- * Maps an oidc-client-ts {@link User} profile into our {@link AuthUser}.
- *
- * @param user - OIDC user with ID token claims
- */
 function toAuthUser(user: User): AuthUser {
   const profile = user.profile
   const groupsClaim = profile['cognito:groups']
@@ -52,11 +37,6 @@ function toAuthUser(user: User): AuthUser {
   }
 }
 
-/**
- * Maps a library user to {@link AuthSession}, or {@code null} if missing/expired.
- *
- * @param user - OIDC user, or {@code null}
- */
 function toAuthSession(user: User | null): AuthSession | null {
   if (!user || user.expired) {
     return null
@@ -64,11 +44,6 @@ function toAuthSession(user: User | null): AuthSession | null {
   return { user: toAuthUser(user) }
 }
 
-/**
- * Builds {@link UserManager} settings for Cognito Hosted UI (authorize code + PKCE).
- *
- * @param config - env-based Cognito settings
- */
 function buildUserManagerSettings(config: AuthConfig): UserManagerSettings {
   const hostedUi = getHostedUiBaseUrl(config)
 
@@ -96,50 +71,25 @@ function buildUserManagerSettings(config: AuthConfig): UserManagerSettings {
 /**
  * Creates an {@link AuthPort} backed by Cognito + {@code oidc-client-ts}.
  *
- * <p>{@link UserManager} is created lazily on first browser use so SSR does not
+ * {@link UserManager} is created lazily on first browser use so SSR does not
  * touch {@code window} / {@code localStorage}.
- *
- * @param config - Cognito OIDC configuration
- * @returns auth port implementation
  */
 export function createOidcAuthAdapter(config: AuthConfig): AuthPort {
-  // Lazy: UserManager touches window/localStorage — only create in the browser.
   let userManager: UserManager | null = null
   let oidcEventsWired = false
 
-  /** React (and others) register here; we fan out when the OIDC library changes. */
-  const librarySessionSubscribers = new Set<LibrarySessionSubscriber>()
+  const sessionSubscribers = new Set<AuthSessionSubscriber>()
 
-  /**
-   * Notifies every subscriber of a new session snapshot (imperative → listeners).
-   *
-   * @param session - session to publish, or {@code null} for logged out
-   */
-  const publishToLibrarySessionSubscribers = (
-    session: AuthSession | null,
-  ) => {
-    for (const subscriber of librarySessionSubscribers) {
+  const publishSession = (session: AuthSession | null) => {
+    for (const subscriber of sessionSubscribers) {
       subscriber(session)
     }
   }
 
-  /**
-   * Converts an OIDC {@link User} and publishes it to subscribers.
-   *
-   * @param user - library user, or {@code null}
-   */
-  const forwardOidcUserToSubscribers = (user: User | null) => {
-    publishToLibrarySessionSubscribers(toAuthSession(user))
+  const forwardOidcUser = (user: User | null) => {
+    publishSession(toAuthSession(user))
   }
 
-  /**
-   * Returns the shared {@link UserManager}, creating it and wiring OIDC events once.
-   *
-   * <p>Event wiring forwards library lifecycle into {@link publishToLibrarySessionSubscribers}
-   * so React can stay in sync.
-   *
-   * @throws if called outside the browser
-   */
   const getUserManager = (): UserManager => {
     if (typeof window === 'undefined') {
       throw new Error('Auth is only available in the browser')
@@ -149,28 +99,22 @@ export function createOidcAuthAdapter(config: AuthConfig): AuthPort {
     }
     if (!oidcEventsWired) {
       oidcEventsWired = true
-      // Hook imperative OIDC events → our subscriber list → React state updates.
       userManager.events.addUserLoaded((user) => {
-        forwardOidcUserToSubscribers(user)
+        forwardOidcUser(user)
       })
       userManager.events.addUserUnloaded(() => {
-        forwardOidcUserToSubscribers(null)
+        forwardOidcUser(null)
       })
       userManager.events.addAccessTokenExpired(() => {
-        void userManager!.getUser().then(forwardOidcUserToSubscribers)
+        void userManager!.getUser().then(forwardOidcUser)
       })
       userManager.events.addSilentRenewError(() => {
-        forwardOidcUserToSubscribers(null)
+        forwardOidcUser(null)
       })
     }
     return userManager
   }
 
-  /**
-   * Loads the current user only if present and not expired.
-   *
-   * @returns valid {@link User}, or {@code null}
-   */
   const getValidUser = async (): Promise<User | null> => {
     const user = await getUserManager().getUser()
     if (!user || user.expired) {
@@ -192,13 +136,13 @@ export function createOidcAuthAdapter(config: AuthConfig): AuthPort {
       if (!session) {
         throw new Error('OIDC callback completed without a valid session')
       }
-      publishToLibrarySessionSubscribers(session)
+      publishSession(session)
       return session
     },
 
     async logout(): Promise<void> {
       await getUserManager().removeUser()
-      publishToLibrarySessionSubscribers(null)
+      publishSession(null)
 
       const hostedUi = getHostedUiBaseUrl(config)
       const logoutUrl = new URL(`${hostedUi}/logout`)
@@ -225,12 +169,10 @@ export function createOidcAuthAdapter(config: AuthConfig): AuthPort {
       return (await getValidUser()) !== null
     },
 
-    subscribeToLibrarySession(
-      subscriber: LibrarySessionSubscriber,
-    ): () => void {
-      librarySessionSubscribers.add(subscriber)
+    subscribeToSession(subscriber: AuthSessionSubscriber): () => void {
+      sessionSubscribers.add(subscriber)
       return () => {
-        librarySessionSubscribers.delete(subscriber)
+        sessionSubscribers.delete(subscriber)
       }
     },
   }

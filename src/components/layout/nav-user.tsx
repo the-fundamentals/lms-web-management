@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   ChevronsUpDownIcon,
   LogOutIcon,
@@ -20,19 +21,36 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { useAuth } from '@/features/auth/AuthContext'
+import {
+  clearMyAccountProfileCache,
+  getProfileDisplayName,
+  getProfileInitials,
+  useMyAccountProfile,
+} from '@/features/account'
+import { useAuth } from '@/features/auth'
 
 export function NavUser() {
   const { isMobile } = useSidebar()
-  const { session, logout, status } = useAuth()
+  const queryClient = useQueryClient()
+  const { logout, status, isAuthenticated, session } = useAuth()
+  const { data: profile, isPending: isProfilePending } = useMyAccountProfile(
+    isAuthenticated,
+  )
 
-  const email = session?.user.email ?? 'Signed in'
-  const displayName = email.includes('@')
-    ? (email.split('@')[0] ?? email)
-    : email
-  const initials = displayName.slice(0, 2).toUpperCase()
+  const email = profile?.email ?? session?.user.email ?? 'Signed in'
+  const displayName = profile
+    ? getProfileDisplayName(profile)
+    : email.includes('@')
+      ? (email.split('@')[0] ?? email)
+      : email
+  const initials = profile
+    ? getProfileInitials(profile)
+    : displayName.slice(0, 2).toUpperCase()
+
+  const isLoading = status === 'loading' || (isAuthenticated && isProfilePending)
 
   async function handleLogout() {
+    clearMyAccountProfileCache(queryClient)
     await logout()
   }
 
@@ -44,7 +62,7 @@ export function NavUser() {
             <SidebarMenuButton
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-              disabled={status === 'loading'}
+              disabled={isLoading}
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarFallback className="rounded-lg">

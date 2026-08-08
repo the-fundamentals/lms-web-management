@@ -15,10 +15,15 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
+import { requireAccountProfile } from '@/features/account'
 import { requireAuthenticated } from '@/features/auth'
 
 export const Route = createFileRoute('/dashboard')({
-  beforeLoad: () => requireAuthenticated(),
+  // Applies to /dashboard and every nested page under this layout.
+  beforeLoad: async ({ context }) => {
+    await requireAuthenticated()
+    await requireAccountProfile(context.queryClient)
+  },
   component: DashboardLayout,
 })
 
