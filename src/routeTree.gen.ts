@@ -19,6 +19,7 @@ import { Route as DashboardSettingsRouteImport } from './routes/dashboard/settin
 import { Route as DashboardUsersRouteImport } from './routes/dashboard/users'
 import { Route as DashboardClassroomsIndexRouteImport } from './routes/dashboard/classrooms/index'
 import { Route as DashboardClassroomsListRouteImport } from './routes/dashboard/classrooms/list'
+import { Route as DashboardClassroomsNewRouteImport } from './routes/dashboard/classrooms/new'
 import { Route as DashboardClassroomsScheduleRouteImport } from './routes/dashboard/classrooms/schedule'
 import { Route as DashboardClassroomsStudentsRouteImport } from './routes/dashboard/classrooms/students'
 
@@ -73,6 +74,11 @@ const DashboardClassroomsListRoute = DashboardClassroomsListRouteImport.update({
   path: '/classrooms/list',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardClassroomsNewRoute = DashboardClassroomsNewRouteImport.update({
+  id: '/classrooms/new',
+  path: '/classrooms/new',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const DashboardClassroomsScheduleRoute =
   DashboardClassroomsScheduleRouteImport.update({
     id: '/classrooms/schedule',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/users': typeof DashboardUsersRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/classrooms/list': typeof DashboardClassroomsListRoute
+  '/dashboard/classrooms/new': typeof DashboardClassroomsNewRoute
   '/dashboard/classrooms/schedule': typeof DashboardClassroomsScheduleRoute
   '/dashboard/classrooms/students': typeof DashboardClassroomsStudentsRoute
   '/dashboard/classrooms/': typeof DashboardClassroomsIndexRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/dashboard/users': typeof DashboardUsersRoute
   '/dashboard': typeof DashboardIndexRoute
   '/dashboard/classrooms/list': typeof DashboardClassroomsListRoute
+  '/dashboard/classrooms/new': typeof DashboardClassroomsNewRoute
   '/dashboard/classrooms/schedule': typeof DashboardClassroomsScheduleRoute
   '/dashboard/classrooms/students': typeof DashboardClassroomsStudentsRoute
   '/dashboard/classrooms': typeof DashboardClassroomsIndexRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/dashboard/users': typeof DashboardUsersRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/classrooms/list': typeof DashboardClassroomsListRoute
+  '/dashboard/classrooms/new': typeof DashboardClassroomsNewRoute
   '/dashboard/classrooms/schedule': typeof DashboardClassroomsScheduleRoute
   '/dashboard/classrooms/students': typeof DashboardClassroomsStudentsRoute
   '/dashboard/classrooms/': typeof DashboardClassroomsIndexRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/dashboard/users'
     | '/dashboard/'
     | '/dashboard/classrooms/list'
+    | '/dashboard/classrooms/new'
     | '/dashboard/classrooms/schedule'
     | '/dashboard/classrooms/students'
     | '/dashboard/classrooms/'
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/dashboard/users'
     | '/dashboard'
     | '/dashboard/classrooms/list'
+    | '/dashboard/classrooms/new'
     | '/dashboard/classrooms/schedule'
     | '/dashboard/classrooms/students'
     | '/dashboard/classrooms'
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/dashboard/users'
     | '/dashboard/'
     | '/dashboard/classrooms/list'
+    | '/dashboard/classrooms/new'
     | '/dashboard/classrooms/schedule'
     | '/dashboard/classrooms/students'
     | '/dashboard/classrooms/'
@@ -251,6 +263,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardClassroomsListRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/classrooms/new': {
+      id: '/dashboard/classrooms/new'
+      path: '/classrooms/new'
+      fullPath: '/dashboard/classrooms/new'
+      preLoaderRoute: typeof DashboardClassroomsNewRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/classrooms/schedule': {
       id: '/dashboard/classrooms/schedule'
       path: '/classrooms/schedule'
@@ -274,6 +293,7 @@ interface DashboardRouteRouteChildren {
   DashboardUsersRoute: typeof DashboardUsersRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardClassroomsListRoute: typeof DashboardClassroomsListRoute
+  DashboardClassroomsNewRoute: typeof DashboardClassroomsNewRoute
   DashboardClassroomsScheduleRoute: typeof DashboardClassroomsScheduleRoute
   DashboardClassroomsStudentsRoute: typeof DashboardClassroomsStudentsRoute
   DashboardClassroomsIndexRoute: typeof DashboardClassroomsIndexRoute
@@ -285,6 +305,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardUsersRoute: DashboardUsersRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardClassroomsListRoute: DashboardClassroomsListRoute,
+  DashboardClassroomsNewRoute: DashboardClassroomsNewRoute,
   DashboardClassroomsScheduleRoute: DashboardClassroomsScheduleRoute,
   DashboardClassroomsStudentsRoute: DashboardClassroomsStudentsRoute,
   DashboardClassroomsIndexRoute: DashboardClassroomsIndexRoute,

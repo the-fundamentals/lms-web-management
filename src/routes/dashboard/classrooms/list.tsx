@@ -1,10 +1,12 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { PlusIcon } from 'lucide-react'
 
 import {
   DataTable,
   DataTableColumnHeader,
 } from '@/components/table'
 import type { ColumnDef } from '@/components/table'
+import { Button } from '@/components/ui/button'
 
 export const Route = createFileRoute('/dashboard/classrooms/list')({
   component: AllClassroomsPage,
@@ -61,13 +63,21 @@ const columns: ColumnDef<Classroom>[] = [
 function AllClassroomsPage() {
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          All Classrooms
-        </h1>
-        <p className="text-muted-foreground">
-          Browse and manage every classroom in the platform.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            All Classrooms
+          </h1>
+          <p className="text-muted-foreground">
+            Browse and manage every classroom in the platform.
+          </p>
+        </div>
+        <Button asChild className="rounded-md">
+          <Link to="/dashboard/classrooms/new">
+            <PlusIcon className="size-4" aria-hidden />
+            Create classroom
+          </Link>
+        </Button>
       </div>
       <DataTable
         columns={columns}
