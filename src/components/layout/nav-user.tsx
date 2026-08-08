@@ -1,11 +1,7 @@
-import { Link } from '@tanstack/react-router'
-import {
-  ChevronsUpDownIcon,
-  LogOutIcon,
-  SettingsIcon,
-} from 'lucide-react'
+import {Link} from '@tanstack/react-router'
+import {ChevronsUpDownIcon, LogOutIcon, SettingsIcon,} from 'lucide-react'
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import {Avatar, AvatarFallback} from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,13 +10,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from '@/components/ui/sidebar'
-import { useAuth } from '@/features/auth/AuthContext'
+import {SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,} from '@/components/ui/sidebar'
+import {useAuth} from '@/features/auth/AuthContext'
 
 export function NavUser() {
   const { isMobile } = useSidebar()

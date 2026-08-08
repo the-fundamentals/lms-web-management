@@ -4,7 +4,7 @@ import { createOidcAuthAdapter } from '@/features/auth/oidc-auth-adapter'
 
 /**
  * Module-level singleton. One {@link AuthPort} shared by React, route guards, and
- * (later) the API client — same idea as a single Spring bean, but looked up via
+ * the API client — same idea as a single Spring bean, but looked up via
  * {@link getAuth} because TanStack {@code beforeLoad} cannot use React Context.
  */
 let authPort: AuthPort | null = null

@@ -15,7 +15,7 @@
  * What to use where:
  * - React components → `useAuth` (must be under `AuthProvider`)
  * - Router `beforeLoad` → `requireAuthenticated` / `redirectIfAuthenticated` or `getAuth`
- * - API client (later) → `getAuth().getAccessToken()` / `getIdToken()`
+ * - API client → `configureApiClient` (`@/features/api`) uses `getAccessToken()`
  */
 
 export type {
