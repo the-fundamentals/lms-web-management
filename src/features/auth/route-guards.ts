@@ -26,6 +26,7 @@ export async function redirectIfAuthenticated() {
     return
   }
   if (await getAuth().isAuthenticated()) {
-    throw redirect({ to: '/dashboard' })
+    // Destination is decided by profile status in `@/features/account`.
+    throw redirect({ to: '/onboarding' })
   }
 }

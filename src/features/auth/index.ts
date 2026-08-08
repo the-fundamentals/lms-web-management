@@ -5,8 +5,8 @@
  * not for direct app use.
  *
  * - React → `useAuth` / `AuthProvider`
- * - Router `beforeLoad` → `requireAuthenticated` / `redirectIfAuthenticated` / `getAuth`
- * - API client → `getAuth().getAccessToken()` (via `@/features/api`)
+ * - Router `beforeLoad` → `requireAuthenticated` / `getAuth`
+ * - Post-login destination → `@/features/account` (`resolvePostLoginPath`)
  * - Login UI → `LoginPage`
  */
 

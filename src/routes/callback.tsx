@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 
+import { resolvePostLoginPath, clearMyAccountProfileCache } from '@/features/account'
 import { getAuth } from '@/features/auth'
 
 export const Route = createFileRoute('/callback')({
@@ -9,18 +11,24 @@ export const Route = createFileRoute('/callback')({
 
 function CallbackPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [error, setError] = useState<string | null>(null)
 
-  // After Cognito redirects back here with a code, finish login then go to the dashboard.
-  // If this page unmounts mid-flight, ignore the result so we do not navigate/setState late.
+  // After Cognito returns with a code: finish login, then send onboarded users to
+  // the dashboard and everyone else to onboarding (profile 404). Seeds the profile cache.
   useEffect(() => {
     let cancelled = false
 
     void getAuth()
       .handleLoginCallback()
       .then(() => {
+        // Drop any previous user's cached profile before resolving destination.
+        clearMyAccountProfileCache(queryClient)
+        return resolvePostLoginPath(queryClient)
+      })
+      .then((to) => {
         if (!cancelled) {
-          void navigate({ to: '/dashboard' })
+          void navigate({ to })
         }
       })
       .catch((cause: unknown) => {
@@ -35,7 +43,7 @@ function CallbackPage() {
     return () => {
       cancelled = true
     }
-  }, [navigate])
+  }, [navigate, queryClient])
 
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-4 px-4">

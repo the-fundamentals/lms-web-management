@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import { Loader2Icon } from 'lucide-react'
 
 import { FundamentalsLogo } from '@/components/brand/fundamentals-logo'
+import { resolvePostLoginPath } from '@/features/account'
 import { useAuth } from '@/features/auth/AuthContext'
 import { LoginForm } from '@/features/auth/components/login-form'
 import '@/features/auth/pages/login.css'
@@ -13,16 +15,26 @@ const LOADER_DELAY_MS = 300
 export function LoginPage() {
   const { status, isAuthenticated } = useAuth()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [showLoader, setShowLoader] = useState(false)
 
   const isPending = status === 'loading' || isAuthenticated
 
-  // When auth already has a session, leave the login page and go to the dashboard.
+  // When auth already has a session, go to dashboard or onboarding based on profile.
   useEffect(() => {
-    if (isAuthenticated) {
-      void navigate({ to: '/dashboard' })
+    if (!isAuthenticated) return
+
+    let cancelled = false
+    void resolvePostLoginPath(queryClient).then((to) => {
+      if (!cancelled) {
+        void navigate({ to })
+      }
+    })
+
+    return () => {
+      cancelled = true
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, navigate, queryClient])
 
   // Delay showing the spinner so a quick session check does not flash a loader on screen.
   // Clear the timer if the check finishes first or the component unmounts.

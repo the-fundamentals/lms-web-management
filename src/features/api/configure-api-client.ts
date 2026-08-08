@@ -5,15 +5,11 @@ import { getAuth } from '@/features/auth'
 let configured = false
 
 /**
- * Wires the shared OpenAPI client once: API base URL + access token for every
- * secured request.
+ * Wires the shared OpenAPI client once: API base URL + bearer access token.
  *
- * <p>Uses {@link client.setConfig} from {@code @the-fundamentals/core-openapi}.
- * {@code auth} is a callback so each request resolves the current Cognito
- * access token (login, renew, logout) instead of a stale string.
- *
- * <p>Call early (e.g. from {@code getRouter}) before any SDK / React Query
- * helpers read {@code baseUrl} into query keys.
+ * Call early (e.g. from {@code getRouter}) before any SDK / React Query helpers
+ * read {@code baseUrl} into query keys. Pass {@code X-ID-Token} only on calls
+ * that require it (e.g. {@code updateMyAccountProfile}).
  */
 export function configureApiClient(): void {
   if (configured) return
