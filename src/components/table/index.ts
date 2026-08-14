@@ -45,7 +45,7 @@
  * | `DataTableColumnHeader` | Sortable header for `ColumnDef.header` |
  * | `createSelectColumn` | Optional checkbox select column |
  * | `createNumberColumn` | Leading index column (usually via `numbering` prop) |
- * | `sortingStateToApiParams` | Map TanStack `SortingState` → `{ sortBy, sortOrder }` |
+ * | `sortingStateToApiParams` | Map TanStack `SortingState` → `{ sortBy, sortDirection }` |
  * | `ColumnDef` / `SortingState` / `PaginationState` | Re-exported TanStack types |
  * | Option types (`DataTableSortingOptions`, …) | Prop bags for `DataTable` |
  *
@@ -61,12 +61,15 @@
  * data-table-toolbar.tsx        ← search filter + View menu slot
  * data-table-view-options.tsx   ← column visibility dropdown
  * data-table-pagination.tsx     ← rows-per-page + page controls
+ * data-table-skeleton.tsx       ← loading skeleton body rows (shadcn Skeleton)
  * data-table-column-header.tsx  ← sortable header UI for column defs
  * create-number-column.tsx      ← numbering column factory + resolveNumberingOptions
  * create-select-column.tsx      ← row-selection checkbox column
  * sorting.ts                    ← sort option normalize + column enableSorting
  * striped.ts                    ← zebra row class helpers
  * padding.ts                    ← cell/header padding normalize → CSS
+ * pagination.ts                 ← pagination option normalize (client/server)
+ * filtering.ts                  ← column-filter option normalize (client/server)
  * types.ts                      ← option bags + resolved configs + column meta
  * constants.ts                  ← default page size / options
  * ```
@@ -75,7 +78,7 @@
  *
  * ```
  * DataTable
- *   ├─ resolve sorting / striped / padding / numbering options
+ *   ├─ resolve sorting / pagination / filtering / striped / padding / numbering
  *   ├─ build columns (optional numbering + sortable whitelist)
  *   ├─ useReactTable (sorting, filters, visibility, selection, pagination)
  *   ├─ DataTableToolbar → DataTableViewOptions
@@ -96,6 +99,38 @@
  *   sorting,
  *   onSortingChange: setSorting,
  * }}
+ *
+ * // Off — no sort UI
+ * sorting={false}
+ * ```
+ *
+ * ## Pagination modes
+ *
+ * ```ts
+ * // Inline — slice `data` in memory (default)
+ * pagination
+ *
+ * // API — TanStack manualPagination; refetch when page / size changes
+ * pagination={{
+ *   mode: 'server',
+ *   pagination,
+ *   onPaginationChange: setPagination,
+ *   pageCount,
+ * }}
+ * ```
+ *
+ * ## Filtering modes
+ *
+ * ```ts
+ * // Inline — filter `data` in memory (default when filterColumnId is set)
+ * filterColumnId="name"
+ *
+ * // API — TanStack manualFiltering; refetch when filters change
+ * filtering={{
+ *   mode: 'server',
+ *   columnFilters,
+ *   onColumnFiltersChange: setColumnFilters,
+ * }}
  * ```
  *
  * ## React Compiler note
@@ -110,6 +145,7 @@
 export { DataTable } from '@/components/table/data-table'
 export { DataTableColumnHeader } from '@/components/table/data-table-column-header'
 export { DataTablePagination } from '@/components/table/data-table-pagination'
+export { DataTableSkeletonRows } from '@/components/table/data-table-skeleton'
 export { DataTableToolbar } from '@/components/table/data-table-toolbar'
 export { DataTableViewOptions } from '@/components/table/data-table-view-options'
 export { createSelectColumn } from '@/components/table/create-select-column'
@@ -123,6 +159,11 @@ export {
   sortingStateToApiParams,
   getColumnDefId,
 } from '@/components/table/sorting'
+export { resolvePaginationOptions } from '@/components/table/pagination'
+export {
+  getColumnFilterValue,
+  resolveFilteringOptions,
+} from '@/components/table/filtering'
 export {
   resolveStripedOptions,
   getStripedRowClassName,
@@ -140,6 +181,12 @@ export type {
   DataTableSortingOptions,
   DataTableSortingMode,
   ResolvedDataTableSorting,
+  DataTablePaginationOptions,
+  DataTablePaginationMode,
+  ResolvedDataTablePagination,
+  DataTableFilteringOptions,
+  DataTableFilteringMode,
+  ResolvedDataTableFiltering,
   DataTableStripedOptions,
   ResolvedDataTableStriped,
   DataTablePaddingOptions,
@@ -150,6 +197,7 @@ export type {
 /** Re-export so feature columns can type against this module alone. */
 export type {
   ColumnDef,
+  ColumnFiltersState,
   SortingState,
   PaginationState,
 } from '@tanstack/react-table'

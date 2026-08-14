@@ -1,18 +1,35 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { createClassroom } from '@the-fundamentals/core-openapi'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { createClassroomMutation } from '@the-fundamentals/core-openapi/react-query'
 import { Loader2Icon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { invalidateClassroomsQueries } from '@/features/classrooms/classrooms-query'
 
 export function CreateClassroomForm() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [name, setName] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const createClassroom = useMutation({
+    ...createClassroomMutation(),
+    onSuccess: async () => {
+      invalidateClassroomsQueries(queryClient)
+      await navigate({ to: '/dashboard/classrooms/list', replace: true })
+    },
+    onError: (cause) => {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : 'Could not create the classroom. Try again.',
+      )
+    },
+  })
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -24,27 +41,10 @@ export function CreateClassroomForm() {
       return
     }
 
-    setIsSubmitting(true)
-    try {
-      const { data, error: apiError } = await createClassroom({
-        body: { name: trimmedName },
-      })
-
-      if (data) {
-        await navigate({ to: '/dashboard/classrooms/list', replace: true })
-        return
-      }
-
-      throw new Error(apiError.message)
-    } catch (cause) {
-      setIsSubmitting(false)
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : 'Could not create the classroom. Try again.',
-      )
-    }
+    createClassroom.mutate({ body: { name: trimmedName } })
   }
+
+  const isSubmitting = createClassroom.isPending
 
   return (
     <form

@@ -46,7 +46,10 @@ import {
   resolveNumberingOptions,
 } from '@/components/table/create-number-column'
 import { DataTablePagination } from '@/components/table/data-table-pagination'
+import { DataTableSkeletonRows } from '@/components/table/data-table-skeleton'
 import { DataTableToolbar } from '@/components/table/data-table-toolbar'
+import { resolveFilteringOptions } from '@/components/table/filtering'
+import { resolvePaginationOptions } from '@/components/table/pagination'
 import {
   applySortableColumns,
   resolveSortingOptions,
@@ -57,9 +60,11 @@ import {
 } from '@/components/table/striped'
 import { resolvePaddingOptions, paddingToStyle } from '@/components/table/padding'
 import type {
+  DataTableFilteringOptions,
   DataTableNumberingOptions,
   DataTablePaddingOptions,
   DataTablePaddingValue,
+  DataTablePaginationOptions,
   DataTableSortingOptions,
   DataTableStripedOptions,
 } from '@/components/table/types'
@@ -123,6 +128,15 @@ interface DataTableProps<TData, TValue> {
   pageSizeOptions?: readonly number[]
   /** Show “N of M selected” vs “Showing X–Y of Z”. Default: auto from selection. */
   showSelectionCount?: boolean
+  /**
+   * When true, replace the table body with skeleton rows (shadcn `Skeleton`).
+   * Headers, toolbar, and pagination stay mounted so layout does not jump.
+   */
+  loading?: boolean
+  /**
+   * Skeleton row count while `loading`. Default: current page size.
+   */
+  skeletonRowCount?: number
   /** Hide the toolbar entirely (filter + view). */
   hideToolbar?: boolean
   /** Extra classes on the outer wrapper. */
@@ -143,6 +157,24 @@ interface DataTableProps<TData, TValue> {
    *   controlled `sorting` / `onSortingChange` for API wiring
    */
   sorting?: boolean | DataTableSortingOptions
+  /**
+   * Pagination controls (Ant Design–style option bag).
+   * - `false` → hide the pagination footer (show all rows)
+   * - `true` / omitted → client-side pagination
+   * - object → `mode: 'client' | 'server'`, controlled `pagination` /
+   *   `onPaginationChange` / `pageCount` for API `page` / `size` wiring
+   */
+  pagination?: boolean | DataTablePaginationOptions
+  /**
+   * Toolbar / column filter controls (Ant Design–style option bag).
+   * - `false` → disable filtering (no client filter applied)
+   * - `true` / omitted → client-side filtering of `data`
+   * - object → `mode: 'client' | 'server'`, controlled `columnFilters` /
+   *   `onColumnFiltersChange` for API `filters` wiring
+   *
+   * Bind the search input with `filterColumnId`.
+   */
+  filtering?: boolean | DataTableFilteringOptions
   /**
    * Zebra / staggered row backgrounds (Ant Design–style option bag).
    * - `true` → odd rows plain, even rows soft gray
@@ -166,16 +198,25 @@ export function DataTable<TData, TValue>({
   initialPageSize = DEFAULT_PAGE_SIZE,
   pageSizeOptions,
   showSelectionCount,
+  loading = false,
+  skeletonRowCount,
   hideToolbar = false,
   className,
   toolbarChildren,
   numbering,
   sorting: sortingProp,
+  pagination: paginationProp,
+  filtering: filteringProp,
   striped: stripedProp,
   padding: paddingProp,
 }: DataTableProps<TData, TValue>) {
   // --- 1. Normalize option bags ---------------------------------------------
   const sortingConfig = resolveSortingOptions(sortingProp)
+  const paginationConfig = resolvePaginationOptions(
+    paginationProp,
+    initialPageSize,
+  )
+  const filteringConfig = resolveFilteringOptions(filteringProp)
   const stripedConfig = resolveStripedOptions(stripedProp)
   const paddingConfig = resolvePaddingOptions(paddingProp)
 
@@ -197,23 +238,32 @@ export function DataTable<TData, TValue>({
   const [internalSorting, setInternalSorting] = React.useState<SortingState>(
     sortingConfig.initialSorting,
   )
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  )
+  const [internalColumnFilters, setInternalColumnFilters] =
+    React.useState<ColumnFiltersState>(filteringConfig.initialColumnFilters)
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
-  const [pagination, setPagination] = React.useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: initialPageSize,
-  })
+  const [internalPagination, setInternalPagination] =
+    React.useState<PaginationState>(paginationConfig.initialPagination)
 
   const sorting = sortingConfig.isControlled
     ? (sortingConfig.sorting ?? [])
     : internalSorting
 
+  const columnFilters = filteringConfig.isControlled
+    ? (filteringConfig.columnFilters ?? [])
+    : internalColumnFilters
+
+  const pagination = paginationConfig.isControlled
+    ? (paginationConfig.pagination ?? paginationConfig.initialPagination)
+    : internalPagination
+
   const isServerSorting = sortingConfig.mode === 'server'
   const sortingEnabled = sortingConfig.enabled
+  const isServerPagination = paginationConfig.mode === 'server'
+  const paginationEnabled = paginationConfig.enabled
+  const isServerFiltering = filteringConfig.mode === 'server'
+  const filteringEnabled = filteringConfig.enabled
 
   // --- 4. TanStack table instance -------------------------------------------
   const table = useReactTable({
@@ -234,7 +284,11 @@ export function DataTable<TData, TValue>({
       sortingConfig.onSortingChange?.(next)
     },
     onColumnFiltersChange: (updater) => {
-      setColumnFilters((previous) => functionalUpdate(updater, previous))
+      const next = functionalUpdate(updater, columnFilters)
+      if (!filteringConfig.isControlled) {
+        setInternalColumnFilters(next)
+      }
+      filteringConfig.onColumnFiltersChange?.(next)
     },
     onColumnVisibilityChange: (updater) => {
       setColumnVisibility((previous) => functionalUpdate(updater, previous))
@@ -243,20 +297,38 @@ export function DataTable<TData, TValue>({
       setRowSelection((previous) => functionalUpdate(updater, previous))
     },
     onPaginationChange: (updater) => {
-      setPagination((previous) => functionalUpdate(updater, previous))
+      const next = functionalUpdate(updater, pagination)
+      if (!paginationConfig.isControlled) {
+        setInternalPagination(next)
+      }
+      paginationConfig.onPaginationChange?.(next)
     },
     enableSorting: sortingEnabled,
     enableMultiSort: sortingConfig.enableMultiSort,
+    enableFilters: filteringEnabled,
     // Server mode: TanStack assumes `data` is already sorted by the API.
     // @see https://tanstack.com/table/latest/docs/guide/sorting#manual-server-side-sorting
     manualSorting: isServerSorting,
+    // Server mode: `data` is already one API page; do not slice again.
+    // @see https://tanstack.com/table/latest/docs/guide/pagination#manual-server-side-pagination
+    manualPagination: isServerPagination,
+    // Server mode: `data` already matches the API filter; do not filter again.
+    // @see https://tanstack.com/table/latest/docs/guide/filters#manual-server-side-filtering
+    manualFiltering: isServerFiltering,
+    pageCount: isServerPagination
+      ? (paginationConfig.pageCount ?? -1)
+      : undefined,
     getCoreRowModel: getCoreRowModel(),
     // Only attach the client sorted row model when sorting inline.
     getSortedRowModel: isServerSorting ? undefined : getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    // Reset to page 0 when filters / data change (TanStack default).
-    autoResetPageIndex: true,
+    getFilteredRowModel: isServerFiltering ? undefined : getFilteredRowModel(),
+    getPaginationRowModel:
+      isServerPagination || !paginationEnabled
+        ? undefined
+        : getPaginationRowModel(),
+    // Client: reset to page 0 when filters / data change.
+    // Server: parent owns page index — changing `data` must not bounce to 0.
+    autoResetPageIndex: !isServerPagination,
   })
 
   const hasSelectableRows = table
@@ -264,10 +336,20 @@ export function DataTable<TData, TValue>({
     .some((column) => column.id === 'select')
   const resolvedShowSelectionCount =
     showSelectionCount ?? hasSelectableRows
+  const pageRowCount = table.getRowModel().rows.length
+  const filteredRowCount = isServerPagination
+    ? (paginationConfig.rowCount ?? pageRowCount)
+    : table.getFilteredRowModel().rows.length
+  const showTotalCount =
+    !isServerPagination || paginationConfig.rowCount != null
 
   // --- 5. Render: toolbar → grid → pagination -------------------------------
   return (
-    <div className={cn('flex w-full flex-col gap-4', className)}>
+    <div
+      className={cn('flex w-full flex-col gap-4', className)}
+      aria-busy={loading || undefined}
+      data-loading={loading ? '' : undefined}
+    >
       {!hideToolbar ? (
         <DataTableToolbar
           table={table}
@@ -324,7 +406,14 @@ export function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.length ? (
+            {loading ? (
+              <DataTableSkeletonRows
+                columnCount={tableColumns.length}
+                rowCount={skeletonRowCount ?? pagination.pageSize}
+                cellPadding={paddingConfig.cell}
+                stripedConfig={stripedConfig}
+              />
+            ) : table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -376,17 +465,21 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
-      <DataTablePagination
-        table={table}
-        pagination={pagination}
-        pageSizeOptions={pageSizeOptions}
-        showSelectionCount={resolvedShowSelectionCount}
-        filteredRowCount={table.getFilteredRowModel().rows.length}
-        selectedRowCount={table.getFilteredSelectedRowModel().rows.length}
-        pageCount={table.getPageCount()}
-        canPreviousPage={table.getCanPreviousPage()}
-        canNextPage={table.getCanNextPage()}
-      />
+      {paginationEnabled ? (
+        <DataTablePagination
+          table={table}
+          pagination={pagination}
+          pageSizeOptions={pageSizeOptions}
+          showSelectionCount={resolvedShowSelectionCount}
+          showTotalCount={showTotalCount}
+          pageRowCount={pageRowCount}
+          filteredRowCount={filteredRowCount}
+          selectedRowCount={table.getFilteredSelectedRowModel().rows.length}
+          pageCount={table.getPageCount()}
+          canPreviousPage={table.getCanPreviousPage()}
+          canNextPage={table.getCanNextPage()}
+        />
+      ) : null}
     </div>
   )
 }

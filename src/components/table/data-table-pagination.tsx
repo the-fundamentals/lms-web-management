@@ -29,6 +29,13 @@ interface DataTablePaginationProps<TData> {
   pagination: PaginationState
   pageSizeOptions?: readonly number[]
   showSelectionCount?: boolean
+  /**
+   * When false, omit “of Z” (server lists without a known total row count).
+   * Default: true.
+   */
+  showTotalCount?: boolean
+  /** Rows on the current page (used when total is unknown). */
+  pageRowCount: number
   filteredRowCount: number
   selectedRowCount: number
   pageCount: number
@@ -41,6 +48,8 @@ export function DataTablePagination<TData>({
   pagination,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   showSelectionCount = true,
+  showTotalCount = true,
+  pageRowCount,
   filteredRowCount,
   selectedRowCount,
   pageCount,
@@ -49,8 +58,13 @@ export function DataTablePagination<TData>({
 }: DataTablePaginationProps<TData>) {
   const { pageIndex, pageSize } = pagination
 
-  const from = filteredRowCount === 0 ? 0 : pageIndex * pageSize + 1
-  const to = Math.min((pageIndex + 1) * pageSize, filteredRowCount)
+  const from =
+    pageRowCount === 0 && filteredRowCount === 0
+      ? 0
+      : pageIndex * pageSize + 1
+  const to = showTotalCount
+    ? Math.min((pageIndex + 1) * pageSize, filteredRowCount)
+    : pageIndex * pageSize + pageRowCount
   const totalPages = Math.max(pageCount, 1)
 
   return (
@@ -60,9 +74,13 @@ export function DataTablePagination<TData>({
           <>
             {selectedRowCount} of {filteredRowCount} row(s) selected.
           </>
-        ) : (
+        ) : showTotalCount ? (
           <>
             Showing {from}–{to} of {filteredRowCount}
+          </>
+        ) : (
+          <>
+            Showing {from}–{to}
           </>
         )}
       </div>
