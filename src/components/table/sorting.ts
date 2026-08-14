@@ -10,7 +10,7 @@ import type {
  *
  * - `resolveSortingOptions` — normalize `boolean | DataTableSortingOptions`
  * - `applySortableColumns` — set `enableSorting` from the columns whitelist
- * - `sortingStateToApiParams` — map TanStack state → `{ sortBy, sortOrder }`
+ * - `sortingStateToApiParams` — map TanStack state → `{ sortBy, sortDirection }`
  * - `getColumnDefId` — resolve a ColumnDef’s id for whitelist matching
  *
  * Wired from `data-table.tsx`; features usually only need
@@ -116,12 +116,13 @@ export function applySortableColumns<TData, TValue>(
 }
 
 /**
- * Map TanStack SortingState → common list-API query fields.
+ * Map TanStack SortingState → list-API sort fields.
  * Uses the primary (first) sort entry — typical for server list endpoints.
+ * Matches `ClassroomFilter` / shared filter shapes: `sortBy` + `sortDirection`.
  */
 export function sortingStateToApiParams(sorting: SortingState): {
   sortBy?: string
-  sortOrder?: 'asc' | 'desc'
+  sortDirection?: 'ASC' | 'DESC'
 } {
   const primary = sorting[0]
   if (!primary) {
@@ -130,6 +131,6 @@ export function sortingStateToApiParams(sorting: SortingState): {
 
   return {
     sortBy: primary.id,
-    sortOrder: primary.desc ? 'desc' : 'asc',
+    sortDirection: primary.desc ? 'DESC' : 'ASC',
   }
 }

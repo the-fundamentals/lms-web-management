@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Loader2Icon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -8,6 +8,17 @@ export function LoginForm() {
   const { login } = useAuth()
   const [isRedirecting, setIsRedirecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    function onPageShow(event: PageTransitionEvent) {
+      if (event.persisted) {
+        setIsRedirecting(false)
+      }
+    }
+
+    window.addEventListener('pageshow', onPageShow)
+    return () => window.removeEventListener('pageshow', onPageShow)
+  }, [])
 
   async function handleSignIn() {
     setError(null)

@@ -1,15 +1,17 @@
-import type { SortingState } from '@tanstack/react-table'
+import type { ColumnFiltersState, PaginationState, SortingState } from '@tanstack/react-table'
 
 /**
  * Option bags and resolved configs for the DataTable kit.
  *
  * Public props accept `boolean | OptionsObject` (Ant Design–style).
- * Sibling helpers (`sorting.ts`, `striped.ts`, `padding.ts`,
- * `create-number-column.tsx`) normalize those into the `Resolved*` types
- * consumed by `data-table.tsx`.
+ * Sibling helpers (`sorting.ts`, `striped.ts`, `padding.ts`, `pagination.ts`,
+ * `filtering.ts`, `create-number-column.tsx`) normalize those into the
+ * `Resolved*` types consumed by `data-table.tsx`.
  *
  * Contents:
  * - Sorting — `DataTableSortingOptions` / `ResolvedDataTableSorting`
+ * - Pagination — `DataTablePaginationOptions` / `ResolvedDataTablePagination`
+ * - Filtering — `DataTableFilteringOptions` / `ResolvedDataTableFiltering`
  * - Numbering — `DataTableNumberingOptions` / `ResolvedDataTableNumbering`
  * - Striped rows — `DataTableStripedOptions` / `ResolvedDataTableStriped`
  * - Padding — `DataTablePaddingValue` / `DataTablePaddingOptions` / resolved
@@ -90,6 +92,133 @@ export type ResolvedDataTableSorting = {
   initialSorting: SortingState
   enableMultiSort: boolean
   /** True when parent owns `sorting` state. */
+  isControlled: boolean
+}
+
+/**
+ * Pagination option bag (Ant Design–style).
+ *
+ * Two modes (TanStack-compatible):
+ * - `client` — slice `data` in memory via `getPaginationRowModel`
+ * - `server` — `manualPagination: true`; wire `pagination` / `onPaginationChange`
+ *   (and `pageCount`) to your API `page` / `size`
+ *
+ * @example Client (default)
+ * <DataTable pagination />
+ *
+ * @example Server (API)
+ * const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
+ * <DataTable
+ *   data={pageFromApi}
+ *   pagination={{
+ *     mode: 'server',
+ *     pagination,
+ *     onPaginationChange: setPagination,
+ *     pageCount,
+ *   }}
+ * />
+ */
+export type DataTablePaginationMode = 'client' | 'server'
+
+export type DataTablePaginationOptions = {
+  /**
+   * - `client` — paginate current `data` in memory (default)
+   * - `server` — do not slice locally; assume `data` is already one API page
+   */
+  mode?: DataTablePaginationMode
+  /**
+   * Controlled pagination state. Prefer this with `mode: 'server'` so you can
+   * put `pageIndex` / `pageSize` in a query key / request body.
+   */
+  pagination?: PaginationState
+  /** Fires whenever page index or page size changes. */
+  onPaginationChange?: (pagination: PaginationState) => void
+  /** Initial page when uncontrolled (`pagination` not passed). */
+  initialPagination?: PaginationState
+  /**
+   * Total page count for server mode (`table.getPageCount()`).
+   * When the API has no total, estimate: `hasMore ? pageIndex + 2 : pageIndex + 1`.
+   */
+  pageCount?: number
+  /**
+   * Total row count across all pages (server). Used for “Showing X–Y of Z”.
+   * Omit when the API does not return a total — the footer then shows X–Y only.
+   */
+  rowCount?: number
+  /**
+   * When false, the pagination footer is hidden.
+   * Default: true.
+   */
+  enabled?: boolean
+}
+
+/** Internal resolved pagination config after normalizing `boolean | object`. */
+export type ResolvedDataTablePagination = {
+  enabled: boolean
+  mode: DataTablePaginationMode
+  pagination?: PaginationState
+  onPaginationChange?: (pagination: PaginationState) => void
+  initialPagination: PaginationState
+  pageCount?: number
+  rowCount?: number
+  /** True when parent owns `pagination` state. */
+  isControlled: boolean
+}
+
+/**
+ * Column-filter / toolbar search option bag (Ant Design–style).
+ *
+ * Two modes (TanStack-compatible):
+ * - `client` — filter rows already in `data` via `getFilteredRowModel`
+ * - `server` — `manualFiltering: true`; wire `columnFilters` /
+ *   `onColumnFiltersChange` to your API (e.g. `filters: [{ field, operator, value }]`)
+ *
+ * The toolbar search still binds to `filterColumnId` on `DataTable`.
+ *
+ * @example Server (API)
+ * const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+ * <DataTable
+ *   filterColumnId="name"
+ *   filtering={{
+ *     mode: 'server',
+ *     columnFilters,
+ *     onColumnFiltersChange: setColumnFilters,
+ *   }}
+ * />
+ */
+export type DataTableFilteringMode = 'client' | 'server'
+
+export type DataTableFilteringOptions = {
+  /**
+   * - `client` — filter current `data` in memory (default)
+   * - `server` — do not filter locally; assume `data` already matches the API filter
+   */
+  mode?: DataTableFilteringMode
+  /**
+   * Controlled column filters. Prefer this with `mode: 'server'` so you can
+   * put the filter value in a query key / request body.
+   */
+  columnFilters?: ColumnFiltersState
+  /** Fires whenever toolbar / column filters change. */
+  onColumnFiltersChange?: (filters: ColumnFiltersState) => void
+  /** Initial filters when uncontrolled (`columnFilters` not passed). */
+  initialColumnFilters?: ColumnFiltersState
+  /**
+   * When false, filtering state is ignored (toolbar may still render if
+   * `filterColumnId` is set — prefer omitting `filterColumnId` to hide it).
+   * Default: true.
+   */
+  enabled?: boolean
+}
+
+/** Internal resolved filtering config after normalizing `boolean | object`. */
+export type ResolvedDataTableFiltering = {
+  enabled: boolean
+  mode: DataTableFilteringMode
+  columnFilters?: ColumnFiltersState
+  onColumnFiltersChange?: (filters: ColumnFiltersState) => void
+  initialColumnFilters: ColumnFiltersState
+  /** True when parent owns `columnFilters` state. */
   isControlled: boolean
 }
 
