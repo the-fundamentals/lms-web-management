@@ -1,22 +1,22 @@
 import { useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
-import { useNavigate } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { updateMyAccountProfile } from '@the-fundamentals/core-openapi'
+import type { AccountProfileResponse } from '@the-fundamentals/core-openapi'
 import { CircleAlertIcon, Loader2Icon, UserRoundIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import {
+  DialogClose,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  clearMyAccountProfileCache,
-  setMyAccountProfileCache,
-} from '@/features/account'
-import { useAuth } from '@/features/auth/AuthContext'
-import { uploadPublicFile } from '@/features/storage'
+import { setMyAccountProfileCache } from '@/features/account'
+import { useAuth } from '@/features/auth'
+import { getPublicObjectUrl, uploadPublicFile } from '@/features/storage'
 
 const SAVE_FAILED = 'Could not save your profile. Try again.'
-const SIGNOUT_FAILED = 'Could not sign out. Try again.'
 const AVATAR_UPLOAD_FAILED = 'Could not upload your photo. Try again.'
 
 function userFacingMessage(cause: unknown, fallback: string): string {
@@ -35,23 +35,27 @@ function userFacingMessage(cause: unknown, fallback: string): string {
   return message
 }
 
-export function OnboardingForm() {
-  const navigate = useNavigate()
+export function UpdateProfileForm({
+  profile,
+  onSaved,
+}: {
+  profile: AccountProfileResponse
+  onSaved: () => void
+}) {
   const queryClient = useQueryClient()
-  const { getIdToken, logout, session } = useAuth()
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [avatarKey, setAvatarKey] = useState('')
-  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null)
+  const { getIdToken } = useAuth()
+  const [firstName, setFirstName] = useState(profile.firstName)
+  const [lastName, setLastName] = useState(profile.lastName)
+  const [avatarKey, setAvatarKey] = useState(profile.avatarKey ?? '')
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(
+    getPublicObjectUrl(profile.avatarKey),
+  )
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
-  const isBusy = isSubmitting || isLoggingOut || isUploadingAvatar
-
-  const email = session?.user.email
+  const isBusy = isSubmitting || isUploadingAvatar
 
   async function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -80,7 +84,7 @@ export function OnboardingForm() {
     const trimmedFirst = firstName.trim()
     const trimmedLast = lastName.trim()
     if (!trimmedFirst || !trimmedLast) {
-      setError('Enter your first and last name to continue.')
+      setError('Enter your first and last name.')
       return
     }
 
@@ -100,13 +104,12 @@ export function OnboardingForm() {
         headers: { 'X-ID-Token': idToken },
       })
 
-      if (data) {
-        setMyAccountProfileCache(queryClient, data)
-        await navigate({ to: '/dashboard', replace: true })
-        return
+      if (!data) {
+        throw new Error(SAVE_FAILED)
       }
 
-      throw new Error(SAVE_FAILED)
+      setMyAccountProfileCache(queryClient, data)
+      onSaved()
     } catch (cause) {
       setIsSubmitting(false)
       setError(userFacingMessage(cause, SAVE_FAILED))
@@ -114,24 +117,11 @@ export function OnboardingForm() {
   }
 
   return (
-    <form
-      className="flex w-full flex-col gap-5 text-left motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:delay-200 motion-safe:duration-500"
-      onSubmit={(event) => void handleSubmit(event)}
-      noValidate
-    >
-      {email ? (
-        <p className="m-0 rounded-lg border border-border/80 bg-background/70 px-3.5 py-2.5 text-xs text-muted-foreground">
-          Signed in as{' '}
-          <span className="font-semibold break-all text-foreground">
-            {email}
-          </span>
-        </p>
-      ) : null}
-
-      <div className="flex flex-col items-center gap-3">
+    <form className="grid gap-4" onSubmit={(event) => void handleSubmit(event)} noValidate>
+      <div className="flex flex-col items-center gap-2">
         <input
           ref={avatarInputRef}
-          id="onboarding-avatar"
+          id="update-profile-avatar"
           name="avatar"
           type="file"
           accept="image/*"
@@ -141,11 +131,9 @@ export function OnboardingForm() {
         />
         <button
           type="button"
-          className="relative size-24 overflow-hidden rounded-full border border-border/80 bg-background/70 shadow-[0_0_0_1px_color-mix(in_oklch,var(--foreground)_6%,transparent)] outline-none transition hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+          className="relative size-20 overflow-hidden rounded-full border border-border bg-muted outline-none transition hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
           disabled={isBusy}
-          aria-label={
-            avatarPreviewUrl ? 'Change profile photo' : 'Add a profile photo'
-          }
+          aria-label={avatarPreviewUrl ? 'Change profile photo' : 'Add a profile photo'}
           onClick={() => avatarInputRef.current?.click()}
         >
           {avatarPreviewUrl ? (
@@ -156,7 +144,7 @@ export function OnboardingForm() {
             />
           ) : (
             <span className="flex size-full items-center justify-center text-muted-foreground">
-              <UserRoundIcon className="size-9" aria-hidden />
+              <UserRoundIcon className="size-8" aria-hidden />
             </span>
           )}
           {isUploadingAvatar ? (
@@ -166,42 +154,32 @@ export function OnboardingForm() {
           ) : null}
         </button>
         <p className="m-0 text-center text-xs text-muted-foreground">
-          {isUploadingAvatar
-            ? 'Uploading photo…'
-            : avatarPreviewUrl
-              ? 'Photo uploaded. Click to replace.'
-              : 'Optional photo — shown after upload.'}
+          {isUploadingAvatar ? 'Uploading photo…' : 'Click to change photo'}
         </p>
       </div>
 
-      <div className="grid gap-3.5">
+      <div className="grid gap-3">
         <div className="grid gap-1.5">
-          <Label htmlFor="onboarding-first-name">First name</Label>
+          <Label htmlFor="update-profile-first-name">First name</Label>
           <Input
-            id="onboarding-first-name"
+            id="update-profile-first-name"
             name="firstName"
             autoComplete="given-name"
-            autoFocus
             required
             value={firstName}
             disabled={isBusy}
-            placeholder="Alex"
-            className="h-11 rounded-md bg-background/70 px-3 text-sm"
             onChange={(event) => setFirstName(event.target.value)}
           />
         </div>
-
         <div className="grid gap-1.5">
-          <Label htmlFor="onboarding-last-name">Last name</Label>
+          <Label htmlFor="update-profile-last-name">Last name</Label>
           <Input
-            id="onboarding-last-name"
+            id="update-profile-last-name"
             name="lastName"
             autoComplete="family-name"
             required
             value={lastName}
             disabled={isBusy}
-            placeholder="Nguyen"
-            className="h-11 rounded-md bg-background/70 px-3 text-sm"
             onChange={(event) => setLastName(event.target.value)}
           />
         </div>
@@ -209,7 +187,7 @@ export function OnboardingForm() {
 
       {error ? (
         <div
-          className="flex items-start gap-2.5 rounded-lg border border-destructive/25 bg-destructive/8 px-3.5 py-2.5 text-destructive"
+          className="flex items-start gap-2.5 rounded-lg border border-destructive/25 bg-destructive/8 px-3 py-2 text-destructive"
           role="alert"
         >
           <CircleAlertIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
@@ -217,49 +195,23 @@ export function OnboardingForm() {
         </div>
       ) : null}
 
-      <div className="grid gap-2">
-        <Button
-          type="submit"
-          className="h-11 w-full rounded-md text-sm font-semibold"
-          size="lg"
-          disabled={isBusy}
-        >
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button type="button" variant="outline" disabled={isBusy}>
+            Cancel
+          </Button>
+        </DialogClose>
+        <Button type="submit" disabled={isBusy}>
           {isSubmitting ? (
             <>
               <Loader2Icon className="size-4 animate-spin" aria-hidden />
               Saving…
             </>
           ) : (
-            'Continue to dashboard'
+            'Save changes'
           )}
         </Button>
-
-        <Button
-          type="button"
-          variant="ghost"
-          className="h-11 w-full rounded-md text-sm font-medium text-muted-foreground"
-          size="lg"
-          disabled={isBusy}
-          onClick={() => {
-            setError(null)
-            setIsLoggingOut(true)
-            clearMyAccountProfileCache(queryClient)
-            void logout().catch((cause: unknown) => {
-              setIsLoggingOut(false)
-              setError(userFacingMessage(cause, SIGNOUT_FAILED))
-            })
-          }}
-        >
-          {isLoggingOut ? (
-            <>
-              <Loader2Icon className="size-4 animate-spin" aria-hidden />
-              Signing out…
-            </>
-          ) : (
-            'Sign out'
-          )}
-        </Button>
-      </div>
+      </DialogFooter>
     </form>
   )
 }

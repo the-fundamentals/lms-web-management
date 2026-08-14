@@ -1,12 +1,14 @@
+import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   ChevronsUpDownIcon,
   LogOutIcon,
   SettingsIcon,
+  UserRoundPenIcon,
 } from 'lucide-react'
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,11 +27,14 @@ import {
   clearMyAccountProfileCache,
   getProfileDisplayName,
   getProfileInitials,
+  UpdateProfileDialog,
   useMyAccountProfile,
 } from '@/features/account'
 import { useAuth } from '@/features/auth'
+import { getPublicObjectUrl } from '@/features/storage'
 
 export function NavUser() {
+  const [isUpdateProfileOpen, setIsUpdateProfileOpen] = useState(false)
   const { isMobile } = useSidebar()
   const queryClient = useQueryClient()
   const { logout, status, isAuthenticated, session } = useAuth()
@@ -46,6 +51,7 @@ export function NavUser() {
   const initials = profile
     ? getProfileInitials(profile)
     : displayName.slice(0, 2).toUpperCase()
+  const avatarUrl = profile ? getPublicObjectUrl(profile.avatarKey) : null
 
   const isLoading = status === 'loading' || (isAuthenticated && isProfilePending)
 
@@ -64,11 +70,7 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               disabled={isLoading}
             >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarFallback className="rounded-lg">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar src={avatarUrl} initials={initials} />
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{displayName}</span>
                 <span className="truncate text-xs">{email}</span>
@@ -84,11 +86,7 @@ export function NavUser() {
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarFallback className="rounded-lg">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar src={avatarUrl} initials={initials} />
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{displayName}</span>
                   <span className="truncate text-xs">{email}</span>
@@ -96,6 +94,14 @@ export function NavUser() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            {profile ? (
+              <DropdownMenuItem
+                onSelect={() => setIsUpdateProfileOpen(true)}
+              >
+                <UserRoundPenIcon />
+                Update profile
+              </DropdownMenuItem>
+            ) : null}
             <DropdownMenuItem asChild>
               <Link to="/dashboard/settings">
                 <SettingsIcon />
@@ -109,7 +115,29 @@ export function NavUser() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        {profile ? (
+          <UpdateProfileDialog
+            open={isUpdateProfileOpen}
+            onOpenChange={setIsUpdateProfileOpen}
+            profile={profile}
+          />
+        ) : null}
       </SidebarMenuItem>
     </SidebarMenu>
+  )
+}
+
+function UserAvatar({
+  src,
+  initials,
+}: {
+  src: string | null
+  initials: string
+}) {
+  return (
+    <Avatar className="h-8 w-8 rounded-lg">
+      {src ? <AvatarImage src={src} alt="" className="rounded-lg" /> : null}
+      <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
+    </Avatar>
   )
 }
