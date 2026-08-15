@@ -24,3 +24,4 @@ export {
 export type { AccountProfileNotFoundError } from '@/features/account/my-account-profile'
 export { OnboardingPage } from '@/features/account/pages/onboarding-page'
 export { UpdateProfileDialog } from '@/features/account/components/update-profile-dialog'
+export { getAllAccountsOptions } from '@/features/account/accounts-query'

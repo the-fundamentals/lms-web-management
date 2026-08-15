@@ -9,4 +9,9 @@ export {
   useClassrooms,
 } from '@/features/classrooms/classrooms-query'
 export { CreateClassroomForm } from '@/features/classrooms/components/create-classroom-form'
+export { AddStudentDialog, AddTeacherDialog } from '@/features/classrooms/components/add-student-dialog'
+export { ClassroomDetailsLayout } from '@/features/classrooms/pages/classroom-details-page'
+export { ClassroomOverviewPage } from '@/features/classrooms/pages/classroom-overview-page'
+export { ClassroomPeoplePage } from '@/features/classrooms/pages/classroom-people-page'
+export { ClassroomSessionsPage } from '@/features/classrooms/pages/classroom-sessions-page'
 export { CreateClassroomPage } from '@/features/classrooms/pages/create-classroom-page'

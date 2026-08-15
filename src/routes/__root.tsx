@@ -8,6 +8,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import type { QueryClient } from '@tanstack/react-query'
 
+import { ConfirmActionProvider } from '@/components/confirm-action'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AuthProvider } from '@/features/auth'
 import appCss from '@/styles.css?url'
@@ -43,7 +44,9 @@ function RootComponent() {
   return (
     <AuthProvider>
       <TooltipProvider>
-        <Outlet />
+        <ConfirmActionProvider>
+          <Outlet />
+        </ConfirmActionProvider>
       </TooltipProvider>
     </AuthProvider>
   )

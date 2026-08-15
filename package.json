@@ -24,7 +24,7 @@
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/router-plugin": "^1.132.0",
     "class-variance-authority": "^0.7.1",
-    "@the-fundamentals/core-openapi": "0.2.6",
+    "@the-fundamentals/core-openapi": "0.2.7-feature-branch-dev-sangdang-260816-1-c41d8c6ea5bd99f4204c0625ceb53711caadd8e3",
     "clsx": "^2.1.1",
     "lucide-react": "^0.545.0",
     "oidc-client-ts": "^3.5.0",

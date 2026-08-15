@@ -1,10 +1,8 @@
 import {
-  BookOpenIcon,
   CalendarIcon,
   LayoutDashboardIcon,
   ListIcon,
   SchoolIcon,
-  SettingsIcon,
   UsersIcon,
 } from 'lucide-react'
 
@@ -42,26 +40,11 @@ const teachingNav = [
   },
 ]
 
-const managementNav = [
+const dashboardNav = [
   {
-    title: 'Overview',
+    title: 'Dashboard',
     url: '/dashboard',
     icon: <LayoutDashboardIcon />,
-  },
-  {
-    title: 'Users',
-    url: '/dashboard/users',
-    icon: <UsersIcon />,
-  },
-  {
-    title: 'Courses',
-    url: '/dashboard/courses',
-    icon: <BookOpenIcon />,
-  },
-  {
-    title: 'Settings',
-    url: '/dashboard/settings',
-    icon: <SettingsIcon />,
   },
 ]
 
@@ -72,8 +55,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <AppBrand />
       </SidebarHeader>
       <SidebarContent>
+        <NavMain items={dashboardNav} />
         <NavMain label="Teaching" items={teachingNav} />
-        <NavMain label="Management" items={managementNav} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
