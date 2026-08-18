@@ -56,7 +56,8 @@ function ClassroomDetailsTabs({ classroomId }: { classroomId: string }) {
   const peoplePath = `/dashboard/classrooms/${classroomId}/people`
   const sessionsPath = `/dashboard/classrooms/${classroomId}/sessions`
   const isPeople = pathname === peoplePath
-  const isSessions = pathname === sessionsPath
+  const isSessions =
+    pathname === sessionsPath || pathname.startsWith(`${sessionsPath}/`)
   const isOverview =
     pathname === `/dashboard/classrooms/${classroomId}` ||
     pathname === `/dashboard/classrooms/${classroomId}/`
@@ -90,7 +91,7 @@ function ClassroomDetailsTabs({ classroomId }: { classroomId: string }) {
         params={{ classroomId }}
         className={tabClass(isSessions)}
       >
-        Classroom Sessions
+        Sessions
       </Link>
     </nav>
   )

@@ -99,3 +99,10 @@ export function getAllClassroomSessionsOptions(
     staleTime: 30_000,
   })
 }
+
+/** Invalidate classroom session list queries (e.g. after creating a session). */
+export function invalidateClassroomSessionsQueries(
+  queryClient: QueryClient,
+): void {
+  void queryClient.invalidateQueries({ queryKey: ['getAllClassroomSessions'] })
+}
