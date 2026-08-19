@@ -1,0 +1,35 @@
+---
+description: Stop and notify the user when a needed API operation is missing from core-openapi; do not invent client workarounds.
+alwaysApply: true
+---
+
+# Missing backend endpoint
+
+When wiring UI to the API, **first** confirm the operation exists in `@the-fundamentals/core-openapi` (`sdk.gen` / `types.gen`, or the `react-query` wrappers).
+
+If the needed read, write, or list endpoint is missing, **stop**. Do not invent a workaround that hides the gap. The user may have forgotten to implement it on the backend.
+
+## Do not invent
+
+- Local-only React Query caches as the source of truth
+- Fake lists built only from create/mutation responses
+- Client-side joining or filtering as a substitute for a list/get API
+- Hardcoded data, stubs that look like real fetches, or other client-only stand-ins
+
+## Tell the user immediately
+
+1. Which capability is missing (e.g. list session attendances).
+2. Which SDK operations you found that are close (e.g. create-only).
+3. That they may need to add the endpoint on the backend.
+
+Wait for them before implementing UI that depends on the missing operation.
+
+```text
+❌ BAD — session attendance: no list GET in core-openapi; still ship a
+   `queryFn` that returns `[]` and `setQueryData` from
+   `createClassroomSessionAttendancesMutation` only.
+
+✅ GOOD — stop. Report: list/get session attendance is missing; SDK has
+   `createClassroomSessionAttendances` (and similar create/session ops).
+   Ask them to add the backend endpoint before the list UI.
+```

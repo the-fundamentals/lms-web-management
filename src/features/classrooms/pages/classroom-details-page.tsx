@@ -55,7 +55,8 @@ function ClassroomDetailsTabs({ classroomId }: { classroomId: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const peoplePath = `/dashboard/classrooms/${classroomId}/people`
   const sessionsPath = `/dashboard/classrooms/${classroomId}/sessions`
-  const isPeople = pathname === peoplePath
+  const isPeople =
+    pathname === peoplePath || pathname.startsWith(`${peoplePath}/`)
   const isSessions =
     pathname === sessionsPath || pathname.startsWith(`${sessionsPath}/`)
   const isOverview =
