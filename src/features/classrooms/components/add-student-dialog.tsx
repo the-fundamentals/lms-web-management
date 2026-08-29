@@ -122,7 +122,7 @@ export function AddClassroomMemberDialog({
   const addMembers = useMutation({
     ...createClassroomMembersMutation(),
     onSuccess: () => {
-      invalidateClassroomMembersQueries(queryClient)
+      invalidateClassroomMembersQueries(queryClient, classroomId)
       setSelectedAccountIds(new Set())
     },
     onError: (cause) => {

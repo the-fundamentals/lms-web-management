@@ -26,11 +26,9 @@ const sessionsRoute = getRouteApi(
 function SessionRow({
   classroomId,
   session,
-  index,
 }: {
   classroomId: string
   session: ClassroomSessionResponse
-  index: number
 }) {
   const date = parseSessionDate(session.sessionDate)
   const weekday = new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(
@@ -48,10 +46,7 @@ function SessionRow({
   const description = session.description?.trim()
 
   return (
-    <li
-      className="animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both"
-      style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
-    >
+    <li>
       <Link
         to="/dashboard/classrooms/$classroomId/sessions/$sessionId"
         params={{ classroomId, sessionId: session.id }}
@@ -179,12 +174,11 @@ export function ClassroomSessionsPage() {
         </p>
       ) : (
         <ul className="divide-y">
-          {sessions.map((session, index) => (
+          {sessions.map((session) => (
             <SessionRow
               key={session.id}
               classroomId={classroomId}
               session={session}
-              index={index}
             />
           ))}
         </ul>

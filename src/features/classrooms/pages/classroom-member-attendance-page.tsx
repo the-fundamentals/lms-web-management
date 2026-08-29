@@ -6,6 +6,7 @@ import type {
   ClassroomSessionAttendanceResponse,
   ClassroomSessionAttendanceStatus,
 } from '@the-fundamentals/core-openapi'
+import { getAllClassroomMembersOptions } from '@the-fundamentals/core-openapi/react-query'
 import { ChevronLeftIcon } from 'lucide-react'
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -13,7 +14,6 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
-  getAllClassroomMembersOptions,
   getAllClassroomSessionsOptions,
   getClassroomMemberAttendancesOptions,
 } from '@/features/classrooms/classrooms-query'
@@ -99,7 +99,6 @@ export function ClassroomMemberAttendancePage() {
   const membersQuery = useQuery(
     getAllClassroomMembersOptions({
       path: { classroomId },
-      body: { page: 0, size: 50 },
     }),
   )
   const attendancesQuery = useQuery(

@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { ClassroomMemberResponse } from '@the-fundamentals/core-openapi'
+import type {
+  ClassroomMemberResponse,
+  ClassroomSessionAttendanceStatus,
+} from '@the-fundamentals/core-openapi'
 import {
   createClassroomSessionAttendancesMutation,
   getAllClassroomSessionAttendancesQueryKey,
@@ -9,7 +12,6 @@ import { Loader2Icon } from 'lucide-react'
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -18,9 +20,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { invalidateClassroomMemberAttendancesQueries } from '@/features/classrooms/classrooms-query'
 
 const MAX_ATTENDANCES_PER_REQUEST = 30
+
+type AttendanceMark = Extract<
+  ClassroomSessionAttendanceStatus,
+  'ATTENDED' | 'ABSENT'
+>
 
 function initialsFromName(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -33,11 +47,15 @@ function initialsFromName(name: string): string {
   return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase()
 }
 
-function takeAttendanceLabel(count: number): string {
+function saveAttendanceLabel(count: number): string {
   if (count === 1) {
-    return 'Mark 1 student present'
+    return 'Save 1 mark'
   }
-  return `Mark ${count} students present`
+  return `Save ${count} marks`
+}
+
+function isAttendanceMark(value: string): value is AttendanceMark {
+  return value === 'ATTENDED' || value === 'ABSENT'
 }
 
 export function TakeAttendanceDialog({
@@ -56,14 +74,14 @@ export function TakeAttendanceDialog({
   hasClassroomStudents: boolean
 }) {
   const queryClient = useQueryClient()
-  const [selectedMemberIds, setSelectedMemberIds] = useState<
-    ReadonlySet<string>
-  >(new Set())
+  const [marks, setMarks] = useState<Readonly<Record<string, AttendanceMark>>>(
+    {},
+  )
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) {
-      setSelectedMemberIds(new Set())
+      setMarks({})
       setError(null)
     }
   }, [open])
@@ -88,22 +106,20 @@ export function TakeAttendanceDialog({
     },
   })
 
-  const selectedCount = selectedMemberIds.size
-  const atLimit = selectedCount >= MAX_ATTENDANCES_PER_REQUEST
+  const markedEntries = Object.entries(marks)
+  const markedCount = markedEntries.length
+  const atLimit = markedCount >= MAX_ATTENDANCES_PER_REQUEST
 
-  const toggleMember = (memberId: string) => {
+  const setMemberMark = (memberId: string, value: string) => {
     setError(null)
-    setSelectedMemberIds((current) => {
-      const next = new Set(current)
-      if (next.has(memberId)) {
-        next.delete(memberId)
-        return next
-      }
-      if (next.size >= MAX_ATTENDANCES_PER_REQUEST) {
+    setMarks((current) => {
+      if (!isAttendanceMark(value)) {
         return current
       }
-      next.add(memberId)
-      return next
+      if (!(memberId in current) && Object.keys(current).length >= MAX_ATTENDANCES_PER_REQUEST) {
+        return current
+      }
+      return { ...current, [memberId]: value }
     })
   }
 
@@ -113,7 +129,7 @@ export function TakeAttendanceDialog({
         <DialogHeader>
           <DialogTitle>Take attendance</DialogTitle>
           <DialogDescription>
-            Select students who attended this session.
+            Mark each student as present or absent.
           </DialogDescription>
         </DialogHeader>
 
@@ -127,39 +143,45 @@ export function TakeAttendanceDialog({
           ) : (
             <ul className="flex flex-col gap-0.5">
               {students.map((member) => {
-                const isSelected = selectedMemberIds.has(member.id)
+                const mark = marks[member.id]
                 const isDisabled =
-                  createAttendances.isPending || (atLimit && !isSelected)
+                  createAttendances.isPending || (atLimit && mark === undefined)
 
                 return (
-                  <li key={member.id}>
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
-                      disabled={isDisabled}
-                      aria-pressed={isSelected}
-                      onClick={() => toggleMember(member.id)}
-                    >
-                      <Checkbox
-                        checked={isSelected}
-                        tabIndex={-1}
-                        className="pointer-events-none"
-                        aria-hidden
-                      />
-                      <Avatar>
-                        <AvatarFallback>
-                          {initialsFromName(member.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium">
-                          {member.name}
-                        </span>
-                        <span className="block truncate text-xs text-muted-foreground">
-                          {member.email}
-                        </span>
+                  <li
+                    key={member.id}
+                    className="flex items-center gap-3 rounded-md px-2 py-2"
+                  >
+                    <Avatar>
+                      <AvatarFallback>
+                        {initialsFromName(member.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">
+                        {member.name}
                       </span>
-                    </button>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {member.email}
+                      </span>
+                    </span>
+                    <Select
+                      value={mark}
+                      onValueChange={(value) => setMemberMark(member.id, value)}
+                      disabled={isDisabled}
+                    >
+                      <SelectTrigger
+                        size="sm"
+                        className="shrink-0"
+                        aria-label={`Attendance for ${member.name}`}
+                      >
+                        <SelectValue placeholder="Mark" />
+                      </SelectTrigger>
+                      <SelectContent position="popper" align="end" className="z-[100]">
+                        <SelectItem value="ATTENDED">Present</SelectItem>
+                        <SelectItem value="ABSENT">Absent</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </li>
                 )
               })}
@@ -181,16 +203,16 @@ export function TakeAttendanceDialog({
         <DialogFooter>
           <Button
             type="button"
-            disabled={selectedCount === 0 || createAttendances.isPending}
+            disabled={markedCount === 0 || createAttendances.isPending}
             onClick={() => {
               setError(null)
               createAttendances.mutate({
                 path: { classroomId, sessionId },
                 body: {
-                  attendances: [...selectedMemberIds].map(
-                    (classroomMemberId) => ({
+                  attendances: markedEntries.map(
+                    ([classroomMemberId, status]) => ({
                       classroomMemberId,
-                      status: 'ATTENDED',
+                      status,
                     }),
                   ),
                 },
@@ -203,7 +225,7 @@ export function TakeAttendanceDialog({
                 Saving…
               </>
             ) : (
-              takeAttendanceLabel(selectedCount)
+              saveAttendanceLabel(markedCount)
             )}
           </Button>
         </DialogFooter>

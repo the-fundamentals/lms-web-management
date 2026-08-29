@@ -55,10 +55,16 @@ function ClassroomDetailsTabs({ classroomId }: { classroomId: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const peoplePath = `/dashboard/classrooms/${classroomId}/people`
   const sessionsPath = `/dashboard/classrooms/${classroomId}/sessions`
+  const schedulePath = `/dashboard/classrooms/${classroomId}/schedule`
+  const financesPath = `/dashboard/classrooms/${classroomId}/finances`
   const isPeople =
     pathname === peoplePath || pathname.startsWith(`${peoplePath}/`)
   const isSessions =
     pathname === sessionsPath || pathname.startsWith(`${sessionsPath}/`)
+  const isSchedule =
+    pathname === schedulePath || pathname.startsWith(`${schedulePath}/`)
+  const isFinances =
+    pathname === financesPath || pathname.startsWith(`${financesPath}/`)
   const isOverview =
     pathname === `/dashboard/classrooms/${classroomId}` ||
     pathname === `/dashboard/classrooms/${classroomId}/`
@@ -93,6 +99,20 @@ function ClassroomDetailsTabs({ classroomId }: { classroomId: string }) {
         className={tabClass(isSessions)}
       >
         Sessions
+      </Link>
+      <Link
+        to="/dashboard/classrooms/$classroomId/schedule"
+        params={{ classroomId }}
+        className={tabClass(isSchedule)}
+      >
+        Schedule
+      </Link>
+      <Link
+        to="/dashboard/classrooms/$classroomId/finances"
+        params={{ classroomId }}
+        className={tabClass(isFinances)}
+      >
+        Finances
       </Link>
     </nav>
   )

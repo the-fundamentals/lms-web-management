@@ -1,13 +1,12 @@
 import { keepPreviousData, queryOptions, useQuery } from '@tanstack/react-query'
 import type { QueryClient } from '@tanstack/react-query'
 import {
-  getAllClassroomMembers,
   getAllClassroomSessions,
   getAllClassrooms,
   getClassroomMemberAttendances,
 } from '@the-fundamentals/core-openapi'
+import { getAllClassroomMembersQueryKey } from '@the-fundamentals/core-openapi/react-query'
 import type {
-  GetAllClassroomMembersData,
   GetAllClassroomSessionsData,
   GetAllClassroomsData,
   GetClassroomMemberAttendancesData,
@@ -46,28 +45,6 @@ export function useClassrooms(
   return useQuery(getAllClassroomsOptions(options))
 }
 
-/**
- * Query options for listing members of a classroom.
- *
- * Uses the SDK {@link getAllClassroomMembers} directly (POST list endpoint).
- */
-export function getAllClassroomMembersOptions(
-  options: Options<GetAllClassroomMembersData>,
-) {
-  return queryOptions({
-    queryKey: ['getAllClassroomMembers', options] as const,
-    queryFn: async ({ signal }) => {
-      const { data } = await getAllClassroomMembers({
-        ...options,
-        signal,
-        throwOnError: true,
-      })
-      return data
-    },
-    staleTime: 30_000,
-  })
-}
-
 /** Invalidate getAllClassrooms queries (e.g. after create). */
 export function invalidateClassroomsQueries(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: ['getAllClassrooms'] })
@@ -76,8 +53,11 @@ export function invalidateClassroomsQueries(queryClient: QueryClient): void {
 /** Invalidate classroom member list queries (e.g. after adding a member). */
 export function invalidateClassroomMembersQueries(
   queryClient: QueryClient,
+  classroomId: string,
 ): void {
-  void queryClient.invalidateQueries({ queryKey: ['getAllClassroomMembers'] })
+  void queryClient.invalidateQueries({
+    queryKey: getAllClassroomMembersQueryKey({ path: { classroomId } }),
+  })
 }
 
 /**

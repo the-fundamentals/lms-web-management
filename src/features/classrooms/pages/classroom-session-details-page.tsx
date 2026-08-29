@@ -7,17 +7,24 @@ import type {
   ClassroomSessionAttendanceStatus,
 } from '@the-fundamentals/core-openapi'
 import {
+  getAllClassroomMembersOptions,
   getAllClassroomSessionAttendancesOptions,
   getClassroomSessionByIdOptions,
 } from '@the-fundamentals/core-openapi/react-query'
-import { ChevronLeftIcon } from 'lucide-react'
+import { ChevronLeftIcon, EllipsisVerticalIcon } from 'lucide-react'
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EditAttendanceDialog } from '@/features/classrooms/components/edit-attendance-dialog'
 import { TakeAttendanceDialog } from '@/features/classrooms/components/take-attendance-dialog'
-import { getAllClassroomMembersOptions } from '@/features/classrooms/classrooms-query'
 import { formatSessionDateTime } from '@/features/classrooms/session-date'
 import { cn } from '@/lib/utils'
 
@@ -70,12 +77,18 @@ function StatusChip({
 }
 
 function AttendanceRow({
+  classroomId,
+  sessionId,
   member,
   record,
 }: {
+  classroomId: string
+  sessionId: string
   member: ClassroomMemberResponse
   record: ClassroomSessionAttendanceResponse
 }) {
+  const [isEditOpen, setIsEditOpen] = useState(false)
+
   return (
     <li className="flex items-center gap-3 py-3">
       <Avatar>
@@ -86,6 +99,31 @@ function AttendanceRow({
         <p className="truncate text-xs text-muted-foreground">{member.email}</p>
       </div>
       <StatusChip status={record.status} />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Actions for ${member.name}`}
+          >
+            <EllipsisVerticalIcon />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-36">
+          <DropdownMenuItem onSelect={() => setIsEditOpen(true)}>
+            Edit
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <EditAttendanceDialog
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        classroomId={classroomId}
+        sessionId={sessionId}
+        member={member}
+        record={record}
+      />
     </li>
   )
 }
@@ -108,7 +146,6 @@ export function ClassroomSessionDetailsPage() {
   const membersQuery = useQuery(
     getAllClassroomMembersOptions({
       path: { classroomId },
-      body: { page: 0, size: 50 },
     }),
   )
 
@@ -204,7 +241,7 @@ export function ClassroomSessionDetailsPage() {
   const title = session.name?.trim() || 'Untitled session'
 
   return (
-    <div className="flex max-w-3xl flex-col gap-8">
+    <div className="flex max-w-3xl flex-col gap-6">
       <div className="flex flex-col gap-3">
         <Link
           to="/dashboard/classrooms/$classroomId/sessions"
@@ -224,6 +261,8 @@ export function ClassroomSessionDetailsPage() {
           ) : null}
         </div>
       </div>
+
+      <Separator />
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
@@ -282,6 +321,8 @@ export function ClassroomSessionDetailsPage() {
             {recordedRows.map(({ member, record }) => (
               <AttendanceRow
                 key={record.id}
+                classroomId={classroomId}
+                sessionId={sessionId}
                 member={member}
                 record={record}
               />

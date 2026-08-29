@@ -2,7 +2,10 @@ import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, getRouteApi } from '@tanstack/react-router'
 import type { ClassroomMemberResponse } from '@the-fundamentals/core-openapi'
-import { removeClassroomMemberMutation } from '@the-fundamentals/core-openapi/react-query'
+import {
+  getAllClassroomMembersOptions,
+  removeClassroomMemberMutation,
+} from '@the-fundamentals/core-openapi/react-query'
 import { EllipsisVerticalIcon, UserPlusIcon } from 'lucide-react'
 
 import { useConfirmAction } from '@/components/confirm-action'
@@ -25,10 +28,7 @@ import {
   AddStudentDialog,
   AddTeacherDialog,
 } from '@/features/classrooms/components/add-student-dialog'
-import {
-  getAllClassroomMembersOptions,
-  invalidateClassroomMembersQueries,
-} from '@/features/classrooms/classrooms-query'
+import { invalidateClassroomMembersQueries } from '@/features/classrooms/classrooms-query'
 
 const peopleRoute = getRouteApi('/dashboard/classrooms/$classroomId/people/')
 
@@ -77,7 +77,7 @@ function MemberActionsRow({
   const removeMember = useMutation({
     ...removeClassroomMemberMutation(),
     onSuccess: () => {
-      invalidateClassroomMembersQueries(queryClient)
+      invalidateClassroomMembersQueries(queryClient, classroomId)
     },
   })
 
@@ -174,10 +174,6 @@ export function ClassroomPeoplePage() {
     useQuery(
       getAllClassroomMembersOptions({
         path: { classroomId },
-        body: {
-          page: 0,
-          size: 50,
-        },
       }),
     )
 
