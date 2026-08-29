@@ -12,6 +12,7 @@ export { CreateClassroomForm } from '@/features/classrooms/components/create-cla
 export { AddStudentDialog, AddTeacherDialog } from '@/features/classrooms/components/add-student-dialog'
 export { CreateSessionDialog } from '@/features/classrooms/components/create-session-dialog'
 export { CreateScheduleDialog } from '@/features/classrooms/components/create-schedule-dialog'
+export { SetPaymentPlanDialog } from '@/features/classrooms/components/set-payment-plan-dialog'
 export { TakeAttendanceDialog } from '@/features/classrooms/components/take-attendance-dialog'
 export { EditAttendanceDialog } from '@/features/classrooms/components/edit-attendance-dialog'
 export { ClassroomDetailsLayout } from '@/features/classrooms/pages/classroom-details-page'
