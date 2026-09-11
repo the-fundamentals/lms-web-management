@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import type { ClassroomResponse } from '@the-fundamentals/core-openapi'
 
 import {
@@ -23,7 +24,13 @@ export const classroomColumns: ColumnDef<ClassroomResponse>[] = [
       <DataTableColumnHeader column={column} title="Name" />
     ),
     cell: ({ row }) => (
-      <span className="font-medium">{row.getValue('name')}</span>
+      <Link
+        to="/dashboard/classrooms/$classroomId"
+        params={{ classroomId: row.original.id }}
+        className="font-medium underline-offset-4 hover:underline"
+      >
+        {row.getValue('name')}
+      </Link>
     ),
   },
   {

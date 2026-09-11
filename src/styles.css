@@ -94,14 +94,20 @@ body {
   --chart-4: color-mix(in oklch, var(--primary) 45%, var(--foreground));
   --chart-5: color-mix(in oklch, var(--primary) 25%, var(--foreground));
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-tint: #007595;
+  --sidebar: color-mix(in oklch, var(--foreground) 5.5%, var(--background));
+  --sidebar-end: color-mix(in oklch, var(--sidebar-tint) 16%, var(--sidebar));
+  --sidebar-foreground: color-mix(
+    in oklch,
+    var(--sidebar-tint) 22%,
+    var(--foreground)
+  );
+  --sidebar-primary: var(--sidebar-tint);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: var(--sidebar-tint);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: color-mix(in oklch, var(--sidebar-tint) 14%, var(--border));
+  --sidebar-ring: var(--sidebar-tint);
 }
 
 .dark {
@@ -131,14 +137,16 @@ body {
   --chart-3: color-mix(in oklch, var(--primary) 70%, var(--foreground));
   --chart-4: color-mix(in oklch, var(--primary) 40%, var(--foreground));
   --chart-5: color-mix(in oklch, var(--primary) 20%, var(--foreground));
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-tint: #007595;
+  --sidebar: color-mix(in oklch, var(--foreground) 7%, var(--background));
+  --sidebar-end: color-mix(in oklch, var(--sidebar-tint) 20%, var(--sidebar));
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--sidebar-tint);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: var(--sidebar-tint);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-border: color-mix(in oklch, var(--sidebar-tint) 22%, var(--border));
+  --sidebar-ring: var(--sidebar-tint);
 }
 
 @layer base {
@@ -151,6 +159,15 @@ body {
   html {
     @apply font-sans;
   }
+}
+
+/* Quiet gray → teal wash */
+[data-slot='sidebar-inner'] {
+  background-image: linear-gradient(
+    165deg,
+    var(--sidebar) 0%,
+    var(--sidebar-end) 100%
+  );
 }
 
 /* Wordmark — uses theme primary / foreground only */

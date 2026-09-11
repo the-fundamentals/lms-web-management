@@ -32,12 +32,12 @@ export function NavMain({
   label,
   items,
 }: {
-  label: string
+  label?: string
   items: NavMainItem[]
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+      {label ? <SidebarGroupLabel>{label}</SidebarGroupLabel> : null}
       <SidebarMenu>
         {items.map((item) =>
           item.items && item.items.length > 0 ? (

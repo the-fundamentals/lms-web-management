@@ -33,7 +33,7 @@ function AllClassroomsPage() {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
   )
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [sorting, setSorting] = React.useState<SortingState>([{id: 'createdDate', desc: true}])
 
   const nameFilter = getColumnFilterValue(columnFilters, 'name').trim()
   const [debouncedNameFilter, setDebouncedNameFilter] =

@@ -1,7 +1,17 @@
 import { keepPreviousData, queryOptions, useQuery } from '@tanstack/react-query'
 import type { QueryClient } from '@tanstack/react-query'
-import { getAllClassrooms } from '@the-fundamentals/core-openapi'
-import type { GetAllClassroomsData, Options } from '@the-fundamentals/core-openapi'
+import {
+  getAllClassroomSessions,
+  getAllClassrooms,
+  getClassroomMemberAttendances,
+} from '@the-fundamentals/core-openapi'
+import { getAllClassroomMembersQueryKey } from '@the-fundamentals/core-openapi/react-query'
+import type {
+  GetAllClassroomSessionsData,
+  GetAllClassroomsData,
+  GetClassroomMemberAttendancesData,
+  Options,
+} from '@the-fundamentals/core-openapi'
 
 /**
  * Query options for listing classrooms.
@@ -38,4 +48,74 @@ export function useClassrooms(
 /** Invalidate getAllClassrooms queries (e.g. after create). */
 export function invalidateClassroomsQueries(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: ['getAllClassrooms'] })
+}
+
+/** Invalidate classroom member list queries (e.g. after adding a member). */
+export function invalidateClassroomMembersQueries(
+  queryClient: QueryClient,
+  classroomId: string,
+): void {
+  void queryClient.invalidateQueries({
+    queryKey: getAllClassroomMembersQueryKey({ path: { classroomId } }),
+  })
+}
+
+/**
+ * Query options for listing sessions of a classroom.
+ *
+ * Uses the SDK {@link getAllClassroomSessions} directly (POST list endpoint).
+ */
+export function getAllClassroomSessionsOptions(
+  options: Options<GetAllClassroomSessionsData>,
+) {
+  return queryOptions({
+    queryKey: ['getAllClassroomSessions', options] as const,
+    queryFn: async ({ signal }) => {
+      const { data } = await getAllClassroomSessions({
+        ...options,
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    staleTime: 30_000,
+  })
+}
+
+/** Invalidate classroom session list queries (e.g. after creating a session). */
+export function invalidateClassroomSessionsQueries(
+  queryClient: QueryClient,
+): void {
+  void queryClient.invalidateQueries({ queryKey: ['getAllClassroomSessions'] })
+}
+
+/**
+ * Query options for listing a classroom member's attendance history.
+ *
+ * Uses the SDK {@link getClassroomMemberAttendances} directly (POST list endpoint).
+ */
+export function getClassroomMemberAttendancesOptions(
+  options: Options<GetClassroomMemberAttendancesData>,
+) {
+  return queryOptions({
+    queryKey: ['getClassroomMemberAttendances', options] as const,
+    queryFn: async ({ signal }) => {
+      const { data } = await getClassroomMemberAttendances({
+        ...options,
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    staleTime: 30_000,
+  })
+}
+
+/** Invalidate a classroom member's attendance history queries (e.g. after taking attendance). */
+export function invalidateClassroomMemberAttendancesQueries(
+  queryClient: QueryClient,
+): void {
+  void queryClient.invalidateQueries({
+    queryKey: ['getClassroomMemberAttendances'],
+  })
 }

@@ -9,6 +9,10 @@ import tailwindcss from '@tailwindcss/vite'
 
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
+  // GitHub-pinned client changes often; Vite's dep cache otherwise keeps stale exports.
+  optimizeDeps: {
+    exclude: ['@the-fundamentals/core-openapi'],
+  },
   plugins: [
     devtools(),
     tailwindcss(),
@@ -16,9 +20,9 @@ const config = defineConfig({
     viteReact(),
     babel({ presets: [reactCompilerPreset()] }),
   ],
-  server: {
-    watch: null, // disable hot module reloading
-  }
+  // server: {
+  //   watch: null, // disable hot module reloading
+  // }
 })
 
 export default config
