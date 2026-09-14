@@ -208,3 +208,54 @@ body {
 .fundamentals-logo--lg {
   font-size: clamp(1.75rem, 4.5vw, 2.25rem);
 }
+
+/* Editorial timetable — map FullCalendar monarch tokens to LMS theme */
+.classroom-schedule-calendar {
+  --fc-monarch-primary: var(--primary);
+  --fc-monarch-primary-foreground: var(--primary-foreground);
+  --fc-monarch-primary-over: var(--primary-hover);
+  --fc-monarch-primary-down: var(--primary-hover);
+  --fc-monarch-secondary: var(--primary-soft);
+  --fc-monarch-secondary-foreground: var(--foreground);
+  --fc-monarch-event: var(--primary-soft);
+  --fc-monarch-event-contrast: var(--foreground);
+  --fc-monarch-highlight: var(--primary-softer);
+  --fc-monarch-now: var(--primary);
+  --fc-monarch-background: var(--card);
+  --fc-monarch-foreground: var(--foreground);
+  --fc-monarch-muted-foreground: var(--muted-foreground);
+  --fc-monarch-faint-foreground: var(--muted-foreground);
+  --fc-monarch-border: var(--border);
+  --fc-monarch-strong-border: var(--border);
+  --fc-monarch-faint: var(--primary-softer);
+  --fc-monarch-muted: var(--muted);
+  font-family: var(--font-sans);
+}
+
+.classroom-schedule-calendar .fc {
+  height: 100%;
+  min-height: 0;
+}
+
+.classroom-schedule-calendar .is-other-month {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+}
+
+.classroom-schedule-calendar .is-other-month * {
+  color: var(--muted-foreground);
+}
+
+.classroom-schedule-calendar .is-today {
+  background-color: var(--primary-softer);
+}
+
+.classroom-schedule-calendar .is-today-number {
+  display: inline-flex;
+  min-width: 1.5rem;
+  justify-content: center;
+  border-radius: 999px;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 600;
+}
