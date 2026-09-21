@@ -17,33 +17,37 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { ClassroomScheduleCalendar } from '@/features/classrooms/components/classroom-schedule-calendar'
 import { CreateScheduleDialog } from '@/features/classrooms/components/create-schedule-dialog'
+import { ManageRecurrenceRulesDialog } from '@/features/classrooms/components/manage-recurrence-rules-dialog'
 
 const schedulesRoute = getRouteApi(
   '/dashboard/classrooms/$classroomId/schedule',
 )
 
-function ScheduleRow({
-  classroomId,
-  schedule,
-}: {
-  classroomId: string
-  schedule: ClassroomScheduleResponse
-}) {
+function asScheduleList(data: unknown): Array<ClassroomScheduleResponse> {
+  return Array.isArray(data) ? data : []
+}
+
+export function ClassroomSchedulesPage() {
+  const { classroomId } = schedulesRoute.useParams()
   const queryClient = useQueryClient()
   const confirmAction = useConfirmAction()
-  const [error, setError] = useState<string | null>(null)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isManageOpen, setIsManageOpen] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const { data, error, isError, refetch, isFetching } = useQuery(
+    getAllClassroomSchedulesOptions({
+      path: { classroomId },
+    }),
+  )
+  const schedules = asScheduleList(data)
+
   const deleteSchedule = useMutation({
     ...deleteClassroomScheduleMutation(),
     onSuccess: () => {
-      setError(null)
+      setDeleteError(null)
       void queryClient.invalidateQueries({
         queryKey: getAllClassroomSchedulesQueryKey({
           path: { classroomId },
@@ -51,7 +55,7 @@ function ScheduleRow({
       })
     },
     onError: (cause) => {
-      setError(
+      setDeleteError(
         cause instanceof Error
           ? cause.message
           : 'Could not delete this schedule. Try again.',
@@ -59,81 +63,29 @@ function ScheduleRow({
     },
   })
 
-  return (
-    <li className="py-3">
-      <div className="flex items-start gap-3">
-        <p className="min-w-0 flex-1 font-mono text-sm break-all">
-          {schedule.scheduleRule}
-        </p>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Schedule actions"
-              disabled={deleteSchedule.isPending}
-            >
-              <EllipsisVerticalIcon />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-36">
-            <DropdownMenuItem
-              variant="destructive"
-              disabled={deleteSchedule.isPending}
-              onSelect={() => {
-                void (async () => {
-                  const confirmed = await confirmAction({
-                    title: 'Delete this schedule?',
-                    description:
-                      'This classroom will no longer follow this recurrence rule.',
-                    confirmLabel: 'Delete',
-                    cancelLabel: 'Cancel',
-                    variant: 'destructive',
-                  })
-                  if (!confirmed) {
-                    return
-                  }
-                  setError(null)
-                  deleteSchedule.mutate({
-                    path: {
-                      classroomId,
-                      scheduleId: schedule.id,
-                    },
-                  })
-                })()
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      {error ? (
-        <p className="mt-1 text-sm text-destructive" role="alert">
-          {error}
-        </p>
-      ) : null}
-    </li>
-  )
-}
+  async function handleDeleteSchedule(scheduleId: string) {
+    const confirmed = await confirmAction({
+      title: 'Delete this schedule?',
+      description:
+        'This classroom will no longer follow this recurrence rule.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      variant: 'destructive',
+    })
+    if (!confirmed) {
+      return
+    }
+    setDeleteError(null)
+    deleteSchedule.mutate({
+      path: { classroomId, scheduleId },
+    })
+  }
 
-export function ClassroomSchedulesPage() {
-  const { classroomId } = schedulesRoute.useParams()
-  const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const { data = [], error, isPending, isError, refetch, isFetching } =
-    useQuery(
-      getAllClassroomSchedulesOptions({
-        path: { classroomId },
-      }),
-    )
-
-  if (isPending) {
+  if (data === undefined && !isError) {
     return (
-      <div className="flex max-w-3xl flex-col gap-3">
+      <div className="flex flex-col gap-3">
         <Skeleton className="h-6 w-28" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-[36rem] w-full rounded-xl" />
       </div>
     )
   }
@@ -160,45 +112,70 @@ export function ClassroomSchedulesPage() {
   }
 
   return (
-    <section className="flex max-w-3xl flex-col gap-3">
+    <section className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-baseline gap-3">
           <h2 className="text-lg font-medium tracking-tight">Schedule</h2>
           <span className="text-sm text-muted-foreground">
-            {(data as any).length === 1 ? '1 schedule' : `${(data as any).length} schedules`}
+            {schedules.length === 1
+              ? '1 schedule'
+              : `${schedules.length} schedules`}
           </span>
         </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              aria-label="Create schedule"
-              onClick={() => setIsCreateOpen(true)}
-            >
-              <PlusIcon />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Create schedule</TooltipContent>
-        </Tooltip>
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setIsCreateOpen(true)}
+          >
+            <PlusIcon />
+            Add Schedule
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Schedule actions"
+              >
+                <EllipsisVerticalIcon />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-52">
+              <DropdownMenuItem onSelect={() => setIsManageOpen(true)}>
+                Manage Recurrence Rules
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
-      <Separator />
-      {(data as any).length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">
-          No schedules yet.
+      {deleteError ? (
+        <p className="text-sm text-destructive" role="alert">
+          {deleteError}
         </p>
-      ) : (
-        <ul className="divide-y">
-          {(data as any).map((schedule: any) => (
-            <ScheduleRow
-              key={schedule.id}
-              classroomId={classroomId}
-              schedule={schedule}
-            />
-          ))}
-        </ul>
-      )}
+      ) : null}
+      <ClassroomScheduleCalendar
+        classroomId={classroomId}
+        schedules={schedules}
+        onDeleteSchedule={(scheduleId) => {
+          void handleDeleteSchedule(scheduleId)
+        }}
+      />
+      <ManageRecurrenceRulesDialog
+        open={isManageOpen}
+        onOpenChange={setIsManageOpen}
+        schedules={schedules}
+        isDeleting={deleteSchedule.isPending}
+        onAdd={() => {
+          setIsManageOpen(false)
+          setIsCreateOpen(true)
+        }}
+        onDelete={(scheduleId) => {
+          void handleDeleteSchedule(scheduleId)
+        }}
+      />
       <CreateScheduleDialog
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}

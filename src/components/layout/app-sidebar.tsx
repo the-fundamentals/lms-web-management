@@ -1,10 +1,4 @@
-import {
-  CalendarIcon,
-  LayoutDashboardIcon,
-  ListIcon,
-  SchoolIcon,
-  UsersIcon,
-} from 'lucide-react'
+import { LayoutDashboardIcon, ListIcon } from 'lucide-react'
 
 import { AppBrand } from '@/components/layout/app-brand'
 import { NavMain } from '@/components/layout/nav-main'
@@ -19,24 +13,9 @@ import {
 
 const teachingNav = [
   {
-    title: 'Overview',
-    url: '/dashboard/classrooms',
-    icon: <SchoolIcon />,
-  },
-  {
     title: 'Classrooms',
     url: '/dashboard/classrooms/list',
     icon: <ListIcon />,
-  },
-  {
-    title: 'Students',
-    url: '/dashboard/classrooms/students',
-    icon: <UsersIcon />,
-  },
-  {
-    title: 'Schedule',
-    url: '/dashboard/classrooms/schedule',
-    icon: <CalendarIcon />,
   },
 ]
 
