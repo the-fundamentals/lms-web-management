@@ -213,6 +213,19 @@ export function clockLabel(time: string): string {
   return `${hour}:${minute}`
 }
 
+/** Match recurrence slots to cancelled rows (date + wall-clock times). */
+export function occurrenceSlotKey(
+  date: Date | string,
+  startTime: string,
+  endTime: string,
+): string {
+  const iso =
+    typeof date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(date)
+      ? date.slice(0, 10)
+      : toIsoDateLocal(typeof date === 'string' ? parseCalendarDate(date) : date)
+  return `${iso}|${clockLabel(startTime)}|${clockLabel(endTime)}`
+}
+
 export function applyTime(day: Date, time: string): Date {
   const [hour = '0', minute = '0', second = '0'] = time.split(':')
   return new Date(

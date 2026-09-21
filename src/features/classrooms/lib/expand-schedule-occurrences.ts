@@ -6,6 +6,7 @@ import {
   clockLabel,
   parseCalendarDate,
   splitScheduleRule,
+  toIsoDateLocal,
 } from '@/features/classrooms/lib/schedule-rule'
 
 export type ScheduleOccurrence = {
@@ -14,6 +15,9 @@ export type ScheduleOccurrence = {
   title: string
   start: Date
   end: Date
+  date: string
+  startTime: string
+  endTime: string
 }
 
 /** Noon UTC so rrule (UTC-based) does not shift the civil date. */
@@ -65,6 +69,9 @@ export function expandScheduleOccurrences(
         title: `${clockLabel(schedule.startTime)} – ${clockLabel(schedule.endTime)}`,
         start,
         end,
+        date: toIsoDateLocal(day),
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
       })
     }
   }

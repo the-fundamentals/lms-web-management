@@ -157,6 +157,7 @@ export function ClassroomSchedulesPage() {
         </p>
       ) : null}
       <ClassroomScheduleCalendar
+        classroomId={classroomId}
         schedules={schedules}
         onDeleteSchedule={(scheduleId) => {
           void handleDeleteSchedule(scheduleId)

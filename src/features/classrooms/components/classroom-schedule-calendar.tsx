@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ClassroomScheduleResponse } from '@the-fundamentals/core-openapi'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type {
+  ClassroomScheduleCancelledResponse,
+  ClassroomScheduleResponse,
+} from '@the-fundamentals/core-openapi'
+import {
+  createClassroomScheduleCancelledMutation,
+  getAllClassroomScheduleCancelledsOptions,
+  getAllClassroomScheduleCancelledsQueryKey,
+} from '@the-fundamentals/core-openapi/react-query'
 import FullCalendar from '@fullcalendar/react'
 import type {
   CalendarRef,
@@ -14,6 +23,7 @@ import themePlugin from '@fullcalendar/react/themes/monarch'
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 import 'temporal-polyfill/global'
 
+import { useConfirmAction } from '@/components/confirm-action'
 import { Button } from '@/components/ui/button'
 import {
   Popover,
@@ -24,7 +34,11 @@ import {
   PopoverTitle,
 } from '@/components/ui/popover'
 import { expandScheduleOccurrences } from '@/features/classrooms/lib/expand-schedule-occurrences'
-import { toLocalDateTimeIso } from '@/features/classrooms/lib/schedule-rule'
+import {
+  occurrenceSlotKey,
+  toIsoDateLocal,
+  toLocalDateTimeIso,
+} from '@/features/classrooms/lib/schedule-rule'
 import { cn } from '@/lib/utils'
 
 import '@fullcalendar/react/skeleton.css'
@@ -57,7 +71,26 @@ type EventFlyout = {
   scheduleId: string
   title: string
   when: string
+  date: string
+  startTime: string
+  endTime: string
+  cancelled: boolean
   rect: { top: number; left: number; width: number; height: number }
+}
+
+function asCancelledList(data: unknown): Array<ClassroomScheduleCancelledResponse> {
+  return Array.isArray(data) ? data : []
+}
+
+/** FullCalendar `end` is exclusive; the cancelled API dates are inclusive. */
+function inclusiveDateRange(range: { start: Date; end: Date }): {
+  startDate: string
+  endDate: string
+  valid: boolean
+} {
+  const startDate = toIsoDateLocal(range.start)
+  const endDate = toIsoDateLocal(new Date(range.end.getTime() - 1))
+  return { startDate, endDate, valid: startDate <= endDate }
 }
 
 function toJsDate(value: unknown): Date {
@@ -104,17 +137,22 @@ function toJsDate(value: unknown): Date {
 }
 
 export function ClassroomScheduleCalendar({
+  classroomId,
   schedules,
   onDeleteSchedule,
 }: {
+  classroomId: string
   schedules: readonly ClassroomScheduleResponse[]
   onDeleteSchedule: (scheduleId: string) => void
 }) {
+  const queryClient = useQueryClient()
+  const confirmAction = useConfirmAction()
   const calendarRef = useRef<CalendarRef>(null)
   const [mounted, setMounted] = useState(false)
   const [view, setView] = useState<ScheduleView>('timeGridWeek')
   const [title, setTitle] = useState('')
   const [flyout, setFlyout] = useState<EventFlyout | null>(null)
+  const [cancelError, setCancelError] = useState<string | null>(null)
   const [range, setRange] = useState(() => {
     const start = new Date()
     start.setDate(start.getDate() - 7)
@@ -127,15 +165,69 @@ export function ClassroomScheduleCalendar({
     setMounted(true)
   }, [])
 
+  const cancelledQueryRange = useMemo(() => inclusiveDateRange(range), [range])
+  const { data: cancelledData } = useQuery({
+    ...getAllClassroomScheduleCancelledsOptions({
+      path: { classroomId },
+      query: {
+        startDate: cancelledQueryRange.startDate,
+        endDate: cancelledQueryRange.endDate,
+      },
+    }),
+    enabled: mounted && cancelledQueryRange.valid,
+  })
+  const cancelledKeys = useMemo(() => {
+    const keys = new Set<string>()
+    for (const row of asCancelledList(cancelledData)) {
+      keys.add(occurrenceSlotKey(row.date, row.startTime, row.endTime))
+    }
+    return keys
+  }, [cancelledData])
+
+  const createCancelled = useMutation({
+    ...createClassroomScheduleCancelledMutation(),
+    onSuccess: () => {
+      setCancelError(null)
+      void queryClient.invalidateQueries({
+        queryKey: getAllClassroomScheduleCancelledsQueryKey({
+          path: { classroomId },
+        }),
+      })
+    },
+    onError: (cause) => {
+      setCancelError(
+        cause instanceof Error
+          ? cause.message
+          : 'Could not cancel this lesson. Try again.',
+      )
+    },
+  })
+
   const events = useMemo<Array<EventInput>>(() => {
-    return expandScheduleOccurrences(schedules, range).map((occurrence) => ({
-      id: occurrence.id,
-      title: occurrence.title,
-      start: toLocalDateTimeIso(occurrence.start),
-      end: toLocalDateTimeIso(occurrence.end),
-      extendedProps: { scheduleId: occurrence.scheduleId },
-    }))
-  }, [schedules, range])
+    return expandScheduleOccurrences(schedules, range).map((occurrence) => {
+      const cancelled = cancelledKeys.has(
+        occurrenceSlotKey(
+          occurrence.date,
+          occurrence.startTime,
+          occurrence.endTime,
+        ),
+      )
+      return {
+        id: occurrence.id,
+        title: occurrence.title,
+        start: toLocalDateTimeIso(occurrence.start),
+        end: toLocalDateTimeIso(occurrence.end),
+        classNames: cancelled ? ['is-cancelled-occurrence'] : [],
+        extendedProps: {
+          scheduleId: occurrence.scheduleId,
+          date: occurrence.date,
+          startTime: occurrence.startTime,
+          endTime: occurrence.endTime,
+          cancelled,
+        },
+      }
+    })
+  }, [schedules, range, cancelledKeys])
 
   function handleDatesSet(info: DatesSetInfo) {
     setTitle(info.view.title)
@@ -156,11 +248,46 @@ export function ClassroomScheduleCalendar({
     })
   }
 
+  async function handleCancelLesson(occurrence: {
+    date: string
+    startTime: string
+    endTime: string
+  }) {
+    const confirmed = await confirmAction({
+      title: 'Cancel this lesson?',
+      description:
+        'This occurrence will not meet. The recurrence rule stays.',
+      confirmLabel: 'Cancel lesson',
+      cancelLabel: 'Keep',
+      variant: 'destructive',
+    })
+    if (!confirmed) {
+      return
+    }
+    setCancelError(null)
+    createCancelled.mutate({
+      path: { classroomId },
+      body: {
+        date: occurrence.date,
+        startTime: occurrence.startTime,
+        endTime: occurrence.endTime,
+      },
+    })
+  }
+
   function handleEventClick(info: EventClickInfo) {
     info.jsEvent.preventDefault()
     info.jsEvent.stopPropagation()
     const scheduleId = info.event.extendedProps.scheduleId
-    if (typeof scheduleId !== 'string') {
+    const date = info.event.extendedProps.date
+    const startTime = info.event.extendedProps.startTime
+    const endTime = info.event.extendedProps.endTime
+    if (
+      typeof scheduleId !== 'string' ||
+      typeof date !== 'string' ||
+      typeof startTime !== 'string' ||
+      typeof endTime !== 'string'
+    ) {
       return
     }
     const rect = info.el.getBoundingClientRect()
@@ -173,6 +300,10 @@ export function ClassroomScheduleCalendar({
       scheduleId,
       title: info.event.title,
       when,
+      date,
+      startTime,
+      endTime,
+      cancelled: info.event.extendedProps.cancelled === true,
       rect: {
         top: rect.top,
         left: rect.left,
@@ -184,6 +315,7 @@ export function ClassroomScheduleCalendar({
     window.setTimeout(() => {
       setFlyout((current) =>
         current?.scheduleId === next.scheduleId &&
+        current.date === next.date &&
         current.rect.top === next.rect.top &&
         current.rect.left === next.rect.left
           ? null
@@ -278,6 +410,11 @@ export function ClassroomScheduleCalendar({
           </button>
         </div>
       </div>
+      {cancelError ? (
+        <p className="text-sm text-destructive" role="alert">
+          {cancelError}
+        </p>
+      ) : null}
 
       <Popover
         modal={false}
@@ -311,8 +448,32 @@ export function ClassroomScheduleCalendar({
           >
             <PopoverHeader>
               <PopoverTitle>{flyout.title}</PopoverTitle>
-              <PopoverDescription>{flyout.when}</PopoverDescription>
+              <PopoverDescription>
+                {flyout.cancelled
+                  ? `${flyout.when} · Cancelled`
+                  : flyout.when}
+              </PopoverDescription>
             </PopoverHeader>
+            {flyout.cancelled ? null : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                disabled={createCancelled.isPending}
+                onClick={() => {
+                  const occurrence = {
+                    date: flyout.date,
+                    startTime: flyout.startTime,
+                    endTime: flyout.endTime,
+                  }
+                  setFlyout(null)
+                  void handleCancelLesson(occurrence)
+                }}
+              >
+                Cancel this lesson
+              </Button>
+            )}
             <Button
               type="button"
               variant="destructive"
@@ -341,6 +502,11 @@ export function ClassroomScheduleCalendar({
           events={events}
           datesSet={handleDatesSet}
           eventClick={handleEventClick}
+          eventClassNames={(info) =>
+            info.event.extendedProps.cancelled === true
+              ? 'is-cancelled-occurrence'
+              : ''
+          }
           nowIndicator
           displayEventTime={false}
           slotMinTime="00:00:00"
