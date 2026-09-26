@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
-import type { ClassroomScheduleResponse } from '@the-fundamentals/core-openapi'
+import type { ClassroomScheduleRecurrenceResponse } from '@the-fundamentals/core-openapi'
 import {
-  deleteClassroomScheduleMutation,
-  getAllClassroomSchedulesOptions,
-  getAllClassroomSchedulesQueryKey,
+  deleteClassroomScheduleRecurrenceMutation,
+  getAllClassroomScheduleRecurrencesOptions,
+  getAllClassroomScheduleRecurrencesQueryKey,
 } from '@the-fundamentals/core-openapi/react-query'
 import { EllipsisVerticalIcon, PlusIcon } from 'lucide-react'
 
@@ -26,7 +26,9 @@ const schedulesRoute = getRouteApi(
   '/dashboard/classrooms/$classroomId/schedule',
 )
 
-function asScheduleList(data: unknown): Array<ClassroomScheduleResponse> {
+function asScheduleList(
+  data: unknown,
+): Array<ClassroomScheduleRecurrenceResponse> {
   return Array.isArray(data) ? data : []
 }
 
@@ -38,18 +40,18 @@ export function ClassroomSchedulesPage() {
   const [isManageOpen, setIsManageOpen] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const { data, error, isError, refetch, isFetching } = useQuery(
-    getAllClassroomSchedulesOptions({
+    getAllClassroomScheduleRecurrencesOptions({
       path: { classroomId },
     }),
   )
   const schedules = asScheduleList(data)
 
   const deleteSchedule = useMutation({
-    ...deleteClassroomScheduleMutation(),
+    ...deleteClassroomScheduleRecurrenceMutation(),
     onSuccess: () => {
       setDeleteError(null)
       void queryClient.invalidateQueries({
-        queryKey: getAllClassroomSchedulesQueryKey({
+        queryKey: getAllClassroomScheduleRecurrencesQueryKey({
           path: { classroomId },
         }),
       })

@@ -16,15 +16,15 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { invalidateClassroomSessionsQueries } from '@/features/classrooms/classrooms-query'
+import { toIsoDateLocal } from '@/features/classrooms/lib/schedule-rule'
 import { cn } from '@/lib/utils'
 
-function toDateTimeLocalValue(date: Date): string {
-  const pad = (value: number) => String(value).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
-}
-
-function toIsoSessionDate(localValue: string): string {
-  return new Date(localValue).toISOString()
+/** API LocalTime is HH:mm:ss; native time inputs are HH:mm. */
+function toApiTime(hhmm: string): string {
+  if (/^\d{2}:\d{2}:\d{2}$/.test(hhmm)) {
+    return hhmm
+  }
+  return `${hhmm}:00`
 }
 
 export function CreateSessionDialog({
@@ -38,14 +38,18 @@ export function CreateSessionDialog({
 }) {
   const queryClient = useQueryClient()
   const [name, setName] = useState('')
-  const [sessionDate, setSessionDate] = useState(toDateTimeLocalValue(new Date()))
+  const [sessionDate, setSessionDate] = useState(() => toIsoDateLocal(new Date()))
+  const [startTime, setStartTime] = useState('')
+  const [endTime, setEndTime] = useState('')
   const [description, setDescription] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) {
       setName('')
-      setSessionDate(toDateTimeLocalValue(new Date()))
+      setSessionDate(toIsoDateLocal(new Date()))
+      setStartTime('')
+      setEndTime('')
       setDescription('')
       setError(null)
     }
@@ -71,13 +75,19 @@ export function CreateSessionDialog({
     setError(null)
 
     if (!sessionDate) {
-      setError('Choose when this session takes place.')
+      setError('Choose the session date.')
       return
     }
 
-    const isoSessionDate = toIsoSessionDate(sessionDate)
-    if (Number.isNaN(new Date(isoSessionDate).getTime())) {
-      setError('Choose a valid date and time.')
+    if (!startTime || !endTime) {
+      setError('Start and end time are required.')
+      return
+    }
+
+    const apiStartTime = toApiTime(startTime)
+    const apiEndTime = toApiTime(endTime)
+    if (apiEndTime <= apiStartTime) {
+      setError('End time must be after start time.')
       return
     }
 
@@ -87,7 +97,9 @@ export function CreateSessionDialog({
     createSession.mutate({
       path: { classroomId },
       body: {
-        sessionDate: isoSessionDate,
+        sessionDate,
+        startTime: apiStartTime,
+        endTime: apiEndTime,
         ...(trimmedName ? { name: trimmedName } : {}),
         ...(trimmedDescription ? { description: trimmedDescription } : {}),
       },
@@ -107,10 +119,10 @@ export function CreateSessionDialog({
           </DialogHeader>
 
           <div className="grid gap-2">
-            <Label htmlFor="session-date">Date and time</Label>
+            <Label htmlFor="session-date">Date</Label>
             <Input
               id="session-date"
-              type="datetime-local"
+              type="date"
               required
               value={sessionDate}
               disabled={createSession.isPending}
@@ -119,6 +131,37 @@ export function CreateSessionDialog({
                 setSessionDate(event.target.value)
               }}
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-2">
+              <Label htmlFor="session-start-time">Start</Label>
+              <Input
+                id="session-start-time"
+                type="time"
+                required
+                value={startTime}
+                disabled={createSession.isPending}
+                onChange={(event) => {
+                  setError(null)
+                  setStartTime(event.target.value)
+                }}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="session-end-time">End</Label>
+              <Input
+                id="session-end-time"
+                type="time"
+                required
+                value={endTime}
+                disabled={createSession.isPending}
+                onChange={(event) => {
+                  setError(null)
+                  setEndTime(event.target.value)
+                }}
+              />
+            </div>
           </div>
 
           <div className="grid gap-2">

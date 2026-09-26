@@ -1,4 +1,4 @@
-import type { ClassroomScheduleResponse } from '@the-fundamentals/core-openapi'
+import type { ClassroomScheduleRecurrenceResponse } from '@the-fundamentals/core-openapi'
 import { PlusIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import {
   clockLabel,
-  describeScheduleRule,
+  describeRecurrence,
 } from '@/features/classrooms/lib/schedule-rule'
 
 export function ManageRecurrenceRulesDialog({
@@ -25,7 +25,7 @@ export function ManageRecurrenceRulesDialog({
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  schedules: readonly ClassroomScheduleResponse[]
+  schedules: readonly ClassroomScheduleRecurrenceResponse[]
   onAdd: () => void
   onDelete: (scheduleId: string) => void
   isDeleting: boolean
@@ -53,7 +53,7 @@ export function ManageRecurrenceRulesDialog({
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm">
-                    {describeScheduleRule(schedule.scheduleRule)}
+                    {describeRecurrence(schedule)}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {clockLabel(schedule.startTime)} –{' '}

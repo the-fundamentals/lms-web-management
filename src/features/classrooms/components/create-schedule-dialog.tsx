@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  createClassroomScheduleMutation,
-  getAllClassroomSchedulesQueryKey,
+  createClassroomScheduleRecurrenceMutation,
+  getAllClassroomScheduleRecurrencesQueryKey,
 } from '@the-fundamentals/core-openapi/react-query'
 import { Loader2Icon } from 'lucide-react'
 
@@ -27,7 +27,6 @@ import {
 } from '@/components/ui/select'
 import {
   WEEKDAYS,
-  buildScheduleRule,
   firstOccurrenceDate,
   toIsoDateLocal,
   weekdayIcalForDate,
@@ -117,22 +116,7 @@ export function CreateScheduleDialog({
   }, [open, freq, byDays, startsOnTouched])
 
   const createSchedule = useMutation({
-    ...createClassroomScheduleMutation(),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: getAllClassroomSchedulesQueryKey({
-          path: { classroomId },
-        }),
-      })
-      onOpenChange(false)
-    },
-    onError: (cause) => {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : 'Could not create this schedule. Try again.',
-      )
-    },
+    ...createClassroomScheduleRecurrenceMutation(),
   })
 
   function toggleDay(ical: string) {
@@ -148,12 +132,18 @@ export function CreateScheduleDialog({
     })
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
 
     if (!Number.isInteger(interval) || interval < 1) {
       setError('Repeat every must be at least 1.')
+      return
+    }
+
+    // API frequency is WEEKLY with no interval. One row stores a single byDay.
+    if (interval !== 1) {
+      setError('Only every 1 week is supported.')
       return
     }
 
@@ -177,8 +167,8 @@ export function CreateScheduleDialog({
       return
     }
 
-    if (endsMode === 'count' && (!Number.isInteger(count) || count < 1)) {
-      setError('Count must be at least 1.')
+    if (endsMode === 'count') {
+      setError('Ending after a number of occurrences is not supported. Use an end date or never.')
       return
     }
 
@@ -195,27 +185,43 @@ export function CreateScheduleDialog({
       return
     }
 
-    createSchedule.mutate({
-      path: { classroomId },
-      body: {
-        scheduleRule: buildScheduleRule({
-          freq,
-          interval,
-          byDays,
-          until: endsMode === 'until' ? untilDate : undefined,
-          count: endsMode === 'count' ? count : undefined,
+    const selectedDays = WEEKDAYS.filter((day) => byDays.has(day.ical))
+    try {
+      for (const day of selectedDays) {
+        await createSchedule.mutateAsync({
+          path: { classroomId },
+          body: {
+            frequency: 'WEEKLY',
+            byDay: day.byDay,
+            recurrenceStartDate: startsOn,
+            ...(endsMode === 'until' ? { recurUntil: untilDate } : {}),
+            startTime: apiStartTime,
+            endTime: apiEndTime,
+          },
+        })
+      }
+      void queryClient.invalidateQueries({
+        queryKey: getAllClassroomScheduleRecurrencesQueryKey({
+          path: { classroomId },
         }),
-        recurrenceStartDate: startsOn,
-        startTime: apiStartTime,
-        endTime: apiEndTime,
-      },
-    })
+      })
+      onOpenChange(false)
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : 'Could not create this schedule. Try again.',
+      )
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
-        <form onSubmit={handleSubmit} className="grid gap-5">
+        <form
+          onSubmit={(event) => void handleSubmit(event)}
+          className="grid gap-5"
+        >
           <DialogHeader>
             <DialogTitle>Custom recurrence</DialogTitle>
             <DialogDescription>

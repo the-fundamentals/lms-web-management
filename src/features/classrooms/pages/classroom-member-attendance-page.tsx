@@ -17,7 +17,10 @@ import {
   getAllClassroomSessionsOptions,
   getClassroomMemberAttendancesOptions,
 } from '@/features/classrooms/classrooms-query'
-import { formatSessionDateTime } from '@/features/classrooms/session-date'
+import {
+  formatClockTime,
+  formatSessionDateTime,
+} from '@/features/classrooms/session-date'
 import { cn } from '@/lib/utils'
 
 const memberAttendanceRoute = getRouteApi(
@@ -285,7 +288,9 @@ export function ClassroomMemberAttendancePage() {
                         }}
                         className="mt-0.5 block truncate text-xs text-muted-foreground hover:text-foreground"
                       >
-                        {sessionName} · {formatSessionDateTime(session.sessionDate)}
+                        {sessionName} · {formatSessionDateTime(session.sessionDate)}{' '}
+                        · {formatClockTime(session.startTime)} –{' '}
+                        {formatClockTime(session.endTime)}
                       </Link>
                     ) : (
                       <p className="mt-0.5 truncate text-xs text-muted-foreground">

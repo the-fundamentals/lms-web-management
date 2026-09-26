@@ -95,7 +95,7 @@ const MOCK_MONTH_SESSIONS = [
     attended: 5,
     amount: 1_500_000,
   },
-] as const
+]
 
 const MOCK_MONTH_TOTAL = MOCK_MONTH_SESSIONS.reduce(
   (sum, session) => sum + session.amount,

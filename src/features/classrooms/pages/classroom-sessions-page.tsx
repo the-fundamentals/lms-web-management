@@ -15,7 +15,7 @@ import {
 import { CreateSessionDialog } from '@/features/classrooms/components/create-session-dialog'
 import { getAllClassroomSessionsOptions } from '@/features/classrooms/classrooms-query'
 import {
-  formatSessionTime,
+  formatClockTime,
   parseSessionDate,
 } from '@/features/classrooms/session-date'
 
@@ -41,7 +41,7 @@ function SessionRow({
     month: 'short',
     year: 'numeric',
   }).format(date)
-  const time = formatSessionTime(session.sessionDate)
+  const time = `${formatClockTime(session.startTime)} – ${formatClockTime(session.endTime)}`
   const name = session.name?.trim() || 'Untitled session'
   const description = session.description?.trim()
 
@@ -69,7 +69,7 @@ function SessionRow({
             <p className="truncate text-sm font-medium">{name}</p>
             {time ? (
               <time
-                dateTime={session.sessionDate}
+                dateTime={`${session.sessionDate}T${session.startTime}`}
                 className="shrink-0 text-xs tabular-nums text-muted-foreground"
               >
                 {time}

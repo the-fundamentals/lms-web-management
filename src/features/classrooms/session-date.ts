@@ -36,6 +36,15 @@ export function formatSessionDateTime(sessionDate: string): string {
   return `${dateLabel} · ${timeLabel}`
 }
 
+export function formatClockTime(time: string): string {
+  const [hour = '0', minute = '0'] = time.split(':')
+  const date = new Date(2000, 0, 1, Number(hour), Number(minute), 0)
+  return new Intl.DateTimeFormat(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date)
+}
+
 export function formatSessionTime(sessionDate: string): string | null {
   const date = parseSessionDate(sessionDate)
   if (!hasClockTime(sessionDate, date)) {

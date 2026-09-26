@@ -1,11 +1,12 @@
 import { RRule } from 'rrule'
-import type { ClassroomScheduleResponse } from '@the-fundamentals/core-openapi'
+import type { ClassroomScheduleRecurrenceResponse } from '@the-fundamentals/core-openapi'
 
 import {
+  WEEKDAYS,
   applyTime,
   clockLabel,
   parseCalendarDate,
-  splitScheduleRule,
+  toIcalDate,
   toIsoDateLocal,
 } from '@/features/classrooms/lib/schedule-rule'
 
@@ -31,8 +32,20 @@ function localDayFromUtc(date: Date): Date {
   return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
 }
 
+function weeklyRrule(schedule: ClassroomScheduleRecurrenceResponse): string | undefined {
+  const ical = WEEKDAYS.find((day) => day.byDay === schedule.byDay)?.ical
+  if (!ical) {
+    return undefined
+  }
+  const parts = [`FREQ=${schedule.frequency}`, `BYDAY=${ical}`]
+  if (schedule.recurUntil) {
+    parts.push(`UNTIL=${toIcalDate(schedule.recurUntil)}`)
+  }
+  return parts.join(';')
+}
+
 export function expandScheduleOccurrences(
-  schedules: readonly ClassroomScheduleResponse[],
+  schedules: readonly ClassroomScheduleRecurrenceResponse[],
   range: { start: Date; end: Date },
 ): Array<ScheduleOccurrence> {
   const events: Array<ScheduleOccurrence> = []
@@ -40,7 +53,11 @@ export function expandScheduleOccurrences(
   const rangeEnd = utcNoon(range.end)
 
   for (const schedule of schedules) {
-    const { dtstart: ruleDtstart, rrule } = splitScheduleRule(schedule.scheduleRule)
+    // Bridge until the calendar reads generated sessions: one WEEKLY byDay row expands locally.
+    const rrule = weeklyRrule(schedule)
+    if (!rrule) {
+      continue
+    }
     let options
     try {
       options = RRule.parseString(rrule)
@@ -48,11 +65,7 @@ export function expandScheduleOccurrences(
       continue
     }
 
-    const seriesStart = schedule.recurrenceStartDate
-      ? parseCalendarDate(schedule.recurrenceStartDate)
-      : (ruleDtstart ?? range.start)
-
-    // rrule.js still needs a dtstart option; series start lives on the API field, not in scheduleRule.
+    const seriesStart = parseCalendarDate(schedule.recurrenceStartDate)
 
     const rule = new RRule({
       ...options,

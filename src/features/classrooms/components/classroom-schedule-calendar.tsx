@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
   ClassroomScheduleCancelledResponse,
-  ClassroomScheduleResponse,
+  ClassroomScheduleRecurrenceResponse,
 } from '@the-fundamentals/core-openapi'
 import {
   createClassroomScheduleCancelledMutation,
@@ -142,7 +142,7 @@ export function ClassroomScheduleCalendar({
   onDeleteSchedule,
 }: {
   classroomId: string
-  schedules: readonly ClassroomScheduleResponse[]
+  schedules: readonly ClassroomScheduleRecurrenceResponse[]
   onDeleteSchedule: (scheduleId: string) => void
 }) {
   const queryClient = useQueryClient()
@@ -502,7 +502,7 @@ export function ClassroomScheduleCalendar({
           events={events}
           datesSet={handleDatesSet}
           eventClick={handleEventClick}
-          eventClassNames={(info) =>
+          eventClass={(info) =>
             info.event.extendedProps.cancelled === true
               ? 'is-cancelled-occurrence'
               : ''

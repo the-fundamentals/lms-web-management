@@ -25,7 +25,10 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EditAttendanceDialog } from '@/features/classrooms/components/edit-attendance-dialog'
 import { TakeAttendanceDialog } from '@/features/classrooms/components/take-attendance-dialog'
-import { formatSessionDateTime } from '@/features/classrooms/session-date'
+import {
+  formatClockTime,
+  formatSessionDateTime,
+} from '@/features/classrooms/session-date'
 import { cn } from '@/lib/utils'
 
 const sessionDetailsRoute = getRouteApi(
@@ -254,7 +257,9 @@ export function ClassroomSessionDetailsPage() {
         <div>
           <h2 className="text-lg font-medium tracking-tight">{title}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {formatSessionDateTime(session.sessionDate)}
+            {formatSessionDateTime(session.sessionDate)} ·{' '}
+            {formatClockTime(session.startTime)} –{' '}
+            {formatClockTime(session.endTime)}
           </p>
           {session.description?.trim() ? (
             <p className="mt-3 text-sm text-pretty">{session.description}</p>
