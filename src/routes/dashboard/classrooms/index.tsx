@@ -164,7 +164,7 @@ function ClassroomsDashboardPage() {
           Classrooms Dashboard
         </h1>
         <p className="text-muted-foreground">
-          Overview of classroom activity, enrollment, and upcoming sessions.
+          Overview of classroom activity and enrollment.
         </p>
       </div>
       <div className="grid auto-rows-min gap-4 md:grid-cols-3">

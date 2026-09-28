@@ -11,7 +11,7 @@ export function CreateClassroomPage() {
           Create classroom
         </h1>
         <p className="text-muted-foreground">
-          Add a new classroom. You can enroll members and schedule sessions
+          Add a new classroom. You can enroll members and set a schedule
           after it exists.
         </p>
       </div>

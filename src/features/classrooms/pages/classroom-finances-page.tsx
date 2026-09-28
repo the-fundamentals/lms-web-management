@@ -25,8 +25,6 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SetPaymentPlanDialog } from '@/features/classrooms/components/set-payment-plan-dialog'
-import { parseSessionDate } from '@/features/classrooms/session-date'
-import { cn } from '@/lib/utils'
 
 const financesRoute = getRouteApi(
   '/dashboard/classrooms/$classroomId/finances',
@@ -63,111 +61,9 @@ function errorMessage(cause: unknown, fallback: string): string {
   return cause instanceof Error ? cause.message : fallback
 }
 
-type FinancesSubtab = 'breakdown' | 'plans'
-
-/** Placeholder session earnings. No classroom session-revenue API yet. */
-const MOCK_MONTH_SESSIONS = [
-  {
-    id: 'mock-1',
-    name: 'Week 1 · Foundations',
-    sessionDate: '2026-08-04T18:00:00',
-    attended: 4,
-    amount: 1_200_000,
-  },
-  {
-    id: 'mock-2',
-    name: 'Week 2 · Listening lab',
-    sessionDate: '2026-08-11T18:00:00',
-    attended: 5,
-    amount: 1_500_000,
-  },
-  {
-    id: 'mock-3',
-    name: 'Week 3 · Speaking clinic',
-    sessionDate: '2026-08-18T18:00:00',
-    attended: 3,
-    amount: 900_000,
-  },
-  {
-    id: 'mock-4',
-    name: 'Week 4 · Review',
-    sessionDate: '2026-08-25T18:00:00',
-    attended: 5,
-    amount: 1_500_000,
-  },
-]
-
-const MOCK_MONTH_TOTAL = MOCK_MONTH_SESSIONS.reduce(
-  (sum, session) => sum + session.amount,
-  0,
-)
-
-function monthLabel(date: Date): string {
-  return new Intl.DateTimeFormat(undefined, {
-    month: 'long',
-    year: 'numeric',
-  }).format(date)
-}
-
-function subtabClass(active: boolean): string {
-  return cn(
-    '-mb-px border-b-2 px-1 pb-2.5 text-sm transition-colors',
-    active
-      ? 'border-foreground font-medium text-foreground'
-      : 'border-transparent text-muted-foreground hover:text-foreground',
-  )
-}
-
 type StudentRateRow = {
   member: ClassroomMemberResponse
   plan: ClassroomMemberPaymentPlanResponse | undefined
-}
-
-function MockSessionEarningRow({
-  session,
-}: {
-  session: (typeof MOCK_MONTH_SESSIONS)[number]
-}) {
-  const date = parseSessionDate(session.sessionDate)
-  const weekday = new Intl.DateTimeFormat(undefined, {
-    weekday: 'short',
-  }).format(date)
-  const dayNumber = new Intl.DateTimeFormat(undefined, {
-    day: '2-digit',
-  }).format(date)
-  const monthYear = new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-
-  return (
-    <li className="flex gap-4 py-4">
-      <div className="flex w-14 shrink-0 flex-col items-center">
-        <span className="text-[10px] font-medium tracking-[0.16em] text-[var(--sidebar-tint)] uppercase">
-          {weekday}
-        </span>
-        <span className="font-heading mt-0.5 text-2xl leading-none font-medium tracking-tight tabular-nums">
-          {dayNumber}
-        </span>
-        <span className="mt-1 text-[10px] text-muted-foreground">
-          {monthYear}
-        </span>
-      </div>
-      <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium">{session.name}</p>
-          <p className="text-xs text-muted-foreground">
-            {session.attended === 1
-              ? '1 student attended'
-              : `${session.attended} students attended`}
-          </p>
-        </div>
-        <p className="shrink-0 text-sm font-medium tabular-nums">
-          {vnd.format(session.amount)}
-        </p>
-      </div>
-    </li>
-  )
 }
 
 function StudentPlanRow({
@@ -283,7 +179,6 @@ function StudentPlanRow({
 
 export function ClassroomFinancesPage() {
   const { classroomId } = financesRoute.useParams()
-  const [subtab, setSubtab] = useState<FinancesSubtab>('breakdown')
   const [planMember, setPlanMember] = useState<ClassroomMemberResponse | null>(
     null,
   )
@@ -342,56 +237,10 @@ export function ClassroomFinancesPage() {
   const isError = membersQuery.isError || plansQuery.isError
   const error = membersQuery.error ?? plansQuery.error
   const isFetching = membersQuery.isFetching || plansQuery.isFetching
-  const thisMonth = monthLabel(new Date())
 
   return (
     <div className="flex max-w-3xl flex-col gap-8">
-      <section className="rounded-xl border border-border px-4 py-5">
-        <p className="text-[10px] font-medium tracking-[0.16em] text-[var(--sidebar-tint)] uppercase">
-          Revenue this month
-        </p>
-        <p className="font-heading mt-1 text-4xl font-medium tracking-tight tabular-nums">
-          {vnd.format(MOCK_MONTH_TOTAL)}
-        </p>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {thisMonth} · {MOCK_MONTH_SESSIONS.length} sessions
-        </p>
-      </section>
-
-      <div>
-        <nav className="flex gap-4 border-b" aria-label="Finances sections">
-          <button
-            type="button"
-            className={subtabClass(subtab === 'breakdown')}
-            onClick={() => setSubtab('breakdown')}
-          >
-            Monthly revenue breakdown
-          </button>
-          <button
-            type="button"
-            className={subtabClass(subtab === 'plans')}
-            onClick={() => setSubtab('plans')}
-          >
-            Payment plans
-          </button>
-        </nav>
-
-        {subtab === 'breakdown' ? (
-          <section className="flex flex-col gap-3 pt-6">
-            <div className="flex items-baseline justify-between gap-3">
-              <h2 className="text-lg font-medium tracking-tight">Sessions</h2>
-              <span className="text-sm text-muted-foreground">
-                From attendance
-              </span>
-            </div>
-            <Separator />
-            <ul className="divide-y">
-              {MOCK_MONTH_SESSIONS.map((session) => (
-                <MockSessionEarningRow key={session.id} session={session} />
-              ))}
-            </ul>
-          </section>
-        ) : isPending ? (
+      {isPending ? (
           <div className="flex flex-col gap-6 pt-6">
             <Skeleton className="h-20 w-56" />
             <Skeleton className="h-12 w-full" />
@@ -470,8 +319,7 @@ export function ClassroomFinancesPage() {
               )}
             </section>
           </>
-        )}
-      </div>
+      )}
 
       <SetPaymentPlanDialog
         open={planMember !== null}

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, getRouteApi } from '@tanstack/react-router'
+import { getRouteApi } from '@tanstack/react-router'
 import type { ClassroomMemberResponse } from '@the-fundamentals/core-openapi'
 import {
   getAllClassroomMembersOptions,
@@ -83,13 +83,9 @@ function MemberActionsRow({
 
   return (
     <div className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-muted/60">
-      <Link
-        to="/dashboard/classrooms/$classroomId/people/$memberId"
-        params={{ classroomId, memberId: member.id }}
-        className="flex min-w-0 flex-1 items-center gap-3"
-      >
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <MemberIdentity member={member} />
-      </Link>
+      </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button

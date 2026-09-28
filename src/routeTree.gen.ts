@@ -27,11 +27,7 @@ import { Route as DashboardClassroomsClassroomIdIndexRouteImport } from './route
 import { Route as DashboardClassroomsClassroomIdFinancesRouteImport } from './routes/dashboard/classrooms/$classroomId/finances'
 import { Route as DashboardClassroomsClassroomIdPeopleRouteRouteImport } from './routes/dashboard/classrooms/$classroomId/people/route'
 import { Route as DashboardClassroomsClassroomIdScheduleRouteImport } from './routes/dashboard/classrooms/$classroomId/schedule'
-import { Route as DashboardClassroomsClassroomIdSessionsRouteRouteImport } from './routes/dashboard/classrooms/$classroomId/sessions/route'
 import { Route as DashboardClassroomsClassroomIdPeopleIndexRouteImport } from './routes/dashboard/classrooms/$classroomId/people/index'
-import { Route as DashboardClassroomsClassroomIdPeopleMemberIdRouteImport } from './routes/dashboard/classrooms/$classroomId/people/$memberId'
-import { Route as DashboardClassroomsClassroomIdSessionsIndexRouteImport } from './routes/dashboard/classrooms/$classroomId/sessions/index'
-import { Route as DashboardClassroomsClassroomIdSessionsSessionIdRouteImport } from './routes/dashboard/classrooms/$classroomId/sessions/$sessionId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -131,35 +127,11 @@ const DashboardClassroomsClassroomIdScheduleRoute =
     path: '/schedule',
     getParentRoute: () => DashboardClassroomsClassroomIdRouteRoute,
   } as any)
-const DashboardClassroomsClassroomIdSessionsRouteRoute =
-  DashboardClassroomsClassroomIdSessionsRouteRouteImport.update({
-    id: '/sessions',
-    path: '/sessions',
-    getParentRoute: () => DashboardClassroomsClassroomIdRouteRoute,
-  } as any)
 const DashboardClassroomsClassroomIdPeopleIndexRoute =
   DashboardClassroomsClassroomIdPeopleIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => DashboardClassroomsClassroomIdPeopleRouteRoute,
-  } as any)
-const DashboardClassroomsClassroomIdPeopleMemberIdRoute =
-  DashboardClassroomsClassroomIdPeopleMemberIdRouteImport.update({
-    id: '/$memberId',
-    path: '/$memberId',
-    getParentRoute: () => DashboardClassroomsClassroomIdPeopleRouteRoute,
-  } as any)
-const DashboardClassroomsClassroomIdSessionsIndexRoute =
-  DashboardClassroomsClassroomIdSessionsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => DashboardClassroomsClassroomIdSessionsRouteRoute,
-  } as any)
-const DashboardClassroomsClassroomIdSessionsSessionIdRoute =
-  DashboardClassroomsClassroomIdSessionsSessionIdRouteImport.update({
-    id: '/$sessionId',
-    path: '/$sessionId',
-    getParentRoute: () => DashboardClassroomsClassroomIdSessionsRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -178,14 +150,10 @@ export interface FileRoutesByFullPath {
   '/dashboard/classrooms/students': typeof DashboardClassroomsStudentsRoute
   '/dashboard/classrooms/': typeof DashboardClassroomsIndexRoute
   '/dashboard/classrooms/$classroomId/people': typeof DashboardClassroomsClassroomIdPeopleRouteRouteWithChildren
-  '/dashboard/classrooms/$classroomId/sessions': typeof DashboardClassroomsClassroomIdSessionsRouteRouteWithChildren
   '/dashboard/classrooms/$classroomId/finances': typeof DashboardClassroomsClassroomIdFinancesRoute
   '/dashboard/classrooms/$classroomId/schedule': typeof DashboardClassroomsClassroomIdScheduleRoute
   '/dashboard/classrooms/$classroomId/': typeof DashboardClassroomsClassroomIdIndexRoute
-  '/dashboard/classrooms/$classroomId/people/$memberId': typeof DashboardClassroomsClassroomIdPeopleMemberIdRoute
-  '/dashboard/classrooms/$classroomId/sessions/$sessionId': typeof DashboardClassroomsClassroomIdSessionsSessionIdRoute
   '/dashboard/classrooms/$classroomId/people/': typeof DashboardClassroomsClassroomIdPeopleIndexRoute
-  '/dashboard/classrooms/$classroomId/sessions/': typeof DashboardClassroomsClassroomIdSessionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -203,10 +171,7 @@ export interface FileRoutesByTo {
   '/dashboard/classrooms/$classroomId/finances': typeof DashboardClassroomsClassroomIdFinancesRoute
   '/dashboard/classrooms/$classroomId/schedule': typeof DashboardClassroomsClassroomIdScheduleRoute
   '/dashboard/classrooms/$classroomId': typeof DashboardClassroomsClassroomIdIndexRoute
-  '/dashboard/classrooms/$classroomId/people/$memberId': typeof DashboardClassroomsClassroomIdPeopleMemberIdRoute
-  '/dashboard/classrooms/$classroomId/sessions/$sessionId': typeof DashboardClassroomsClassroomIdSessionsSessionIdRoute
   '/dashboard/classrooms/$classroomId/people': typeof DashboardClassroomsClassroomIdPeopleIndexRoute
-  '/dashboard/classrooms/$classroomId/sessions': typeof DashboardClassroomsClassroomIdSessionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -225,14 +190,10 @@ export interface FileRoutesById {
   '/dashboard/classrooms/students': typeof DashboardClassroomsStudentsRoute
   '/dashboard/classrooms/': typeof DashboardClassroomsIndexRoute
   '/dashboard/classrooms/$classroomId/people': typeof DashboardClassroomsClassroomIdPeopleRouteRouteWithChildren
-  '/dashboard/classrooms/$classroomId/sessions': typeof DashboardClassroomsClassroomIdSessionsRouteRouteWithChildren
   '/dashboard/classrooms/$classroomId/finances': typeof DashboardClassroomsClassroomIdFinancesRoute
   '/dashboard/classrooms/$classroomId/schedule': typeof DashboardClassroomsClassroomIdScheduleRoute
   '/dashboard/classrooms/$classroomId/': typeof DashboardClassroomsClassroomIdIndexRoute
-  '/dashboard/classrooms/$classroomId/people/$memberId': typeof DashboardClassroomsClassroomIdPeopleMemberIdRoute
-  '/dashboard/classrooms/$classroomId/sessions/$sessionId': typeof DashboardClassroomsClassroomIdSessionsSessionIdRoute
   '/dashboard/classrooms/$classroomId/people/': typeof DashboardClassroomsClassroomIdPeopleIndexRoute
-  '/dashboard/classrooms/$classroomId/sessions/': typeof DashboardClassroomsClassroomIdSessionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -252,14 +213,10 @@ export interface FileRouteTypes {
     | '/dashboard/classrooms/students'
     | '/dashboard/classrooms/'
     | '/dashboard/classrooms/$classroomId/people'
-    | '/dashboard/classrooms/$classroomId/sessions'
     | '/dashboard/classrooms/$classroomId/finances'
     | '/dashboard/classrooms/$classroomId/schedule'
     | '/dashboard/classrooms/$classroomId/'
-    | '/dashboard/classrooms/$classroomId/people/$memberId'
-    | '/dashboard/classrooms/$classroomId/sessions/$sessionId'
     | '/dashboard/classrooms/$classroomId/people/'
-    | '/dashboard/classrooms/$classroomId/sessions/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -277,10 +234,7 @@ export interface FileRouteTypes {
     | '/dashboard/classrooms/$classroomId/finances'
     | '/dashboard/classrooms/$classroomId/schedule'
     | '/dashboard/classrooms/$classroomId'
-    | '/dashboard/classrooms/$classroomId/people/$memberId'
-    | '/dashboard/classrooms/$classroomId/sessions/$sessionId'
     | '/dashboard/classrooms/$classroomId/people'
-    | '/dashboard/classrooms/$classroomId/sessions'
   id:
     | '__root__'
     | '/'
@@ -298,14 +252,10 @@ export interface FileRouteTypes {
     | '/dashboard/classrooms/students'
     | '/dashboard/classrooms/'
     | '/dashboard/classrooms/$classroomId/people'
-    | '/dashboard/classrooms/$classroomId/sessions'
     | '/dashboard/classrooms/$classroomId/finances'
     | '/dashboard/classrooms/$classroomId/schedule'
     | '/dashboard/classrooms/$classroomId/'
-    | '/dashboard/classrooms/$classroomId/people/$memberId'
-    | '/dashboard/classrooms/$classroomId/sessions/$sessionId'
     | '/dashboard/classrooms/$classroomId/people/'
-    | '/dashboard/classrooms/$classroomId/sessions/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -443,13 +393,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardClassroomsClassroomIdScheduleRouteImport
       parentRoute: typeof DashboardClassroomsClassroomIdRouteRoute
     }
-    '/dashboard/classrooms/$classroomId/sessions': {
-      id: '/dashboard/classrooms/$classroomId/sessions'
-      path: '/sessions'
-      fullPath: '/dashboard/classrooms/$classroomId/sessions'
-      preLoaderRoute: typeof DashboardClassroomsClassroomIdSessionsRouteRouteImport
-      parentRoute: typeof DashboardClassroomsClassroomIdRouteRoute
-    }
     '/dashboard/classrooms/$classroomId/people/': {
       id: '/dashboard/classrooms/$classroomId/people/'
       path: '/'
@@ -457,39 +400,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardClassroomsClassroomIdPeopleIndexRouteImport
       parentRoute: typeof DashboardClassroomsClassroomIdPeopleRouteRoute
     }
-    '/dashboard/classrooms/$classroomId/people/$memberId': {
-      id: '/dashboard/classrooms/$classroomId/people/$memberId'
-      path: '/$memberId'
-      fullPath: '/dashboard/classrooms/$classroomId/people/$memberId'
-      preLoaderRoute: typeof DashboardClassroomsClassroomIdPeopleMemberIdRouteImport
-      parentRoute: typeof DashboardClassroomsClassroomIdPeopleRouteRoute
-    }
-    '/dashboard/classrooms/$classroomId/sessions/': {
-      id: '/dashboard/classrooms/$classroomId/sessions/'
-      path: '/'
-      fullPath: '/dashboard/classrooms/$classroomId/sessions/'
-      preLoaderRoute: typeof DashboardClassroomsClassroomIdSessionsIndexRouteImport
-      parentRoute: typeof DashboardClassroomsClassroomIdSessionsRouteRoute
-    }
-    '/dashboard/classrooms/$classroomId/sessions/$sessionId': {
-      id: '/dashboard/classrooms/$classroomId/sessions/$sessionId'
-      path: '/$sessionId'
-      fullPath: '/dashboard/classrooms/$classroomId/sessions/$sessionId'
-      preLoaderRoute: typeof DashboardClassroomsClassroomIdSessionsSessionIdRouteImport
-      parentRoute: typeof DashboardClassroomsClassroomIdSessionsRouteRoute
-    }
   }
 }
 
 interface DashboardClassroomsClassroomIdPeopleRouteRouteChildren {
-  DashboardClassroomsClassroomIdPeopleMemberIdRoute: typeof DashboardClassroomsClassroomIdPeopleMemberIdRoute
   DashboardClassroomsClassroomIdPeopleIndexRoute: typeof DashboardClassroomsClassroomIdPeopleIndexRoute
 }
 
 const DashboardClassroomsClassroomIdPeopleRouteRouteChildren: DashboardClassroomsClassroomIdPeopleRouteRouteChildren =
   {
-    DashboardClassroomsClassroomIdPeopleMemberIdRoute:
-      DashboardClassroomsClassroomIdPeopleMemberIdRoute,
     DashboardClassroomsClassroomIdPeopleIndexRoute:
       DashboardClassroomsClassroomIdPeopleIndexRoute,
   }
@@ -499,27 +418,8 @@ const DashboardClassroomsClassroomIdPeopleRouteRouteWithChildren =
     DashboardClassroomsClassroomIdPeopleRouteRouteChildren,
   )
 
-interface DashboardClassroomsClassroomIdSessionsRouteRouteChildren {
-  DashboardClassroomsClassroomIdSessionsSessionIdRoute: typeof DashboardClassroomsClassroomIdSessionsSessionIdRoute
-  DashboardClassroomsClassroomIdSessionsIndexRoute: typeof DashboardClassroomsClassroomIdSessionsIndexRoute
-}
-
-const DashboardClassroomsClassroomIdSessionsRouteRouteChildren: DashboardClassroomsClassroomIdSessionsRouteRouteChildren =
-  {
-    DashboardClassroomsClassroomIdSessionsSessionIdRoute:
-      DashboardClassroomsClassroomIdSessionsSessionIdRoute,
-    DashboardClassroomsClassroomIdSessionsIndexRoute:
-      DashboardClassroomsClassroomIdSessionsIndexRoute,
-  }
-
-const DashboardClassroomsClassroomIdSessionsRouteRouteWithChildren =
-  DashboardClassroomsClassroomIdSessionsRouteRoute._addFileChildren(
-    DashboardClassroomsClassroomIdSessionsRouteRouteChildren,
-  )
-
 interface DashboardClassroomsClassroomIdRouteRouteChildren {
   DashboardClassroomsClassroomIdPeopleRouteRoute: typeof DashboardClassroomsClassroomIdPeopleRouteRouteWithChildren
-  DashboardClassroomsClassroomIdSessionsRouteRoute: typeof DashboardClassroomsClassroomIdSessionsRouteRouteWithChildren
   DashboardClassroomsClassroomIdFinancesRoute: typeof DashboardClassroomsClassroomIdFinancesRoute
   DashboardClassroomsClassroomIdScheduleRoute: typeof DashboardClassroomsClassroomIdScheduleRoute
   DashboardClassroomsClassroomIdIndexRoute: typeof DashboardClassroomsClassroomIdIndexRoute
@@ -529,8 +429,6 @@ const DashboardClassroomsClassroomIdRouteRouteChildren: DashboardClassroomsClass
   {
     DashboardClassroomsClassroomIdPeopleRouteRoute:
       DashboardClassroomsClassroomIdPeopleRouteRouteWithChildren,
-    DashboardClassroomsClassroomIdSessionsRouteRoute:
-      DashboardClassroomsClassroomIdSessionsRouteRouteWithChildren,
     DashboardClassroomsClassroomIdFinancesRoute:
       DashboardClassroomsClassroomIdFinancesRoute,
     DashboardClassroomsClassroomIdScheduleRoute:

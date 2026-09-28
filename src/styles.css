@@ -237,6 +237,20 @@ body {
   min-height: 0;
 }
 
+/* Monarch's slot label uses 8px vertical margin and a -20px offset, which makes each half-hour row ~37px. */
+.classroom-schedule-calendar .fc-monarch-9yp {
+  font-size: 0.6875rem;
+  line-height: 1;
+}
+
+.classroom-schedule-calendar .fc-monarch-2tF {
+  margin-block: 0;
+}
+
+.classroom-schedule-calendar .fc-monarch-Fn5 {
+  top: -0.45em;
+}
+
 .classroom-schedule-calendar .is-other-month {
   background-color: var(--muted);
   color: var(--muted-foreground);
@@ -244,10 +258,6 @@ body {
 
 .classroom-schedule-calendar .is-other-month * {
   color: var(--muted-foreground);
-}
-
-.classroom-schedule-calendar .is-today {
-  background-color: var(--primary-softer);
 }
 
 .classroom-schedule-calendar .is-today-number {

@@ -4,8 +4,8 @@ export const Route = createFileRoute('/dashboard/classrooms/schedule')({
   component: ClassroomSchedulePage,
 })
 
-/** PLACEHOLDER: mock classroom schedule until timetable API exists. */
-const MOCK_SESSIONS = [
+/** PLACEHOLDER: mock weekly timetable until a real schedule list exists. */
+const MOCK_TIMETABLE = [
   {
     id: '1',
     classroom: 'English Foundations A',
@@ -32,14 +32,14 @@ const MOCK_SESSIONS = [
   },
 ]
 
-/** PLACEHOLDER: schedule page shell with mock session rows. */
+/** PLACEHOLDER: schedule page shell with mock timetable rows. */
 function ClassroomSchedulePage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Schedule</h1>
         <p className="text-muted-foreground">
-          Upcoming classroom sessions and recurring weekly timetable.
+          Recurring weekly timetable across classrooms.
         </p>
       </div>
       <div className="overflow-hidden rounded-xl border">
@@ -52,11 +52,11 @@ function ClassroomSchedulePage() {
             </tr>
           </thead>
           <tbody>
-            {MOCK_SESSIONS.map((session) => (
-              <tr key={session.id} className="border-t">
-                <td className="px-4 py-3 font-medium">{session.classroom}</td>
-                <td className="px-4 py-3">{session.day}</td>
-                <td className="px-4 py-3">{session.time}</td>
+            {MOCK_TIMETABLE.map((row) => (
+              <tr key={row.id} className="border-t">
+                <td className="px-4 py-3 font-medium">{row.classroom}</td>
+                <td className="px-4 py-3">{row.day}</td>
+                <td className="px-4 py-3">{row.time}</td>
               </tr>
             ))}
           </tbody>
