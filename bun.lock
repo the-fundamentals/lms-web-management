@@ -18,7 +18,7 @@
         "@tanstack/react-start": "latest",
         "@tanstack/react-table": "^8.21.3",
         "@tanstack/router-plugin": "^1.132.0",
-        "@the-fundamentals/core-openapi": "0.2.11",
+        "@the-fundamentals/core-openapi": "0.2.11-feature-branch-hotfix-28847c32e829e045f4dbe8ff7c5e5197f8e9003b",
         "class-variance-authority": "^0.7.1",
         "cn": "^0.3.0",
         "lucide-react": "^0.545.0",
@@ -630,7 +630,7 @@
 
     "@testing-library/react": ["@testing-library/react@16.3.2", "", { "dependencies": { "@babel/runtime": "^7.12.5" }, "peerDependencies": { "@testing-library/dom": "^10.0.0", "@types/react": "^18.0.0 || ^19.0.0", "@types/react-dom": "^18.0.0 || ^19.0.0", "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0" }, "optionalPeers": ["@types/react", "@types/react-dom"] }, "sha512-XU5/SytQM+ykqMnAnvB2umaJNIOsLF3PVv//1Ew4CTcpz0/BRyy/af40qqrt7SjKpDdT1saBMc42CUok5gaw+g=="],
 
-    "@the-fundamentals/core-openapi": ["@the-fundamentals/core-openapi@0.2.11", "https://npm.pkg.github.com/download/@the-fundamentals/core-openapi/0.2.11/f70f85aa3b9cc38bce5dc852cc2b7863a98d916c", { "dependencies": { "@hey-api/openapi-ts": "next", "oxfmt": "^0.60.0", "yaml": "^2.9.0" }, "peerDependencies": { "@tanstack/react-query": "^5.0.0", "typescript": "^7.0.2" } }, "sha512-CMSM93kR3CJoseqfu2sVBOT+wJh4Nxx4PzE4gp5LL8gN9aWbzm5Iwc0FNjF9x5+5BhV/Tlq4Fw790bqSf/rWqA=="],
+    "@the-fundamentals/core-openapi": ["@the-fundamentals/core-openapi@0.2.11-feature-branch-hotfix-28847c32e829e045f4dbe8ff7c5e5197f8e9003b", "https://npm.pkg.github.com/download/@the-fundamentals/core-openapi/0.2.11-feature-branch-hotfix-28847c32e829e045f4dbe8ff7c5e5197f8e9003b/eec4a6d9a8e8624430d6c89f9b8b0f2416bd6266", { "dependencies": { "@hey-api/openapi-ts": "next", "oxfmt": "^0.60.0", "yaml": "^2.9.0" }, "peerDependencies": { "@tanstack/react-query": "^5.0.0", "typescript": "^7.0.2" } }, "sha512-oWqozHwbPaEYqEIZxSAIfhGABM9zsnx5c01zcJ0rjiJ9dnxB2bEM7ooZQU8eFDh7cgCwk2XTQguNxBngOtBT4A=="],
 
     "@ts-morph/common": ["@ts-morph/common@0.27.0", "", { "dependencies": { "fast-glob": "^3.3.3", "minimatch": "^10.0.1", "path-browserify": "^1.0.1" } }, "sha512-Wf29UqxWDpc+i61k3oIOzcUfQt79PIT9y/MWfAGlrkjg6lBC1hwDECLXPVJAhWjiGbfBCxZd65F/LIZF3+jeJQ=="],
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import type { FormEvent, ReactNode } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import FullCalendar from '@fullcalendar/react'
 import type {
   CalendarRef,
@@ -12,14 +13,22 @@ import type {
 import dayGridPlugin from '@fullcalendar/react/daygrid'
 import timeGridPlugin from '@fullcalendar/react/timegrid'
 import themePlugin from '@fullcalendar/react/themes/monarch'
-import type { ClassroomSessionResponse } from '@the-fundamentals/core-openapi'
+import type {
+  ClassroomSessionResponse,
+  ClassroomSessionStatus,
+  ClassroomSessionType,
+} from '@the-fundamentals/core-openapi'
+import { updateClassroomSessionMutation, cancelClassroomSessionMutation } from '@the-fundamentals/core-openapi/react-query'
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   EllipsisVerticalIcon,
+  Loader2Icon,
+  PencilIcon,
 } from 'lucide-react'
 import 'temporal-polyfill/global'
 
+import { useConfirmAction } from '@/components/confirm-action'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -27,6 +36,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Popover,
   PopoverAnchor,
@@ -37,7 +48,10 @@ import {
 } from '@/components/ui/popover'
 import { AddAdhocSessionDialog } from '@/features/classrooms/components/add-adhoc-session-dialog'
 import { RecurringSchedulesDialog } from '@/features/classrooms/components/recurring-schedules-dialog'
-import { getAllClassroomSessionsOptions } from '@/features/classrooms/classrooms-query'
+import {
+  getAllClassroomSessionsOptions,
+  invalidateClassroomSessionsQueries,
+} from '@/features/classrooms/classrooms-query'
 import { cn } from '@/lib/utils'
 
 import '@fullcalendar/react/skeleton.css'
@@ -85,23 +99,305 @@ function toEventDateTime(sessionDate: string, time: string): string {
 }
 
 type SessionPopover = {
-  title: string
+  sessionId: string
+  status: ClassroomSessionStatus
+  type: ClassroomSessionType
+  name: string
   description: string
+  sessionDate: string
+  startTime: string
+  endTime: string
   rect: DOMRect
 }
 
+function sessionDisplayTitle(
+  name: string | undefined,
+  type: ClassroomSessionType,
+): string {
+  const trimmed = name?.trim()
+  if (trimmed) {
+    return trimmed
+  }
+  return type === 'ADHOC' ? 'Adhoc' : 'Session'
+}
+
+function formatTime(value: string): string {
+  return value.slice(0, 5)
+}
+
+function formatSessionDate(value: string): string {
+  try {
+    return Temporal.PlainDate.from(value).toLocaleString(undefined, {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
+  } catch {
+    return value
+  }
+}
+
+const STATUS_BADGE_CLASS: Record<ClassroomSessionStatus, string> = {
+  OPEN: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+  COMPLETED: 'bg-muted text-muted-foreground',
+  CANCELLED: 'bg-destructive/10 text-destructive',
+}
+
+function SessionMetaBadge({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium tracking-wide uppercase',
+        className,
+      )}
+    >
+      {children}
+    </span>
+  )
+}
+
 function sessionToEvent(session: ClassroomSessionResponse): EventInput {
-  const title =
-    session.name?.trim() || (session.type === 'ADHOC' ? 'Adhoc' : 'Session')
   return {
     id: session.id,
-    title,
+    title: sessionDisplayTitle(session.name, session.type),
     start: toEventDateTime(session.sessionDate, session.startTime),
     end: toEventDateTime(session.sessionDate, session.endTime),
     extendedProps: {
+      name: session.name?.trim() ?? '',
       description: session.description?.trim() ?? '',
+      status: session.status,
+      type: session.type,
+      sessionDate: session.sessionDate,
+      startTime: session.startTime,
+      endTime: session.endTime,
     },
   }
+}
+
+function SessionPopoverPanel({
+  classroomId,
+  session,
+  onSessionChange,
+}: {
+  classroomId: string
+  session: SessionPopover
+  onSessionChange: (
+    next: Partial<Pick<SessionPopover, 'name' | 'description' | 'status'>>,
+  ) => void
+}) {
+  const queryClient = useQueryClient()
+  const confirmAction = useConfirmAction()
+  const [isEditing, setIsEditing] = useState(false)
+  const [name, setName] = useState(session.name)
+  const [description, setDescription] = useState(session.description)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setIsEditing(false)
+    setError(null)
+    setName(session.name)
+    setDescription(session.description)
+  }, [session.sessionId, session.name, session.description])
+
+  const updateSession = useMutation({
+    ...updateClassroomSessionMutation(),
+    onSuccess: (updated) => {
+      invalidateClassroomSessionsQueries(queryClient)
+      onSessionChange({
+        name: updated.name?.trim() ?? '',
+        description: updated.description?.trim() ?? '',
+      })
+      setIsEditing(false)
+    },
+    onError: (cause) => {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : 'Could not update the session. Try again.',
+      )
+    },
+  })
+
+  const cancelSession = useMutation({
+    ...cancelClassroomSessionMutation(),
+    onSuccess: (updated) => {
+      invalidateClassroomSessionsQueries(queryClient)
+      onSessionChange({ status: updated.status })
+      setIsEditing(false)
+    },
+    onError: (cause) => {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : 'Could not cancel the session. Try again.',
+      )
+    },
+  })
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError(null)
+    updateSession.mutate({
+      path: { classroomId, sessionId: session.sessionId },
+      body: {
+        name: name.trim(),
+        description: description.trim(),
+      },
+    })
+  }
+
+  if (isEditing) {
+    return (
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="session-edit-name">Name</Label>
+          <Input
+            id="session-edit-name"
+            value={name}
+            disabled={updateSession.isPending}
+            onChange={(event) => {
+              setError(null)
+              setName(event.target.value)
+            }}
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="session-edit-description">Description</Label>
+          <Input
+            id="session-edit-description"
+            value={description}
+            disabled={updateSession.isPending}
+            onChange={(event) => {
+              setError(null)
+              setDescription(event.target.value)
+            }}
+          />
+        </div>
+        {error ? (
+          <p className="text-xs text-destructive" role="alert">
+            {error}
+          </p>
+        ) : null}
+        <Button
+          type="submit"
+          size="sm"
+          disabled={updateSession.isPending || cancelSession.isPending}
+        >
+          {updateSession.isPending ? (
+            <>
+              <Loader2Icon className="size-4 animate-spin" aria-hidden />
+              Saving…
+            </>
+          ) : (
+            'Save'
+          )}
+        </Button>
+      </form>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <PopoverHeader>
+        <div className="flex items-start justify-between gap-2">
+          <PopoverTitle>
+            {sessionDisplayTitle(session.name, session.type)}
+          </PopoverTitle>
+          {session.status === 'OPEN' ? (
+            <div className="flex shrink-0 items-center gap-0.5">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Edit session"
+                disabled={cancelSession.isPending}
+                onClick={() => setIsEditing(true)}
+              >
+                <PencilIcon />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs font-normal text-muted-foreground hover:text-destructive"
+                disabled={cancelSession.isPending}
+                onClick={() => {
+                  void (async () => {
+                    const confirmed = await confirmAction({
+                      title: 'Cancel this session?',
+                      description:
+                        'This session will be locked. Attendance and details cannot be edited after cancel.',
+                      confirmLabel: 'Cancel session',
+                      cancelLabel: 'Keep open',
+                      variant: 'destructive',
+                    })
+                    if (!confirmed) {
+                      return
+                    }
+                    setError(null)
+                    cancelSession.mutate({
+                      path: { classroomId, sessionId: session.sessionId },
+                    })
+                  })()
+                }}
+              >
+                {cancelSession.isPending ? (
+                  <>
+                    <Loader2Icon className="size-3.5 animate-spin" aria-hidden />
+                    Cancelling…
+                  </>
+                ) : (
+                  'Cancel'
+                )}
+              </Button>
+            </div>
+          ) : null}
+        </div>
+        {session.description ? (
+          <PopoverDescription>{session.description}</PopoverDescription>
+        ) : null}
+      </PopoverHeader>
+
+      <div className="flex flex-wrap items-center gap-1.5">
+        <SessionMetaBadge className={STATUS_BADGE_CLASS[session.status]}>
+          {session.status}
+        </SessionMetaBadge>
+        <SessionMetaBadge className="bg-muted text-muted-foreground">
+          {session.type === 'ADHOC' ? 'Adhoc' : 'Schedule'}
+        </SessionMetaBadge>
+      </div>
+
+      <dl className="grid gap-1.5 text-xs">
+        <div className="flex items-baseline justify-between gap-3">
+          <dt className="text-muted-foreground">Date</dt>
+          <dd className="text-right font-medium">
+            {formatSessionDate(session.sessionDate)}
+          </dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-3">
+          <dt className="text-muted-foreground">Time</dt>
+          <dd className="text-right font-medium tabular-nums">
+            {formatTime(session.startTime)}–{formatTime(session.endTime)}
+          </dd>
+        </div>
+      </dl>
+
+      {/* SCHEDULE recurrence summary needs scheduleId on ClassroomSessionResponse — not in core-openapi yet */}
+
+      {error ? (
+        <p className="text-xs text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  )
 }
 
 export function ClassroomScheduleCalendar({
@@ -119,6 +415,7 @@ export function ClassroomScheduleCalendar({
   const [sessionPopover, setSessionPopover] = useState<SessionPopover | null>(
     null,
   )
+  const [isSessionPopoverOpen, setIsSessionPopoverOpen] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -165,20 +462,35 @@ export function ClassroomScheduleCalendar({
       from: toDateKey(info.startStr),
       to: toDateKey(info.endStr),
     })
-    setSessionPopover(null)
+    setIsSessionPopoverOpen(false)
   }
 
   function handleEventClick(info: EventClickInfo) {
     info.jsEvent.preventDefault()
-    const description =
-      typeof info.event.extendedProps.description === 'string'
-        ? info.event.extendedProps.description
-        : ''
-    setSessionPopover({
-      title: info.event.title,
+    const {
       description,
+      name,
+      status,
+      type,
+      sessionDate,
+      startTime,
+      endTime,
+    } = info.event.extendedProps
+    setSessionPopover({
+      sessionId: info.event.id,
+      status:
+        status === 'OPEN' || status === 'COMPLETED' || status === 'CANCELLED'
+          ? status
+          : 'COMPLETED',
+      type: type === 'SCHEDULE' ? 'SCHEDULE' : 'ADHOC',
+      name: typeof name === 'string' ? name : '',
+      description: typeof description === 'string' ? description : '',
+      sessionDate: typeof sessionDate === 'string' ? sessionDate : '',
+      startTime: typeof startTime === 'string' ? startTime : '',
+      endTime: typeof endTime === 'string' ? endTime : '',
       rect: info.el.getBoundingClientRect(),
     })
+    setIsSessionPopoverOpen(true)
   }
 
   function changeView(next: ScheduleView) {
@@ -307,7 +619,11 @@ export function ClassroomScheduleCalendar({
           events={events}
           datesSet={handleDatesSet}
           eventClick={handleEventClick}
-          eventClass="is-session-event"
+          eventClass={(info) =>
+            info.event.extendedProps.status === 'CANCELLED'
+              ? 'is-session-event is-cancelled-occurrence'
+              : 'is-session-event'
+          }
           nowIndicator
           displayEventTime={false}
           slotMinTime="00:00:00"
@@ -327,14 +643,7 @@ export function ClassroomScheduleCalendar({
         />
       </div>
 
-      <Popover
-        open={sessionPopover !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSessionPopover(null)
-          }
-        }}
-      >
+      <Popover open={isSessionPopoverOpen} onOpenChange={setIsSessionPopoverOpen}>
         {sessionPopover ? (
           <PopoverAnchor asChild>
             <span
@@ -349,13 +658,18 @@ export function ClassroomScheduleCalendar({
             />
           </PopoverAnchor>
         ) : null}
-        <PopoverContent side="right" align="start" className="w-72">
-          <PopoverHeader>
-            <PopoverTitle>{sessionPopover?.title}</PopoverTitle>
-            <PopoverDescription>
-              {sessionPopover?.description || 'No description'}
-            </PopoverDescription>
-          </PopoverHeader>
+        <PopoverContent side="right" align="start" className="w-80">
+          {sessionPopover ? (
+            <SessionPopoverPanel
+              classroomId={classroomId}
+              session={sessionPopover}
+              onSessionChange={(next) => {
+                setSessionPopover((current) =>
+                  current ? { ...current, ...next } : current,
+                )
+              }}
+            />
+          ) : null}
         </PopoverContent>
       </Popover>
     </div>
