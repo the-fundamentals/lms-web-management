@@ -49,6 +49,10 @@ import {
 import { AddAdhocSessionDialog } from '@/features/classrooms/components/add-adhoc-session-dialog'
 import { RecurringSchedulesDialog } from '@/features/classrooms/components/recurring-schedules-dialog'
 import {
+  SessionAttendanceSheet,
+  type SessionAttendanceTarget,
+} from '@/features/classrooms/components/session-attendance-sheet'
+import {
   getAllClassroomSessionsOptions,
   invalidateClassroomSessionsQueries,
 } from '@/features/classrooms/classrooms-query'
@@ -185,12 +189,14 @@ function SessionPopoverPanel({
   classroomId,
   session,
   onSessionChange,
+  onOpenSession,
 }: {
   classroomId: string
   session: SessionPopover
   onSessionChange: (
     next: Partial<Pick<SessionPopover, 'name' | 'description' | 'status'>>,
   ) => void
+  onOpenSession: () => void
 }) {
   const queryClient = useQueryClient()
   const confirmAction = useConfirmAction()
@@ -396,6 +402,10 @@ function SessionPopoverPanel({
           {error}
         </p>
       ) : null}
+
+      <Button type="button" size="sm" className="w-full" onClick={onOpenSession}>
+        Open session
+      </Button>
     </div>
   )
 }
@@ -416,6 +426,9 @@ export function ClassroomScheduleCalendar({
     null,
   )
   const [isSessionPopoverOpen, setIsSessionPopoverOpen] = useState(false)
+  const [sessionSheet, setSessionSheet] =
+    useState<SessionAttendanceTarget | null>(null)
+  const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -668,10 +681,41 @@ export function ClassroomScheduleCalendar({
                   current ? { ...current, ...next } : current,
                 )
               }}
+              onOpenSession={() => {
+                setSessionSheet({
+                  sessionId: sessionPopover.sessionId,
+                  status: sessionPopover.status,
+                  type: sessionPopover.type,
+                  name: sessionPopover.name,
+                  description: sessionPopover.description,
+                  sessionDate: sessionPopover.sessionDate,
+                  startTime: sessionPopover.startTime,
+                  endTime: sessionPopover.endTime,
+                })
+                setIsSessionPopoverOpen(false)
+                setIsSessionSheetOpen(true)
+              }}
             />
           ) : null}
         </PopoverContent>
       </Popover>
+
+      <SessionAttendanceSheet
+        open={isSessionSheetOpen}
+        onOpenChange={setIsSessionSheetOpen}
+        classroomId={classroomId}
+        session={sessionSheet}
+        onSessionChange={(next) => {
+          setSessionSheet((current) =>
+            current ? { ...current, ...next } : current,
+          )
+          setSessionPopover((current) =>
+            current && sessionSheet && current.sessionId === sessionSheet.sessionId
+              ? { ...current, ...next }
+              : current,
+          )
+        }}
+      />
     </div>
   )
 }
