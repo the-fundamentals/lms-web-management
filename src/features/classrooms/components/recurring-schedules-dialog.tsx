@@ -335,7 +335,7 @@ export function RecurringSchedulesDialog({
               {data.map((recurrence) => (
                 <li
                   key={recurrence.id}
-                  className="rounded-md px-2 py-2 text-sm"
+                  className="rounded-md px-2 py-2.5 text-sm hover:bg-muted/60"
                 >
                   <p className="font-medium">
                     {WEEKDAY_LABEL[recurrence.byDay]}{' '}

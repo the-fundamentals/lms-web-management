@@ -313,9 +313,19 @@ function SessionPopoverPanel({
     <div className="flex flex-col gap-2.5">
       <PopoverHeader>
         <div className="flex items-start justify-between gap-2">
-          <PopoverTitle>
-            {sessionDisplayTitle(session.name, session.type)}
-          </PopoverTitle>
+          <div className="flex min-w-0 flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <SessionMetaBadge className={STATUS_BADGE_CLASS[session.status]}>
+                {session.status}
+              </SessionMetaBadge>
+              <SessionMetaBadge className="bg-muted text-muted-foreground">
+                {session.type === 'ADHOC' ? 'Adhoc' : 'Schedule'}
+              </SessionMetaBadge>
+            </div>
+            <PopoverTitle className="truncate tracking-tight">
+              {sessionDisplayTitle(session.name, session.type)}
+            </PopoverTitle>
+          </div>
           {session.status === 'OPEN' ? (
             <div className="flex shrink-0 items-center gap-0.5">
               <Button
@@ -367,20 +377,13 @@ function SessionPopoverPanel({
           ) : null}
         </div>
         {session.description ? (
-          <PopoverDescription>{session.description}</PopoverDescription>
+          <PopoverDescription className="line-clamp-2">
+            {session.description}
+          </PopoverDescription>
         ) : null}
       </PopoverHeader>
 
-      <div className="flex flex-wrap items-center gap-1.5">
-        <SessionMetaBadge className={STATUS_BADGE_CLASS[session.status]}>
-          {session.status}
-        </SessionMetaBadge>
-        <SessionMetaBadge className="bg-muted text-muted-foreground">
-          {session.type === 'ADHOC' ? 'Adhoc' : 'Schedule'}
-        </SessionMetaBadge>
-      </div>
-
-      <dl className="grid gap-1.5 text-xs">
+      <dl className="grid gap-1 border-t border-border/60 pt-2 text-xs">
         <div className="flex items-baseline justify-between gap-3">
           <dt className="text-muted-foreground">Date</dt>
           <dd className="text-right font-medium">
@@ -632,11 +635,16 @@ export function ClassroomScheduleCalendar({
           events={events}
           datesSet={handleDatesSet}
           eventClick={handleEventClick}
-          eventClass={(info) =>
-            info.event.extendedProps.status === 'CANCELLED'
-              ? 'is-session-event is-cancelled-occurrence'
-              : 'is-session-event'
-          }
+          eventClass={(info) => {
+            const status = info.event.extendedProps.status
+            if (status === 'CANCELLED') {
+              return 'is-session-event is-cancelled-occurrence'
+            }
+            if (status === 'COMPLETED') {
+              return 'is-session-event is-completed-occurrence'
+            }
+            return 'is-session-event'
+          }}
           nowIndicator
           displayEventTime={false}
           slotMinTime="00:00:00"

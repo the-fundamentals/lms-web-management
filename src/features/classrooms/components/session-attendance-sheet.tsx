@@ -18,7 +18,9 @@ import { Loader2Icon } from 'lucide-react'
 import 'temporal-polyfill/global'
 
 import { useConfirmAction } from '@/components/confirm-action'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 import {
   Sheet,
   SheetContent,
@@ -72,6 +74,21 @@ function formatSessionDate(value: string): string {
   }
 }
 
+function initialsFromName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) {
+    return '?'
+  }
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase()
+  }
+  return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase()
+}
+
+function studentCountLabel(count: number): string {
+  return count === 1 ? '1 student' : `${count} students`
+}
+
 const STATUS_BADGE_CLASS: Record<ClassroomSessionStatus, string> = {
   OPEN: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
   COMPLETED: 'bg-muted text-muted-foreground',
@@ -114,8 +131,13 @@ function AttendanceToggle({
     { status: 'ABSENT', label: 'Absent' },
   ]
 
+  // Segmented control mirrors calendar Week/Month chrome; color lives in text, not fill.
   return (
-    <div className="inline-flex rounded-lg border bg-muted/40 p-0.5">
+    <div
+      className="inline-flex rounded-md border bg-muted/50 p-0.5"
+      role="group"
+      aria-label="Attendance status"
+    >
       {options.map((option) => {
         const active = value === option.status
         return (
@@ -125,11 +147,11 @@ function AttendanceToggle({
             disabled={disabled}
             aria-pressed={active}
             className={cn(
-              'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+              'rounded-sm px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-60',
               active
                 ? option.status === 'ATTENDED'
-                  ? 'bg-emerald-500/15 text-emerald-700 shadow-sm dark:text-emerald-400'
-                  : 'bg-destructive/10 text-destructive shadow-sm'
+                  ? 'bg-background text-emerald-700 shadow-sm dark:text-emerald-400'
+                  : 'bg-background text-destructive shadow-sm'
                 : 'text-muted-foreground hover:text-foreground',
             )}
             onClick={() => onChange(option.status)}
@@ -373,7 +395,7 @@ export function SessionAttendanceSheet({
       <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-md">
         {session ? (
           <>
-            <SheetHeader className="border-b pr-12">
+            <SheetHeader className="gap-1.5 border-b pr-12">
               <div className="flex flex-wrap items-center gap-1.5">
                 <MetaBadge className={STATUS_BADGE_CLASS[session.status]}>
                   {session.status}
@@ -382,7 +404,7 @@ export function SessionAttendanceSheet({
                   {session.type === 'ADHOC' ? 'Adhoc' : 'Schedule'}
                 </MetaBadge>
               </div>
-              <SheetTitle>
+              <SheetTitle className="tracking-tight">
                 {sessionDisplayTitle(session.name, session.type)}
               </SheetTitle>
               <SheetDescription>
@@ -392,7 +414,7 @@ export function SessionAttendanceSheet({
                 </span>
               </SheetDescription>
               {session.description ? (
-                <p className="pt-1 text-sm text-muted-foreground">
+                <p className="line-clamp-2 text-sm text-muted-foreground">
                   {session.description}
                 </p>
               ) : null}
@@ -400,13 +422,23 @@ export function SessionAttendanceSheet({
 
             <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-medium">Attendance</h3>
+                <div className="flex items-baseline gap-2">
+                  <h3 className="text-sm font-medium tracking-tight">
+                    Attendance
+                  </h3>
+                  {!isLoading && !loadError && students.length > 0 ? (
+                    <span className="text-xs text-muted-foreground">
+                      {studentCountLabel(students.length)}
+                    </span>
+                  ) : null}
+                </div>
                 {!canEditAttendance ? (
                   <p className="text-xs text-muted-foreground">Read only</p>
                 ) : isDirty ? (
                   <p className="text-xs text-muted-foreground">Unsaved changes</p>
                 ) : null}
               </div>
+              <Separator />
 
               {isLoading ? (
                 <p className="py-8 text-center text-sm text-muted-foreground">
@@ -434,15 +466,20 @@ export function SessionAttendanceSheet({
                   No students in this classroom.
                 </p>
               ) : (
-                <ul className="flex flex-col gap-1">
+                <ul>
                   {students.map((student) => {
                     const status = draft[student.id] ?? 'UNSET'
 
                     return (
                       <li
                         key={student.id}
-                        className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-muted/50"
+                        className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-muted/60"
                       >
+                        <Avatar size="sm">
+                          <AvatarFallback>
+                            {initialsFromName(student.name)}
+                          </AvatarFallback>
+                        </Avatar>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">
                             {student.name}
@@ -450,23 +487,24 @@ export function SessionAttendanceSheet({
                           <p className="truncate text-xs text-muted-foreground">
                             {student.email}
                           </p>
-                          {status === 'UNSET' && canEditAttendance ? (
-                            <p className="mt-0.5 text-[11px] text-muted-foreground">
-                              Not marked
-                            </p>
-                          ) : null}
                         </div>
-                        <AttendanceToggle
-                          value={status}
-                          disabled={!canEditAttendance || isBusy}
-                          onChange={(next) => {
-                            setError(null)
-                            setDraft((current) => ({
-                              ...current,
-                              [student.id]: next,
-                            }))
-                          }}
-                        />
+                        {canEditAttendance || status !== 'UNSET' ? (
+                          <AttendanceToggle
+                            value={status}
+                            disabled={!canEditAttendance || isBusy}
+                            onChange={(next) => {
+                              setError(null)
+                              setDraft((current) => ({
+                                ...current,
+                                [student.id]: next,
+                              }))
+                            }}
+                          />
+                        ) : (
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            Unmarked
+                          </span>
+                        )}
                       </li>
                     )
                   })}
@@ -481,7 +519,12 @@ export function SessionAttendanceSheet({
             </div>
 
             {canEditAttendance ? (
-              <SheetFooter className="border-t sm:flex-row sm:justify-end">
+              <SheetFooter className="border-t bg-muted/20 sm:flex-row sm:justify-end">
+                {isDirty ? (
+                  <p className="mr-auto self-center text-xs text-muted-foreground">
+                    Save before completing
+                  </p>
+                ) : null}
                 <Button
                   type="button"
                   variant="outline"

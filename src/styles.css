@@ -234,6 +234,16 @@ body {
 
 .classroom-schedule-calendar .is-session-event {
   cursor: pointer;
+  border-radius: calc(var(--radius) * 0.55);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.classroom-schedule-calendar .is-completed-occurrence {
+  opacity: 0.8;
+  background-color: var(--muted) !important;
+  color: var(--muted-foreground) !important;
 }
 
 /* Monarch's slot label uses 8px vertical margin and a -20px offset, which makes each half-hour row ~37px. */
