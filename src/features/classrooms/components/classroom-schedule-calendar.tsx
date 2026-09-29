@@ -29,7 +29,7 @@ function monthDayCellClass(info: DayCellInfo): string | undefined {
 
 function weekDayHeaderContent(info: DayHeaderInfo) {
   return (
-    <span className="inline-flex items-baseline gap-1">
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
       <span>{info.weekdayText}</span>
       <span className={info.isToday ? 'is-today-number' : undefined}>
         {info.dayNumberText}
