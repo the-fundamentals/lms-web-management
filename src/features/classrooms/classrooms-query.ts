@@ -1,9 +1,13 @@
 import { keepPreviousData, queryOptions, useQuery } from '@tanstack/react-query'
 import type { QueryClient } from '@tanstack/react-query'
-import { getAllClassrooms } from '@the-fundamentals/core-openapi'
+import {
+  getAllClassrooms,
+  getAllClassroomSessions,
+} from '@the-fundamentals/core-openapi'
 import { getAllClassroomMembersQueryKey } from '@the-fundamentals/core-openapi/react-query'
 import type {
   GetAllClassroomsData,
+  GetAllClassroomSessionsData,
   Options,
 } from '@the-fundamentals/core-openapi'
 
@@ -52,4 +56,35 @@ export function invalidateClassroomMembersQueries(
   void queryClient.invalidateQueries({
     queryKey: getAllClassroomMembersQueryKey({ path: { classroomId } }),
   })
+}
+
+/**
+ * Query options for listing classroom sessions.
+ *
+ * Uses the SDK {@link getAllClassroomSessions} directly (POST list endpoint)
+ * rather than the generated mutation helper.
+ */
+export function getAllClassroomSessionsOptions(
+  options: Options<GetAllClassroomSessionsData>,
+) {
+  return queryOptions({
+    queryKey: ['getAllClassroomSessions', options] as const,
+    queryFn: async ({ signal }) => {
+      const { data } = await getAllClassroomSessions({
+        ...options,
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    staleTime: 15_000,
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** Invalidate classroom session list queries (e.g. after create). */
+export function invalidateClassroomSessionsQueries(
+  queryClient: QueryClient,
+): void {
+  void queryClient.invalidateQueries({ queryKey: ['getAllClassroomSessions'] })
 }
