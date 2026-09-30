@@ -10,6 +10,7 @@ import {
 import { Loader2Icon, PlusIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -20,13 +21,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 
 const WEEKDAYS: RecurrenceByDay[] = [
   'MONDAY',
@@ -53,7 +48,9 @@ function formatTime(value: string): string {
 }
 
 type AddFormState = {
-  byDay: RecurrenceByDay | ''
+  name: string
+  description: string
+  byDays: RecurrenceByDay[]
   recurrenceStartDate: string
   recurUntil: string
   startTime: string
@@ -61,7 +58,9 @@ type AddFormState = {
 }
 
 const EMPTY_ADD_FORM: AddFormState = {
-  byDay: '',
+  name: '',
+  description: '',
+  byDays: [],
   recurrenceStartDate: '',
   recurUntil: '',
   startTime: '',
@@ -111,10 +110,22 @@ function AddRecurrenceDialog({
     event.preventDefault()
     setError(null)
 
-    const { byDay, recurrenceStartDate, recurUntil, startTime, endTime } = form
+    const {
+      name,
+      description,
+      byDays,
+      recurrenceStartDate,
+      recurUntil,
+      startTime,
+      endTime,
+    } = form
+    const trimmedName = name.trim()
+    const trimmedDescription = description.trim()
 
-    if (!byDay || !recurrenceStartDate || !startTime || !endTime) {
-      setError('Weekday, start date, start time, and end time are required.')
+    if (byDays.length === 0 || !recurrenceStartDate || !startTime || !endTime) {
+      setError(
+        'At least one weekday, start date, start time, and end time are required.',
+      )
       return
     }
 
@@ -132,12 +143,29 @@ function AddRecurrenceDialog({
       path: { classroomId },
       body: {
         frequency: 'WEEKLY',
-        byDay,
+        // API persists one schedule row per weekday.
+        byDays,
         recurrenceStartDate,
         startTime,
         endTime,
         ...(recurUntil ? { recurUntil } : {}),
+        // Copied onto generated sessions by the backend.
+        ...(trimmedName ? { name: trimmedName } : {}),
+        ...(trimmedDescription ? { description: trimmedDescription } : {}),
       },
+    })
+  }
+
+  function toggleDay(day: RecurrenceByDay) {
+    setError(null)
+    setForm((current) => {
+      const selected = current.byDays.includes(day)
+      return {
+        ...current,
+        byDays: selected
+          ? current.byDays.filter((value) => value !== day)
+          : [...current.byDays, day],
+      }
     })
   }
 
@@ -148,36 +176,78 @@ function AddRecurrenceDialog({
           <DialogHeader>
             <DialogTitle>Add recurring schedule</DialogTitle>
             <DialogDescription>
-              Weekly recurrence. Sessions are generated from this later.
+              Weekly recurrence. Each selected weekday becomes its own schedule
+              row; name and description copy onto generated sessions.
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="recurrence-by-day">Weekday</Label>
-              <Select
-                value={form.byDay || undefined}
+              <Label htmlFor="recurrence-name">Name</Label>
+              <Input
+                id="recurrence-name"
+                type="text"
+                autoFocus
+                placeholder="Optional"
                 disabled={createRecurrence.isPending}
-                onValueChange={(value) => {
+                value={form.name}
+                onChange={(event) => {
                   setError(null)
                   setForm((current) => ({
                     ...current,
-                    byDay: value as RecurrenceByDay,
+                    name: event.target.value,
                   }))
                 }}
-              >
-                <SelectTrigger id="recurrence-by-day" className="w-full">
-                  <SelectValue placeholder="Select a weekday" />
-                </SelectTrigger>
-                <SelectContent>
-                  {WEEKDAYS.map((day) => (
-                    <SelectItem key={day} value={day}>
-                      {WEEKDAY_LABEL[day]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="recurrence-description">Description</Label>
+              <Input
+                id="recurrence-description"
+                type="text"
+                placeholder="Optional"
+                disabled={createRecurrence.isPending}
+                value={form.description}
+                onChange={(event) => {
+                  setError(null)
+                  setForm((current) => ({
+                    ...current,
+                    description: event.target.value,
+                  }))
+                }}
+              />
+            </div>
+
+            <fieldset className="flex flex-col gap-1.5">
+              <legend className="text-sm font-medium">Weekdays</legend>
+              <div className="grid grid-cols-2 gap-1">
+                {WEEKDAYS.map((day) => {
+                  const selected = form.byDays.includes(day)
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      disabled={createRecurrence.isPending}
+                      aria-pressed={selected}
+                      className={cn(
+                        'flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted disabled:pointer-events-none disabled:opacity-50',
+                        selected && 'bg-muted',
+                      )}
+                      onClick={() => toggleDay(day)}
+                    >
+                      <Checkbox
+                        checked={selected}
+                        tabIndex={-1}
+                        className="pointer-events-none"
+                        aria-hidden
+                      />
+                      {WEEKDAY_LABEL[day]}
+                    </button>
+                  )
+                })}
+              </div>
+            </fieldset>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
@@ -338,10 +408,22 @@ export function RecurringSchedulesDialog({
                   className="rounded-md px-2 py-2.5 text-sm hover:bg-muted/60"
                 >
                   <p className="font-medium">
-                    {WEEKDAY_LABEL[recurrence.byDay]}{' '}
-                    {formatTime(recurrence.startTime)}–
-                    {formatTime(recurrence.endTime)}
+                    {recurrence.name?.trim()
+                      ? recurrence.name.trim()
+                      : `${WEEKDAY_LABEL[recurrence.byDay]} ${formatTime(recurrence.startTime)}–${formatTime(recurrence.endTime)}`}
                   </p>
+                  {recurrence.name?.trim() ? (
+                    <p className="text-xs text-muted-foreground">
+                      {WEEKDAY_LABEL[recurrence.byDay]}{' '}
+                      {formatTime(recurrence.startTime)}–
+                      {formatTime(recurrence.endTime)}
+                    </p>
+                  ) : null}
+                  {recurrence.description?.trim() ? (
+                    <p className="line-clamp-2 text-xs text-muted-foreground">
+                      {recurrence.description.trim()}
+                    </p>
+                  ) : null}
                   <p className="text-xs text-muted-foreground">
                     From {recurrence.recurrenceStartDate}
                     {recurrence.recurUntil

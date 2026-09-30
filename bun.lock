@@ -18,7 +18,7 @@
         "@tanstack/react-start": "latest",
         "@tanstack/react-table": "^8.21.3",
         "@tanstack/router-plugin": "^1.132.0",
-        "@the-fundamentals/core-openapi": "0.2.11-feature-branch-hotfix-63d9ae8047c6e2bc12be8b0d3ef60bf88ec80241",
+        "@the-fundamentals/core-openapi": "0.2.13-feature-branch-hotfix-6a44edf596018c39b712763e2311c742f2639c5f",
         "class-variance-authority": "^0.7.1",
         "cn": "^0.3.0",
         "lucide-react": "^0.545.0",
@@ -630,7 +630,7 @@
 
     "@testing-library/react": ["@testing-library/react@16.3.2", "", { "dependencies": { "@babel/runtime": "^7.12.5" }, "peerDependencies": { "@testing-library/dom": "^10.0.0", "@types/react": "^18.0.0 || ^19.0.0", "@types/react-dom": "^18.0.0 || ^19.0.0", "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0" }, "optionalPeers": ["@types/react", "@types/react-dom"] }, "sha512-XU5/SytQM+ykqMnAnvB2umaJNIOsLF3PVv//1Ew4CTcpz0/BRyy/af40qqrt7SjKpDdT1saBMc42CUok5gaw+g=="],
 
-    "@the-fundamentals/core-openapi": ["@the-fundamentals/core-openapi@0.2.11-feature-branch-hotfix-63d9ae8047c6e2bc12be8b0d3ef60bf88ec80241", "https://npm.pkg.github.com/download/@the-fundamentals/core-openapi/0.2.11-feature-branch-hotfix-63d9ae8047c6e2bc12be8b0d3ef60bf88ec80241/565d3babf5b6f07ca100565312e23ea9cfabd3d6", { "dependencies": { "@hey-api/openapi-ts": "next", "oxfmt": "^0.60.0", "yaml": "^2.9.0" }, "peerDependencies": { "@tanstack/react-query": "^5.0.0", "typescript": "^7.0.2" } }, "sha512-Oj29Nb/No2wmp3L28GCM4O5yJTrcx0Gaom4moFLqwQ6tBhC1W7FNkTx/SJRLjtChKM/tFhj8C6Ai+hu56uTq9A=="],
+    "@the-fundamentals/core-openapi": ["@the-fundamentals/core-openapi@0.2.13-feature-branch-hotfix-6a44edf596018c39b712763e2311c742f2639c5f", "https://npm.pkg.github.com/download/@the-fundamentals/core-openapi/0.2.13-feature-branch-hotfix-6a44edf596018c39b712763e2311c742f2639c5f/380973c95472092c4a021ed78ebe9debbdbdc124", { "dependencies": { "@hey-api/openapi-ts": "next", "oxfmt": "^0.60.0", "yaml": "^2.9.0" }, "peerDependencies": { "@tanstack/react-query": "^5.0.0", "typescript": "^7.0.2" } }, "sha512-U4ZVd9F6+AcEZhIyDPN2CGU3BzMLVU3v9zGZ4hP3JZ1dnot2l2atMK2y2U/fYiTjH3mAdIxuGowQjXI236bA9w=="],
 
     "@ts-morph/common": ["@ts-morph/common@0.27.0", "", { "dependencies": { "fast-glob": "^3.3.3", "minimatch": "^10.0.1", "path-browserify": "^1.0.1" } }, "sha512-Wf29UqxWDpc+i61k3oIOzcUfQt79PIT9y/MWfAGlrkjg6lBC1hwDECLXPVJAhWjiGbfBCxZd65F/LIZF3+jeJQ=="],
 

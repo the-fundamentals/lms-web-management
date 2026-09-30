@@ -26,7 +26,7 @@
     "@tanstack/react-start": "latest",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/router-plugin": "^1.132.0",
-    "@the-fundamentals/core-openapi": "0.2.11-feature-branch-hotfix-63d9ae8047c6e2bc12be8b0d3ef60bf88ec80241",
+    "@the-fundamentals/core-openapi": "0.2.13-feature-branch-hotfix-6a44edf596018c39b712763e2311c742f2639c5f",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.3.0",
     "lucide-react": "^0.545.0",
