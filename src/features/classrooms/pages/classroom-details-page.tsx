@@ -54,13 +54,10 @@ function BannerChrome({ currentLabel }: { currentLabel?: string }) {
 function ClassroomDetailsTabs({ classroomId }: { classroomId: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const peoplePath = `/dashboard/classrooms/${classroomId}/people`
-  const sessionsPath = `/dashboard/classrooms/${classroomId}/sessions`
   const schedulePath = `/dashboard/classrooms/${classroomId}/schedule`
   const financesPath = `/dashboard/classrooms/${classroomId}/finances`
   const isPeople =
     pathname === peoplePath || pathname.startsWith(`${peoplePath}/`)
-  const isSessions =
-    pathname === sessionsPath || pathname.startsWith(`${sessionsPath}/`)
   const isSchedule =
     pathname === schedulePath || pathname.startsWith(`${schedulePath}/`)
   const isFinances =
@@ -92,13 +89,6 @@ function ClassroomDetailsTabs({ classroomId }: { classroomId: string }) {
         className={tabClass(isPeople)}
       >
         People
-      </Link>
-      <Link
-        to="/dashboard/classrooms/$classroomId/sessions"
-        params={{ classroomId }}
-        className={tabClass(isSessions)}
-      >
-        Sessions
       </Link>
       <Link
         to="/dashboard/classrooms/$classroomId/schedule"

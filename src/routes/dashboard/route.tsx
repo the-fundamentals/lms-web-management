@@ -1,4 +1,4 @@
-import { Link, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
+import { Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
 
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { DashboardBreadcrumbs } from '@/components/layout/dashboard-breadcrumbs'

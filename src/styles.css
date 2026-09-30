@@ -219,7 +219,7 @@ body {
   --fc-monarch-secondary-foreground: var(--foreground);
   --fc-monarch-event: var(--primary-soft);
   --fc-monarch-event-contrast: var(--foreground);
-  --fc-monarch-highlight: var(--primary-softer);
+  --fc-monarch-highlight: color-mix(in oklch, var(--primary) 22%, transparent);
   --fc-monarch-now: var(--primary);
   --fc-monarch-background: var(--card);
   --fc-monarch-foreground: var(--foreground);
@@ -232,9 +232,89 @@ body {
   font-family: var(--font-sans);
 }
 
-.classroom-schedule-calendar .fc {
-  height: 100%;
-  min-height: 0;
+.classroom-schedule-calendar .is-session-event {
+  cursor: pointer;
+  border-radius: calc(var(--radius) * 0.55);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+/* TEMP: ADHOC vs generated SCHEDULE color split — swap/remove when final palette is set. */
+.classroom-schedule-calendar .is-schedule-session {
+  border-color: color-mix(in oklch, oklch(0.55 0.12 280) 55%, transparent) !important;
+  background-color: color-mix(in oklch, oklch(0.55 0.12 280) 22%, transparent) !important;
+  color: var(--foreground) !important;
+}
+
+.dark .classroom-schedule-calendar .is-schedule-session {
+  border-color: color-mix(in oklch, oklch(0.72 0.1 280) 50%, transparent) !important;
+  background-color: color-mix(in oklch, oklch(0.65 0.1 280) 24%, transparent) !important;
+}
+
+.classroom-schedule-calendar .is-adhoc-session {
+  border-color: color-mix(in oklch, oklch(0.72 0.14 55) 65%, transparent) !important;
+  background-color: color-mix(in oklch, oklch(0.72 0.14 55) 28%, transparent) !important;
+  color: var(--foreground) !important;
+}
+
+.dark .classroom-schedule-calendar .is-adhoc-session {
+  border-color: color-mix(in oklch, oklch(0.78 0.12 70) 55%, transparent) !important;
+  background-color: color-mix(in oklch, oklch(0.72 0.12 70) 24%, transparent) !important;
+}
+
+.classroom-schedule-calendar .is-pending-adhoc {
+  cursor: default;
+  border-radius: calc(var(--radius) * 0.55);
+  border: 1px solid color-mix(in oklch, var(--primary) 45%, transparent) !important;
+  background-color: color-mix(in oklch, var(--primary) 22%, transparent) !important;
+  color: var(--foreground) !important;
+  opacity: 1;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Fallback when selectMirror is off — keep primary, not muted gray. */
+.classroom-schedule-calendar .fc-highlight {
+  border-radius: calc(var(--radius) * 0.55);
+  border: none !important;
+  background-color: color-mix(in oklch, var(--primary) 22%, transparent) !important;
+  opacity: 1;
+}
+
+.classroom-schedule-calendar .is-completed-occurrence {
+  z-index: 1;
+  opacity: 0.8;
+  background-color: var(--muted) !important;
+  color: var(--muted-foreground) !important;
+}
+
+.classroom-schedule-calendar .is-cancelled-occurrence {
+  z-index: 0;
+  opacity: 0.55;
+  text-decoration: line-through;
+  background-color: var(--muted) !important;
+  color: var(--muted-foreground) !important;
+}
+
+.classroom-schedule-calendar .is-session-event:not(.is-cancelled-occurrence):not(
+    .is-completed-occurrence
+  ) {
+  z-index: 2;
+}
+
+/* Monarch's slot label uses 8px vertical margin and a -20px offset, which makes each half-hour row ~37px. */
+.classroom-schedule-calendar .fc-monarch-9yp {
+  font-size: 0.6875rem;
+  line-height: 1;
+}
+
+.classroom-schedule-calendar .fc-monarch-2tF {
+  margin-block: 0;
+}
+
+.classroom-schedule-calendar .fc-monarch-Fn5 {
+  top: -0.45em;
 }
 
 .classroom-schedule-calendar .is-other-month {
@@ -246,23 +326,22 @@ body {
   color: var(--muted-foreground);
 }
 
-.classroom-schedule-calendar .is-today {
-  background-color: var(--primary-softer);
-}
-
 .classroom-schedule-calendar .is-today-number {
   display: inline-flex;
-  min-width: 1.5rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  align-items: center;
   justify-content: center;
   border-radius: 999px;
   background-color: var(--primary);
   color: var(--primary-foreground);
-  font-weight: 600;
+  font-size: 0.6875rem;
+  font-weight: 500;
 }
 
-.classroom-schedule-calendar .is-cancelled-occurrence {
-  opacity: 0.55;
-  text-decoration: line-through;
-  background-color: var(--muted) !important;
-  color: var(--muted-foreground) !important;
+/* Week column titles — monarch defaults are larger than page chrome. */
+.classroom-schedule-calendar .fc-monarch-bCs {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
 }
