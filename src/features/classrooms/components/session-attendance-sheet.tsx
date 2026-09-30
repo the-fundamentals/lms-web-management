@@ -18,7 +18,7 @@ import { Loader2Icon } from 'lucide-react'
 import 'temporal-polyfill/global'
 
 import { useConfirmAction } from '@/components/confirm-action'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -30,6 +30,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { invalidateClassroomSessionsQueries } from '@/features/classrooms/classrooms-query'
+import { getPublicObjectUrl } from '@/features/storage'
 import { cn } from '@/lib/utils'
 
 /** API create batch ceiling from CreateClassroomSessionAttendancesCommand. */
@@ -469,6 +470,8 @@ export function SessionAttendanceSheet({
                 <ul>
                   {students.map((student) => {
                     const status = draft[student.id] ?? 'UNSET'
+                    // SDK field is `avatar` (storage key), not `avatarKey`
+                    const avatarUrl = getPublicObjectUrl(student.avatar)
 
                     return (
                       <li
@@ -476,6 +479,9 @@ export function SessionAttendanceSheet({
                         className="flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-muted/60"
                       >
                         <Avatar size="sm">
+                          {avatarUrl ? (
+                            <AvatarImage src={avatarUrl} alt="" />
+                          ) : null}
                           <AvatarFallback>
                             {initialsFromName(student.name)}
                           </AvatarFallback>
