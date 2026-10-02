@@ -1,3 +1,3 @@
 # bunfig.toml
 [install.scopes]
-"@the-fundamentals" = { url = "https://npm.pkg.github.com", token = "$GITHUB_TOKEN" }
+"@the-fundamentals" = { url = "https://npm.pkg.github.com", token = "$BUN_GITHUB_PACKAGES_LOCAL_TOKEN" }

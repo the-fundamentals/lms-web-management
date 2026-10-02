@@ -1,0 +1,51 @@
+---
+description: Constraints on how Cursor should behave when designing and implementing UX, UI, IA, and accessibility patterns.
+alwaysApply: true
+category: core
+tags: [ux, ui, ia, accessibility, behavior]
+---
+
+# Cursor Behavior Constraints for Design Work
+
+Rules curated by **Spencer Goldade (spencergoldade.ca)**; adapted for LMS Web Management (shadcn/ui + Tailwind CSS v4).
+
+**Beginner-friendly** – these constraints are always-on guardrails that keep Cursor from doing surprising or low-quality design work.
+
+These rules define what the assistant should and should not do across all design-related tasks.
+
+## Stack (this project)
+
+- **UI system is fixed**: shadcn/ui (`radix-nova`, CSS variables) + Tailwind CSS **v4** + Lucide icons.
+- Prefer existing primitives under `src/components/ui/` and patterns in `src/components/table/`, `src/components/layout/`.
+- Add missing shadcn pieces with `bunx --bun shadcn@latest add <name>` — do **not** introduce MUI, Chakra, Bootstrap, or a second CSS framework.
+- Theme source of truth: `src/styles.css` + `design/tokens/*`. Do not invent parallel token systems.
+
+## What Cursor Must Not Do
+
+- **Do not invent design systems or token names** out of thin air:
+  - Prefer reading existing design docs and tokens first.
+  - If a gap exists, propose an extension to `design/tokens/*` and `src/styles.css` instead of one-off hex/oklch in components.
+- **Do not auto-generate gradients, generic shadows, or random color palettes**:
+  - Only use documented tokens / shadcn semantic classes (`bg-background`, `text-muted-foreground`, `bg-primary`, etc.).
+  - Documented washes only (sidebar, auth/onboarding) — see `design/tokens/colors.md`.
+- **Do not bypass accessibility** to move faster:
+  - Avoid patterns that hide focus, rely solely on color, or ignore ARIA for complex components.
+  - Prefer shadcn/Radix primitives (they ship keyboard + focus behavior) over custom interactive markup.
+
+## How Cursor Should Use Project Design Docs
+
+- Before proposing visual, IA, or content decisions, **check for user-created design docs**:
+  - `design/tokens/colors.md` – color tokens and semantic roles (maps to shadcn CSS vars).
+  - `design/tokens/typography.md` – typography scale (Inter Variable + Tailwind text utilities).
+  - `design/tokens/spacing.md` – spacing / radius (Tailwind scale + `--radius`).
+  - `design/ia/navigation.md` – sitemap and labeling.
+  - `design/content/voice-and-tone.md` – product voice.
+- When these files exist, **read and follow them explicitly**.
+- Stack-specific UI rules: `.cursor/rules/frontend/shadcn-tailwind.mdc`.
+
+## Scope and Focus of Rules
+
+- Keep **always-on rules small and universal**; move specialized guidance into:
+  - Auto-attached rules (`.cursor/rules/frontend/*`, globs on `**/*.tsx`).
+  - Agent-requested binders (`.cursor/rules/binders/*`).
+- When a rule depends on specific code patterns, **use real file paths** (for example, `src/components/ui/button.tsx`, `src/components/table/data-table.tsx`) instead of vague phrases like “follow the existing pattern.”

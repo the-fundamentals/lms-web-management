@@ -24,6 +24,11 @@ This is a single-package **TanStack Start** (React 19) app using **Bun** as the 
 - Prefer barrels for features (`@/features/auth`) and shared kits (`@/components/table`) over deep imports.- `src/styles.css` imports `shadcn/tailwind.css`, so the `shadcn` npm package is a required build dependency (do not remove it from `dependencies`).
 - The shadcn CLI init flow is interactive (`@clack` prompts) and requires a real TTY; piping stdin does not work. It is already initialized, so re-init is not needed.
 
+### Design rules (cursor-designer)
+
+- UX/UI/IA/a11y guardrails live under `.cursor/rules/{core,frontend,binders}/` (adapted from [cursor-designer](https://github.com/spencergoldade/cursor-designer)).
+- Product tokens / IA / voice: `design/` — start at `design/README.md`. Prefer shadcn semantic tokens over one-off styles.
+
 ### TanStack Query
 
 - `@tanstack/react-query` is wired into the router in `src/router.tsx` via `setupRouterSsrQueryIntegration`, which auto-injects `QueryClientProvider`. The `queryClient` is available in the router/route context (`createRootRouteWithContext`), so components can use `useQuery` directly without adding another provider.

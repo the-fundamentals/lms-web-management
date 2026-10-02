@@ -1,0 +1,41 @@
+---
+description: Project UI implementation — shadcn/ui (radix-nova) + Tailwind CSS v4 conventions for this LMS management app.
+globs: ["**/*.tsx", "**/*.css"]
+alwaysApply: false
+category: frontend
+tags: [ui, shadcn, tailwind]
+---
+
+# shadcn/ui + Tailwind CSS v4
+
+Project-specific companion to cursor-designer frontend rules. Stack defaults follow shadcn’s theme/templates (`components.json`: `radix-nova`, `baseColor: neutral`, CSS variables).
+
+## Primitives first
+
+- Build UI from `@/components/ui/*` (Button, Dialog, Sheet, Sidebar, Form controls, etc.).
+- Shared kits: `@/components/table` for DataTable; `@/components/layout` for app chrome.
+- Prefer composing primitives over custom one-off controls. If a shadcn component is missing, add it via CLI before hand-rolling.
+
+## Styling
+
+- **Tailwind v4** only — no `tailwind.config.js`. Tokens live in `src/styles.css` (`:root` / `.dark` + `@theme inline`).
+- Prefer semantic utility classes mapped from CSS vars: `bg-background`, `bg-card`, `text-foreground`, `text-muted-foreground`, `bg-primary`, `bg-primary-soft`, `border-border`, `ring-ring`, `rounded-lg`, etc.
+- Do **not** hardcode hex/oklch in feature components when a token covers the role (`design/tokens/colors.md`).
+- Spacing: Tailwind default scale (`gap-4`, `p-6`, …) per `design/tokens/spacing.md`. Avoid arbitrary values (`p-[13px]`) unless documented as an exception.
+- Icons: **Lucide** (`lucide-react`), consistent size (`size-4` in dense chrome).
+
+## Variants and hierarchy
+
+- Buttons: use shadcn `variant` / `size` (`default`, `outline`, `ghost`, `destructive`, …). One primary action per region.
+- Destructive actions: `variant="destructive"` + confirm pattern already used in classrooms (dialog title + clear consequence).
+- Dense LMS chrome: prefer `text-sm`; page titles `text-2xl font-semibold tracking-tight` (`design/tokens/typography.md`).
+
+## Dark mode
+
+- Theme uses class `.dark` (`@custom-variant dark`). Use semantic tokens so light/dark stay in sync — do not invent separate color branches in components.
+
+## Anti-patterns
+
+- Do not add a second component library or CSS framework.
+- Do not restyle shadcn primitives with large one-off class dumps when a variant or token extension would do.
+- Do not replace Radix-backed dialogs/menus/sheets with custom modals that lack focus trap / Escape / return focus.

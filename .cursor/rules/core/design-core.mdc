@@ -7,7 +7,11 @@ tags: [ux, ui, ia, accessibility]
 
 # Design Core – Always-On Principles
 
+Rules curated by **Spencer Goldade (spencergoldade.ca)**; used as the always-on core for LMS Web Management.
+
 **Beginner-friendly** – this is a small, always-on set of principles that is safe to enable in every project.
+
+**Stack note:** UI is shadcn/ui + Tailwind v4. See `.cursor/rules/frontend/shadcn-tailwind.mdc` and `design/README.md`.
 
 These principles apply to every task, regardless of stack, feature, or platform. They describe **how to build** high-quality experiences, not which features to build.
 
@@ -48,3 +52,4 @@ For implementation (ARIA, keyboard patterns, focus management), see `.cursor/rul
 
 - When speed, aesthetics, and accessibility conflict, **do not silently sacrifice accessibility or clarity**.
 - Explicitly call out trade-offs in your explanations and suggest options that maintain UX, IA, and a11y quality.
+
