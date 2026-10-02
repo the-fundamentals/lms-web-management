@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
-import type { ClassroomMemberResponse } from '@the-fundamentals/core-openapi'
+import type {
+  ClassroomMemberResponse,
+  ClassroomMemberRole,
+} from '@the-fundamentals/core-openapi'
 import {
   getAllClassroomMembersOptions,
   removeClassroomMemberMutation,
@@ -9,31 +12,30 @@ import {
 import { EllipsisVerticalIcon, UserPlusIcon } from 'lucide-react'
 
 import { useConfirmAction } from '@/components/confirm-action'
+import { DataTable } from '@/components/table'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
-import {
   AddStudentDialog,
   AddTeacherDialog,
 } from '@/features/classrooms/components/add-student-dialog'
 import { invalidateClassroomMembersQueries } from '@/features/classrooms/classrooms-query'
+import { createStudentMemberColumns } from '@/features/classrooms/student-member-columns'
 import { getPublicObjectUrl } from '@/features/storage'
 
 const peopleRoute = getRouteApi('/dashboard/classrooms/$classroomId/people/')
 
-const TEACHER_ROLES = new Set(['ADMIN', 'TEACHER'])
+const TEACHER_ROLES = new Set<ClassroomMemberRole>(['ADMIN', 'TEACHER'])
 
 function initialsFromName(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -46,8 +48,32 @@ function initialsFromName(name: string): string {
   return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase()
 }
 
+function teacherLabel(count: number): string {
+  return count === 1 ? '1 teacher' : `${count} teachers`
+}
+
 function studentLabel(count: number): string {
   return count === 1 ? '1 student' : `${count} students`
+}
+
+function formatJoinedDate(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+  }).format(date)
+}
+
+function roleBadgeLabel(role: ClassroomMemberRole): string {
+  if (role === 'ADMIN') {
+    return 'Admin'
+  }
+  if (role === 'TEACHER') {
+    return 'Teacher'
+  }
+  return 'Student'
 }
 
 function MemberIdentity({ member }: { member: ClassroomMemberResponse }) {
@@ -68,14 +94,12 @@ function MemberIdentity({ member }: { member: ClassroomMemberResponse }) {
   )
 }
 
-function MemberActionsRow({
+function TeacherActionsRow({
   member,
   classroomId,
-  confirmTitle,
 }: {
   member: ClassroomMemberResponse
   classroomId: string
-  confirmTitle: string
 }) {
   const queryClient = useQueryClient()
   const confirmAction = useConfirmAction()
@@ -91,13 +115,16 @@ function MemberActionsRow({
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <MemberIdentity member={member} />
       </div>
+      <Badge variant="secondary">{roleBadgeLabel(member.role)}</Badge>
+      <p className="hidden shrink-0 text-sm text-muted-foreground sm:block">
+        Joined {formatJoinedDate(member.createdDate)}
+      </p>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             type="button"
             variant="ghost"
             size="icon-sm"
-            className="ml-auto"
             aria-label={`Actions for ${member.name}`}
             disabled={removeMember.isPending}
             onClick={(event) => {
@@ -107,14 +134,22 @@ function MemberActionsRow({
             <EllipsisVerticalIcon />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-36">
+        <DropdownMenuContent align="end" className="min-w-40">
+          <DropdownMenuItem
+            onSelect={() => {
+              void navigator.clipboard.writeText(member.email)
+            }}
+          >
+            Copy email
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
             disabled={removeMember.isPending}
             onSelect={() => {
               void (async () => {
                 const confirmed = await confirmAction({
-                  title: confirmTitle,
+                  title: 'Remove this teacher?',
                   description:
                     "They won't be able to access this classroom.",
                   confirmLabel: 'Remove',
@@ -141,28 +176,18 @@ function MemberActionsRow({
   )
 }
 
-function InviteButton({
+function AddMemberButton({
   label,
   onClick,
 }: {
   label: string
-  onClick?: () => void
+  onClick: () => void
 }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-sm"
-          aria-label={label}
-          onClick={onClick}
-        >
-          <UserPlusIcon />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
+    <Button type="button" variant="outline" size="sm" onClick={onClick}>
+      <UserPlusIcon aria-hidden />
+      {label}
+    </Button>
   )
 }
 
@@ -201,6 +226,11 @@ export function ClassroomPeoplePage() {
     [activeMembers],
   )
 
+  const studentColumns = useMemo(
+    () => createStudentMemberColumns(classroomId),
+    [classroomId],
+  )
+
   const existingMembersByAccountId = useMemo(
     () =>
       new Map(
@@ -211,7 +241,11 @@ export function ClassroomPeoplePage() {
 
   if (isPending) {
     return (
-      <div className="flex max-w-3xl flex-col gap-8">
+      <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-7 w-40" />
+          <Skeleton className="h-4 w-72" />
+        </div>
         <div className="flex flex-col gap-3">
           <Skeleton className="h-6 w-28" />
           <Skeleton className="h-12 w-full" />
@@ -247,26 +281,52 @@ export function ClassroomPeoplePage() {
   }
 
   return (
-    <div className="flex max-w-3xl flex-col gap-8">
+    <div className="flex flex-col gap-8">
+      <header className="flex flex-col gap-2">
+        <h1 className="text-2xl font-semibold tracking-tight">People</h1>
+        <p className="text-sm text-muted-foreground">
+          Manage who teaches and who is enrolled in this classroom.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {teacherLabel(teachers.length)}
+          <span aria-hidden className="mx-1.5 text-border">
+            ·
+          </span>
+          {studentLabel(students.length)}
+        </p>
+      </header>
+
       <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-medium tracking-tight">Teachers</h2>
-          <InviteButton
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-baseline gap-2">
+            <h2 className="text-lg font-medium tracking-tight">Teachers</h2>
+            <span className="text-sm text-muted-foreground">
+              {teacherLabel(teachers.length)}
+            </span>
+          </div>
+          <AddMemberButton
             label="Add teacher"
             onClick={() => setIsAddTeacherOpen(true)}
           />
         </div>
         <Separator />
         {teachers.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No teachers yet.</p>
+          <div className="flex flex-col items-start gap-3 py-2">
+            <p className="text-sm text-muted-foreground">
+              No teachers yet. Add someone who can run this classroom.
+            </p>
+            <AddMemberButton
+              label="Add teacher"
+              onClick={() => setIsAddTeacherOpen(true)}
+            />
+          </div>
         ) : (
           <ul>
             {teachers.map((member) => (
               <li key={member.id}>
-                <MemberActionsRow
+                <TeacherActionsRow
                   member={member}
                   classroomId={classroomId}
-                  confirmTitle="Remove this teacher?"
                 />
               </li>
             ))}
@@ -275,33 +335,51 @@ export function ClassroomPeoplePage() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-medium tracking-tight">Students</h2>
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-baseline gap-2">
+            <h2 className="text-lg font-medium tracking-tight">Students</h2>
             <span className="text-sm text-muted-foreground">
               {studentLabel(students.length)}
             </span>
-            <InviteButton
+          </div>
+          <AddMemberButton
+            label="Add student"
+            onClick={() => setIsAddStudentOpen(true)}
+          />
+        </div>
+        <Separator />
+        {students.length === 0 ? (
+          <div className="flex flex-col items-start gap-3 py-2">
+            <p className="text-sm text-muted-foreground">
+              No students yet. Add learners to enroll them in this classroom.
+            </p>
+            <AddMemberButton
               label="Add student"
               onClick={() => setIsAddStudentOpen(true)}
             />
           </div>
-        </div>
-        <Separator />
-        {students.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No students yet.</p>
         ) : (
-          <ul>
-            {students.map((member) => (
-              <li key={member.id}>
-                <MemberActionsRow
-                  member={member}
-                  classroomId={classroomId}
-                  confirmTitle="Remove this student?"
-                />
-              </li>
-            ))}
-          </ul>
+          <DataTable
+            columns={studentColumns}
+            data={students}
+            filterColumnId="person"
+            filterPlaceholder="Filter by name or email..."
+            numbering={{
+              enabled: true,
+              mode: 'page',
+              title: 'No.',
+            }}
+            sorting={{
+              mode: 'client',
+              columns: ['person', 'createdDate'],
+            }}
+            pagination
+            striped
+            padding={{
+              cell: { x: 16, y: 12 },
+              header: { x: 16, y: 10 },
+            }}
+          />
         )}
       </section>
 

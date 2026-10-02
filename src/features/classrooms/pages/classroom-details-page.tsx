@@ -2,52 +2,38 @@ import { Link, Outlet, useRouterState } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { getClassroomByIdOptions } from '@the-fundamentals/core-openapi/react-query'
 import { ChevronLeftIcon, SchoolIcon } from 'lucide-react'
-import type { ReactNode } from 'react'
 
 import { DashboardBreadcrumbs } from '@/components/layout/dashboard-breadcrumbs'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPublicObjectUrl } from '@/features/storage'
 import { cn } from '@/lib/utils'
 
-function BannerChip({
-  className,
-  children,
+function ClassroomDetailsToolbar({
+  currentLabel,
 }: {
-  className?: string
-  children: ReactNode
+  currentLabel?: string
 }) {
   return (
-    <div
-      className={cn('rounded-2xl bg-white px-3 py-1.5 shadow-sm', className)}
-    >
-      {children}
-    </div>
-  )
-}
-
-function BannerChrome({ currentLabel }: { currentLabel?: string }) {
-  return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-3 p-4">
-      <div className="pointer-events-auto flex min-w-0 items-center gap-2">
-        <BannerChip className="flex items-center p-1">
-          <SidebarTrigger />
-        </BannerChip>
-        <BannerChip className="min-w-0 max-w-[min(100%,32rem)] overflow-hidden">
-          <DashboardBreadcrumbs currentLabel={currentLabel} />
-        </BannerChip>
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+      <SidebarTrigger className="-ml-1" />
+      <Separator
+        orientation="vertical"
+        className="mr-2 data-vertical:h-4 data-vertical:self-auto"
+      />
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <DashboardBreadcrumbs currentLabel={currentLabel} />
       </div>
-      <BannerChip className="pointer-events-auto shrink-0">
-        <Link
-          to="/dashboard/classrooms/list"
-          className="inline-flex items-center gap-1 text-sm text-foreground"
-        >
-          <ChevronLeftIcon className="size-4" aria-hidden />
+      <Button type="button" variant="ghost" size="sm" asChild>
+        <Link to="/dashboard/classrooms/list">
+          <ChevronLeftIcon aria-hidden />
           Classrooms
         </Link>
-      </BannerChip>
-    </div>
+      </Button>
+    </header>
   )
 }
 
@@ -68,14 +54,17 @@ function ClassroomDetailsTabs({ classroomId }: { classroomId: string }) {
 
   const tabClass = (active: boolean) =>
     cn(
-      '-mb-px border-b-2 px-1 pb-2.5 text-sm transition-colors',
+      'inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm transition-colors',
       active
-        ? 'border-foreground font-medium text-foreground'
-        : 'border-transparent text-muted-foreground hover:text-foreground',
+        ? 'bg-background font-medium text-foreground shadow-sm'
+        : 'text-muted-foreground hover:text-foreground',
     )
 
   return (
-    <nav className="flex gap-4 border-b px-4 pt-4" aria-label="Classroom sections">
+    <nav
+      className="inline-flex h-9 max-w-full items-center gap-1 overflow-x-auto rounded-lg bg-muted p-1"
+      aria-label="Classroom sections"
+    >
       <Link
         to="/dashboard/classrooms/$classroomId"
         params={{ classroomId }}
@@ -108,12 +97,18 @@ function ClassroomDetailsTabs({ classroomId }: { classroomId: string }) {
   )
 }
 
+function memberCountLabel(count: number): string {
+  return count === 1 ? '1 member' : `${count} members`
+}
+
 type ClassroomDetailsLayoutProps = {
   classroomId: string
 }
 
 /**
- * Shared classroom chrome (banner, title, tabs) for nested classroom pages.
+ * Shared classroom chrome (toolbar, banner, title, tabs) for nested classroom pages.
+ *
+ * Toolbar mirrors the dashboard header (tokens only) instead of floating white chips on the banner.
  */
 export function ClassroomDetailsLayout({
   classroomId,
@@ -125,20 +120,20 @@ export function ClassroomDetailsLayout({
   if (isPending) {
     return (
       <div className="flex flex-1 flex-col">
-        <div className="relative h-56 bg-muted md:h-64">
-          <Skeleton className="size-full rounded-none" />
-          <BannerChrome currentLabel="Classroom" />
+        <ClassroomDetailsToolbar currentLabel="Classroom" />
+        <Skeleton className="h-40 w-full rounded-none md:h-48" />
+        <div className="flex flex-col gap-3 border-b px-4 py-4">
+          <Skeleton className="h-7 w-56" />
+          <Skeleton className="h-9 w-80" />
         </div>
       </div>
     )
   }
 
-  if (isError || !data) {
+  if (isError) {
     return (
       <div className="flex flex-1 flex-col">
-        <div className="relative h-56 bg-muted md:h-64">
-          <BannerChrome currentLabel="Classroom" />
-        </div>
+        <ClassroomDetailsToolbar currentLabel="Classroom" />
         <div className="flex min-h-48 flex-col items-center justify-center gap-3 p-4">
           <p className="text-sm text-destructive" role="alert">
             {error instanceof Error
@@ -163,21 +158,38 @@ export function ClassroomDetailsLayout({
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="relative h-56 overflow-hidden bg-muted md:h-64">
+      <ClassroomDetailsToolbar currentLabel={data.name} />
+
+      <div className="relative h-40 overflow-hidden bg-muted md:h-48">
         {bannerUrl ? (
           <img src={bannerUrl} alt="" className="size-full object-cover" />
         ) : (
-          <div className="flex size-full items-center justify-center bg-[color-mix(in_oklch,var(--sidebar-tint)_12%,var(--muted))]">
+          <div className="flex size-full items-center justify-center bg-primary-softer">
             <SchoolIcon
-              className="size-12 text-[var(--sidebar-tint)] opacity-40"
+              className="size-12 text-primary opacity-40"
               aria-hidden
             />
           </div>
         )}
-        <BannerChrome currentLabel={data.name} />
+        {/* Soft fade into the surface so the banner meets the title strip cleanly */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-background to-transparent"
+          aria-hidden
+        />
       </div>
 
-      <ClassroomDetailsTabs classroomId={classroomId} />
+      <div className="flex flex-col gap-4 border-b px-4 pb-0 pt-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">{data.name}</h1>
+          <Badge variant="secondary">{memberCountLabel(data.numberOfMembers)}</Badge>
+          {data.status === 'ARCHIVED' ? (
+            <Badge variant="outline">Archived</Badge>
+          ) : null}
+        </div>
+        <div className="pb-3">
+          <ClassroomDetailsTabs classroomId={classroomId} />
+        </div>
+      </div>
 
       <div className="px-4 py-6">
         <Outlet />

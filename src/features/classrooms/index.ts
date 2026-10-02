@@ -3,6 +3,7 @@
  */
 
 export { classroomColumns } from '@/features/classrooms/classroom-columns'
+export { createStudentMemberColumns } from '@/features/classrooms/student-member-columns'
 export {
   getAllClassroomsOptions,
   invalidateClassroomsQueries,
