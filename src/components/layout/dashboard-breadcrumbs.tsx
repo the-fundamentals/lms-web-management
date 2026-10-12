@@ -18,13 +18,37 @@ const PAGE_LABELS: Record<string, string> = {
   '/dashboard/classrooms/list': 'Classrooms',
   '/dashboard/classrooms/students': 'Students',
   '/dashboard/classrooms/schedule': 'Schedule',
+  '/dashboard/classrooms/new': 'New classroom',
 }
+
+/** Fixed classroom section routes (not a classroom id). */
+const CLASSROOM_SECTION_SEGMENTS = new Set([
+  'list',
+  'students',
+  'schedule',
+  'new',
+])
 
 function normalizePath(pathname: string) {
   if (pathname !== '/' && pathname.endsWith('/')) {
     return pathname.slice(0, -1)
   }
   return pathname
+}
+
+function isClassroomObjectPath(path: string): boolean {
+  if (!path.startsWith('/dashboard/classrooms/')) {
+    return false
+  }
+  const segment = path.split('/')[3] ?? ''
+  return segment.length > 0 && !CLASSROOM_SECTION_SEGMENTS.has(segment)
+}
+
+function knownPageLabel(path: string): string | undefined {
+  if (Object.hasOwn(PAGE_LABELS, path)) {
+    return PAGE_LABELS[path]
+  }
+  return undefined
 }
 
 export function DashboardBreadcrumbs({
@@ -34,11 +58,12 @@ export function DashboardBreadcrumbs({
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const path = normalizePath(pathname)
+  const inClassrooms = path.startsWith('/dashboard/classrooms')
+  const onClassroomObject = isClassroomObjectPath(path)
   const pageLabel =
     currentLabel ??
-    PAGE_LABELS[path] ??
-    (path.startsWith('/dashboard/classrooms/') ? 'Classroom' : 'Dashboard')
-  const isTeaching = path.startsWith('/dashboard/classrooms')
+    knownPageLabel(path) ??
+    (onClassroomObject ? 'Classroom' : 'Dashboard')
 
   return (
     <Breadcrumb>
@@ -49,18 +74,29 @@ export function DashboardBreadcrumbs({
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator className="hidden md:block" />
-        {isTeaching ? (
-          <>
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbLink asChild>
-                <Link to="/dashboard/classrooms">Teaching</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator className="hidden md:block" />
+        {inClassrooms ? (
+          onClassroomObject || currentLabel ? (
+            <>
+              <BreadcrumbItem className="hidden md:block">
+                <BreadcrumbLink asChild>
+                  <Link to="/dashboard/classrooms/list">Classrooms</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="hidden md:block" />
+              <BreadcrumbItem>
+                <BreadcrumbPage>{pageLabel}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </>
+          ) : (
             <BreadcrumbItem>
-              <BreadcrumbPage>{pageLabel}</BreadcrumbPage>
+              <BreadcrumbPage>
+                {path === '/dashboard/classrooms/list' ||
+                path === '/dashboard/classrooms'
+                  ? 'Classrooms'
+                  : pageLabel}
+              </BreadcrumbPage>
             </BreadcrumbItem>
-          </>
+          )
         ) : (
           <BreadcrumbItem>
             <BreadcrumbPage>{pageLabel}</BreadcrumbPage>

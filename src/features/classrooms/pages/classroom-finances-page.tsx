@@ -22,7 +22,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SetPaymentPlanDialog } from '@/features/classrooms/components/set-payment-plan-dialog'
 
@@ -121,7 +120,7 @@ function StudentPlanRow({
           >
             {plan ? 'Change plan' : 'Set plan'}
           </DropdownMenuItem>
-          {undoable && plan ? (
+          {undoable ? (
             <DropdownMenuItem
               variant="destructive"
               disabled={deletePlan.isPending}
@@ -239,71 +238,72 @@ export function ClassroomFinancesPage() {
   const isFetching = membersQuery.isFetching || plansQuery.isFetching
 
   return (
-    <div className="flex max-w-3xl flex-col gap-8">
+    <div className="flex flex-col gap-8">
       {isPending ? (
-          <div className="flex flex-col gap-6 pt-6">
-            <Skeleton className="h-20 w-56" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
-        ) : isError ? (
-          <div className="flex min-h-48 flex-col items-center justify-center gap-3 pt-6">
-            <p className="text-sm text-destructive" role="alert">
-              {error instanceof Error
-                ? error.message
-                : 'Could not load classroom finances.'}
+        <div className="flex flex-col gap-6">
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-12 w-full rounded-xl" />
+          <Skeleton className="h-12 w-full rounded-xl" />
+        </div>
+      ) : isError ? (
+        <div className="flex min-h-48 flex-col items-center justify-center gap-3">
+          <p className="text-sm text-destructive" role="alert">
+            {error instanceof Error
+              ? error.message
+              : 'Could not load classroom finances.'}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isFetching}
+            onClick={() => {
+              void membersQuery.refetch()
+              void plansQuery.refetch()
+            }}
+          >
+            Try again
+          </Button>
+        </div>
+      ) : (
+        <>
+          <section className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs text-muted-foreground">Current rates</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">
+              {vnd.format(total)}
             </p>
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-md"
-              disabled={isFetching}
-              onClick={() => {
-                void membersQuery.refetch()
-                void plansQuery.refetch()
-              }}
-            >
-              Try again
-            </Button>
-          </div>
-        ) : (
-          <>
-            <section className="pt-6">
-              <p className="text-[10px] font-medium tracking-[0.16em] text-[var(--sidebar-tint)] uppercase">
-                Current rates
-              </p>
-              <p className="font-heading mt-1 text-4xl font-medium tracking-tight tabular-nums">
-                {vnd.format(total)}
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {students.length === 0
-                  ? 'No students yet.'
-                  : `${onAPlan} of ${students.length === 1 ? '1 student' : `${students.length} students`} on a plan`}
-              </p>
-            </section>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {students.length === 0
+                ? 'No students yet.'
+                : `${onAPlan} of ${students.length === 1 ? '1 student' : `${students.length} students`} on a plan`}
+            </p>
+          </section>
 
-            <section className="mt-8 flex flex-col gap-3">
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 className="text-lg font-medium tracking-tight">Students</h2>
-                <span className="text-sm text-muted-foreground">
-                  Per session
-                </span>
+          <section className="flex flex-col gap-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="text-lg font-semibold tracking-tight">Students</h2>
+              <span className="text-sm text-muted-foreground">Per session</span>
+            </div>
+            {deleteError ? (
+              <p className="text-sm text-destructive" role="alert">
+                {deleteError}
+              </p>
+            ) : null}
+            {rows.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
+                No students yet. Add students on the People tab first.
               </div>
-              <Separator />
-              {deleteError ? (
-                <p className="text-sm text-destructive" role="alert">
-                  {deleteError}
-                </p>
-              ) : null}
-              {rows.length === 0 ? (
-                <p className="py-10 text-center text-sm text-muted-foreground">
-                  No students yet.
-                </p>
-              ) : (
-                <ul className="divide-y">
-                  {rows.map((row) => (
+            ) : (
+              <ul className="overflow-hidden rounded-xl border border-border">
+                {rows.map((row, index) => (
+                  <li
+                    key={row.member.id}
+                    className={
+                      index > 0
+                        ? 'border-t border-border px-2'
+                        : 'px-2'
+                    }
+                  >
                     <StudentPlanRow
-                      key={row.member.id}
                       classroomId={classroomId}
                       row={row}
                       onSetPlan={(member) => {
@@ -314,11 +314,12 @@ export function ClassroomFinancesPage() {
                         setDeleteError(message || null)
                       }}
                     />
-                  ))}
-                </ul>
-              )}
-            </section>
-          </>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </>
       )}
 
       <SetPaymentPlanDialog

@@ -23,7 +23,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   AddStudentDialog,
@@ -282,24 +281,10 @@ export function ClassroomPeoplePage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">People</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage who teaches and who is enrolled in this classroom.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          {teacherLabel(teachers.length)}
-          <span aria-hidden className="mx-1.5 text-border">
-            ·
-          </span>
-          {studentLabel(students.length)}
-        </p>
-      </header>
-
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-baseline gap-2">
-            <h2 className="text-lg font-medium tracking-tight">Teachers</h2>
+            <h2 className="text-lg font-semibold tracking-tight">Teachers</h2>
             <span className="text-sm text-muted-foreground">
               {teacherLabel(teachers.length)}
             </span>
@@ -309,9 +294,8 @@ export function ClassroomPeoplePage() {
             onClick={() => setIsAddTeacherOpen(true)}
           />
         </div>
-        <Separator />
         {teachers.length === 0 ? (
-          <div className="flex flex-col items-start gap-3 py-2">
+          <div className="flex flex-col items-start gap-3 rounded-xl border border-dashed border-border px-4 py-8">
             <p className="text-sm text-muted-foreground">
               No teachers yet. Add someone who can run this classroom.
             </p>
@@ -321,9 +305,12 @@ export function ClassroomPeoplePage() {
             />
           </div>
         ) : (
-          <ul>
-            {teachers.map((member) => (
-              <li key={member.id}>
+          <ul className="overflow-hidden rounded-xl border border-border">
+            {teachers.map((member, index) => (
+              <li
+                key={member.id}
+                className={index > 0 ? 'border-t border-border' : undefined}
+              >
                 <TeacherActionsRow
                   member={member}
                   classroomId={classroomId}
@@ -337,7 +324,7 @@ export function ClassroomPeoplePage() {
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-baseline gap-2">
-            <h2 className="text-lg font-medium tracking-tight">Students</h2>
+            <h2 className="text-lg font-semibold tracking-tight">Students</h2>
             <span className="text-sm text-muted-foreground">
               {studentLabel(students.length)}
             </span>
@@ -347,9 +334,8 @@ export function ClassroomPeoplePage() {
             onClick={() => setIsAddStudentOpen(true)}
           />
         </div>
-        <Separator />
         {students.length === 0 ? (
-          <div className="flex flex-col items-start gap-3 py-2">
+          <div className="flex flex-col items-start gap-3 rounded-xl border border-dashed border-border px-4 py-8">
             <p className="text-sm text-muted-foreground">
               No students yet. Add learners to enroll them in this classroom.
             </p>

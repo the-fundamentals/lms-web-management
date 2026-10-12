@@ -1,7 +1,7 @@
 import { Link, Outlet, useRouterState } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { getClassroomByIdOptions } from '@the-fundamentals/core-openapi/react-query'
-import { ChevronLeftIcon, SchoolIcon } from 'lucide-react'
+import { SchoolIcon } from 'lucide-react'
 
 import { DashboardBreadcrumbs } from '@/components/layout/dashboard-breadcrumbs'
 import { Badge } from '@/components/ui/badge'
@@ -12,93 +12,99 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getPublicObjectUrl } from '@/features/storage'
 import { cn } from '@/lib/utils'
 
+const TABS = [
+  { id: 'overview', label: 'Overview', to: '/dashboard/classrooms/$classroomId' },
+  {
+    id: 'people',
+    label: 'People',
+    to: '/dashboard/classrooms/$classroomId/people',
+  },
+  {
+    id: 'schedule',
+    label: 'Schedule',
+    to: '/dashboard/classrooms/$classroomId/schedule',
+  },
+  {
+    id: 'finances',
+    label: 'Finances',
+    to: '/dashboard/classrooms/$classroomId/finances',
+  },
+] as const
+
 function ClassroomDetailsToolbar({
   currentLabel,
 }: {
   currentLabel?: string
 }) {
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
-      <SidebarTrigger className="-ml-1" />
-      <Separator
-        orientation="vertical"
-        className="mr-2 data-vertical:h-4 data-vertical:self-auto"
-      />
-      <div className="min-w-0 flex-1 overflow-hidden">
-        <DashboardBreadcrumbs currentLabel={currentLabel} />
+    <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+      <div className="flex min-w-0 flex-1 items-center gap-2 px-4">
+        <SidebarTrigger className="-ml-1" />
+        <Separator
+          orientation="vertical"
+          className="mr-2 data-vertical:h-4 data-vertical:self-auto"
+        />
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <DashboardBreadcrumbs currentLabel={currentLabel} />
+        </div>
       </div>
-      <Button type="button" variant="ghost" size="sm" asChild>
-        <Link to="/dashboard/classrooms/list">
-          <ChevronLeftIcon aria-hidden />
-          Classrooms
-        </Link>
-      </Button>
     </header>
   )
 }
 
 function ClassroomDetailsTabs({ classroomId }: { classroomId: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const peoplePath = `/dashboard/classrooms/${classroomId}/people`
-  const schedulePath = `/dashboard/classrooms/${classroomId}/schedule`
-  const financesPath = `/dashboard/classrooms/${classroomId}/finances`
-  const isPeople =
-    pathname === peoplePath || pathname.startsWith(`${peoplePath}/`)
-  const isSchedule =
-    pathname === schedulePath || pathname.startsWith(`${schedulePath}/`)
-  const isFinances =
-    pathname === financesPath || pathname.startsWith(`${financesPath}/`)
-  const isOverview =
-    pathname === `/dashboard/classrooms/${classroomId}` ||
-    pathname === `/dashboard/classrooms/${classroomId}/`
+  const base = `/dashboard/classrooms/${classroomId}`
 
-  const tabClass = (active: boolean) =>
-    cn(
-      'inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm transition-colors',
-      active
-        ? 'bg-background font-medium text-foreground shadow-sm'
-        : 'text-muted-foreground hover:text-foreground',
-    )
+  const activeId = (() => {
+    if (pathname === `${base}/people` || pathname.startsWith(`${base}/people/`)) {
+      return 'people'
+    }
+    if (
+      pathname === `${base}/schedule` ||
+      pathname.startsWith(`${base}/schedule/`)
+    ) {
+      return 'schedule'
+    }
+    if (
+      pathname === `${base}/finances` ||
+      pathname.startsWith(`${base}/finances/`)
+    ) {
+      return 'finances'
+    }
+    return 'overview'
+  })()
 
   return (
     <nav
-      className="inline-flex h-9 max-w-full items-center gap-1 overflow-x-auto rounded-lg bg-muted p-1"
+      className="-mb-px flex gap-1 overflow-x-auto"
       aria-label="Classroom sections"
     >
-      <Link
-        to="/dashboard/classrooms/$classroomId"
-        params={{ classroomId }}
-        className={tabClass(isOverview)}
-      >
-        Overview
-      </Link>
-      <Link
-        to="/dashboard/classrooms/$classroomId/people"
-        params={{ classroomId }}
-        className={tabClass(isPeople)}
-      >
-        People
-      </Link>
-      <Link
-        to="/dashboard/classrooms/$classroomId/schedule"
-        params={{ classroomId }}
-        className={tabClass(isSchedule)}
-      >
-        Schedule
-      </Link>
-      <Link
-        to="/dashboard/classrooms/$classroomId/finances"
-        params={{ classroomId }}
-        className={tabClass(isFinances)}
-      >
-        Finances
-      </Link>
+      {TABS.map((tab) => {
+        const active = tab.id === activeId
+        return (
+          <Link
+            key={tab.id}
+            to={tab.to}
+            params={{ classroomId }}
+            aria-current={active ? 'page' : undefined}
+            className={cn(
+              'shrink-0 border-b-2 px-3 py-2.5 text-sm transition-colors',
+              active
+                ? 'border-primary font-medium text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {tab.label}
+          </Link>
+        )
+      })}
     </nav>
   )
 }
 
-function memberCountLabel(count: number): string {
-  return count === 1 ? '1 member' : `${count} members`
+function peopleCountLabel(count: number): string {
+  return count === 1 ? '1 person' : `${count} people`
 }
 
 type ClassroomDetailsLayoutProps = {
@@ -106,9 +112,7 @@ type ClassroomDetailsLayoutProps = {
 }
 
 /**
- * Shared classroom chrome (toolbar, banner, title, tabs) for nested classroom pages.
- *
- * Toolbar mirrors the dashboard header (tokens only) instead of floating white chips on the banner.
+ * Classroom details chrome: dashboard-aligned toolbar, compact identity header, underline tabs.
  */
 export function ClassroomDetailsLayout({
   classroomId,
@@ -121,9 +125,14 @@ export function ClassroomDetailsLayout({
     return (
       <div className="flex flex-1 flex-col">
         <ClassroomDetailsToolbar currentLabel="Classroom" />
-        <Skeleton className="h-40 w-full rounded-none md:h-48" />
-        <div className="flex flex-col gap-3 border-b px-4 py-4">
-          <Skeleton className="h-7 w-56" />
+        <div className="flex flex-col gap-4 border-b px-4 py-4">
+          <div className="flex gap-4">
+            <Skeleton className="h-24 w-40 shrink-0 rounded-xl" />
+            <div className="flex flex-1 flex-col justify-center gap-2">
+              <Skeleton className="h-7 w-56" />
+              <Skeleton className="h-5 w-28" />
+            </div>
+          </div>
           <Skeleton className="h-9 w-80" />
         </div>
       </div>
@@ -143,7 +152,6 @@ export function ClassroomDetailsLayout({
           <Button
             type="button"
             variant="outline"
-            className="rounded-md"
             disabled={isFetching}
             onClick={() => void refetch()}
           >
@@ -160,33 +168,43 @@ export function ClassroomDetailsLayout({
     <div className="flex flex-1 flex-col">
       <ClassroomDetailsToolbar currentLabel={data.name} />
 
-      <div className="relative h-40 overflow-hidden bg-muted md:h-48">
-        {bannerUrl ? (
-          <img src={bannerUrl} alt="" className="size-full object-cover" />
-        ) : (
-          <div className="flex size-full items-center justify-center bg-primary-softer">
-            <SchoolIcon
-              className="size-12 text-primary opacity-40"
-              aria-hidden
-            />
-          </div>
-        )}
-        {/* Soft fade into the surface so the banner meets the title strip cleanly */}
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-background to-transparent"
-          aria-hidden
-        />
-      </div>
+      <div className="border-b">
+        <div className="flex flex-col gap-4 px-4 pt-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch">
+            <div className="relative h-28 w-full shrink-0 overflow-hidden rounded-xl bg-muted sm:h-24 sm:w-44">
+              {bannerUrl ? (
+                <img
+                  src={bannerUrl}
+                  alt=""
+                  className="size-full object-cover"
+                />
+              ) : (
+                <div className="flex size-full items-center justify-center bg-primary-softer">
+                  <SchoolIcon
+                    className="size-8 text-primary opacity-50"
+                    aria-hidden
+                  />
+                </div>
+              )}
+            </div>
 
-      <div className="flex flex-col gap-4 border-b px-4 pb-0 pt-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">{data.name}</h1>
-          <Badge variant="secondary">{memberCountLabel(data.numberOfMembers)}</Badge>
-          {data.status === 'ARCHIVED' ? (
-            <Badge variant="outline">Archived</Badge>
-          ) : null}
-        </div>
-        <div className="pb-3">
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-semibold tracking-tight">
+                  {data.name}
+                </h1>
+                {data.status === 'ARCHIVED' ? (
+                  <Badge variant="outline">Archived</Badge>
+                ) : (
+                  <Badge variant="secondary">Active</Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {peopleCountLabel(data.numberOfMembers)}
+              </p>
+            </div>
+          </div>
+
           <ClassroomDetailsTabs classroomId={classroomId} />
         </div>
       </div>
