@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
 import type { ClassroomMemberResponse } from '@the-fundamentals/core-openapi'
 import { removeClassroomMemberMutation } from '@the-fundamentals/core-openapi/react-query'
 import { EllipsisVerticalIcon } from 'lucide-react'
@@ -93,14 +92,6 @@ function StudentActionsCell({
           }}
         >
           Copy email
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link
-            to="/dashboard/classrooms/$classroomId/finances"
-            params={{ classroomId }}
-          >
-            View in Finances
-          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

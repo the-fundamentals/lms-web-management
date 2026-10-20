@@ -20,7 +20,6 @@ Generic microcopy patterns: `.cursor/rules/frontend/ux-writing-and-microcopy.mdc
 | Session | Lesson (unless product decides otherwise) |
 | People | Members (unless distinguishing roles) |
 | Schedule | Calendar (UI may show a calendar; nav label stays Schedule) |
-| Finances / payment plan | Billing (reserved if we add org billing later) |
 
 ### Examples
 
@@ -34,4 +33,4 @@ Generic microcopy patterns: `.cursor/rules/frontend/ux-writing-and-microcopy.mdc
 
 - **Routine actions**: Neutral and concise (`text-sm` chrome).
 - **Errors**: Calm and specific; no blame.
-- **Destructive / irreversible** (cancel session, undo payment plan): Confirm dialog with clear consequence in the title/body.
+- **Destructive / irreversible** (cancel session, remove student): Confirm dialog with clear consequence in the title/body.

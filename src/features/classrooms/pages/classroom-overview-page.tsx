@@ -4,11 +4,7 @@ import {
   getAllClassroomMembersOptions,
   getClassroomByIdOptions,
 } from '@the-fundamentals/core-openapi/react-query'
-import {
-  CalendarIcon,
-  CircleDollarSignIcon,
-  UsersIcon,
-} from 'lucide-react'
+import { CalendarIcon, UsersIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 
@@ -44,7 +40,6 @@ function OverviewTile({
   to:
     | '/dashboard/classrooms/$classroomId/people'
     | '/dashboard/classrooms/$classroomId/schedule'
-    | '/dashboard/classrooms/$classroomId/finances'
   params: { classroomId: string }
   className?: string
 }) {
@@ -93,8 +88,7 @@ export function ClassroomOverviewPage() {
     return (
       <div className="flex max-w-3xl flex-col gap-6">
         <Skeleton className="h-20 w-full rounded-xl" />
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Skeleton className="h-28 rounded-xl" />
+        <div className="grid gap-4 sm:grid-cols-2">
           <Skeleton className="h-28 rounded-xl" />
           <Skeleton className="h-28 rounded-xl" />
         </div>
@@ -153,7 +147,7 @@ export function ClassroomOverviewPage() {
         </dl>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2">
         <OverviewTile
           title="People"
           description="Teachers and students"
@@ -166,13 +160,6 @@ export function ClassroomOverviewPage() {
           description="Sessions and attendance"
           icon={<CalendarIcon className="size-4" aria-hidden />}
           to="/dashboard/classrooms/$classroomId/schedule"
-          params={{ classroomId }}
-        />
-        <OverviewTile
-          title="Finances"
-          description="Student payment plans"
-          icon={<CircleDollarSignIcon className="size-4" aria-hidden />}
-          to="/dashboard/classrooms/$classroomId/finances"
           params={{ classroomId }}
         />
       </section>

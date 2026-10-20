@@ -5,7 +5,9 @@ alwaysApply: true
 
 # Missing backend endpoint
 
-When wiring UI to the API, **first** confirm the operation exists in `@the-fundamentals/core-openapi` (`sdk.gen` / `types.gen`, or the `react-query` wrappers).
+**CO** = `@the-fundamentals/core-openapi` — generated type stubs / client for the backend (`sdk.gen`, `types.gen`, `react-query` wrappers).
+
+When wiring UI to the API, **first** confirm the operation exists in CO (`sdk.gen` / `types.gen`, or the `react-query` wrappers).
 
 If the needed read, write, or list endpoint is missing, **stop**. Do not invent a workaround that hides the gap. The user may have forgotten to implement it on the backend.
 

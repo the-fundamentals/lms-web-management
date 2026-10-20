@@ -24,11 +24,6 @@ const TABS = [
     label: 'Schedule',
     to: '/dashboard/classrooms/$classroomId/schedule',
   },
-  {
-    id: 'finances',
-    label: 'Finances',
-    to: '/dashboard/classrooms/$classroomId/finances',
-  },
 ] as const
 
 function ClassroomDetailsToolbar({
@@ -65,12 +60,6 @@ function ClassroomDetailsTabs({ classroomId }: { classroomId: string }) {
       pathname.startsWith(`${base}/schedule/`)
     ) {
       return 'schedule'
-    }
-    if (
-      pathname === `${base}/finances` ||
-      pathname.startsWith(`${base}/finances/`)
-    ) {
-      return 'finances'
     }
     return 'overview'
   })()
