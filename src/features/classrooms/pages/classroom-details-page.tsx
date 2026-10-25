@@ -24,6 +24,11 @@ const TABS = [
     label: 'Schedule',
     to: '/dashboard/classrooms/$classroomId/schedule',
   },
+  {
+    id: 'billing',
+    label: 'Billing',
+    to: '/dashboard/classrooms/$classroomId/billing',
+  },
 ] as const
 
 function ClassroomDetailsToolbar({
@@ -60,6 +65,12 @@ function ClassroomDetailsTabs({ classroomId }: { classroomId: string }) {
       pathname.startsWith(`${base}/schedule/`)
     ) {
       return 'schedule'
+    }
+    if (
+      pathname === `${base}/billing` ||
+      pathname.startsWith(`${base}/billing/`)
+    ) {
+      return 'billing'
     }
     return 'overview'
   })()

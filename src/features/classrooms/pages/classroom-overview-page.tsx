@@ -4,7 +4,7 @@ import {
   getAllClassroomMembersOptions,
   getClassroomByIdOptions,
 } from '@the-fundamentals/core-openapi/react-query'
-import { CalendarIcon, UsersIcon } from 'lucide-react'
+import { CalendarIcon, ReceiptIcon, UsersIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 
@@ -40,6 +40,7 @@ function OverviewTile({
   to:
     | '/dashboard/classrooms/$classroomId/people'
     | '/dashboard/classrooms/$classroomId/schedule'
+    | '/dashboard/classrooms/$classroomId/billing'
   params: { classroomId: string }
   className?: string
 }) {
@@ -147,7 +148,7 @@ export function ClassroomOverviewPage() {
         </dl>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <OverviewTile
           title="People"
           description="Teachers and students"
@@ -160,6 +161,13 @@ export function ClassroomOverviewPage() {
           description="Sessions and attendance"
           icon={<CalendarIcon className="size-4" aria-hidden />}
           to="/dashboard/classrooms/$classroomId/schedule"
+          params={{ classroomId }}
+        />
+        <OverviewTile
+          title="Billing"
+          description="Plans and invoices"
+          icon={<ReceiptIcon className="size-4" aria-hidden />}
+          to="/dashboard/classrooms/$classroomId/billing"
           params={{ classroomId }}
         />
       </section>

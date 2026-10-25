@@ -24,6 +24,7 @@ import { Route as DashboardClassroomsNewRouteImport } from './routes/dashboard/c
 import { Route as DashboardClassroomsScheduleRouteImport } from './routes/dashboard/classrooms/schedule'
 import { Route as DashboardClassroomsStudentsRouteImport } from './routes/dashboard/classrooms/students'
 import { Route as DashboardClassroomsClassroomIdIndexRouteImport } from './routes/dashboard/classrooms/$classroomId/index'
+import { Route as DashboardClassroomsClassroomIdBillingRouteImport } from './routes/dashboard/classrooms/$classroomId/billing'
 import { Route as DashboardClassroomsClassroomIdPeopleRouteRouteImport } from './routes/dashboard/classrooms/$classroomId/people/route'
 import { Route as DashboardClassroomsClassroomIdScheduleRouteImport } from './routes/dashboard/classrooms/$classroomId/schedule'
 import { Route as DashboardClassroomsClassroomIdPeopleIndexRouteImport } from './routes/dashboard/classrooms/$classroomId/people/index'
@@ -108,6 +109,12 @@ const DashboardClassroomsClassroomIdIndexRoute =
     path: '/',
     getParentRoute: () => DashboardClassroomsClassroomIdRouteRoute,
   } as any)
+const DashboardClassroomsClassroomIdBillingRoute =
+  DashboardClassroomsClassroomIdBillingRouteImport.update({
+    id: '/billing',
+    path: '/billing',
+    getParentRoute: () => DashboardClassroomsClassroomIdRouteRoute,
+  } as any)
 const DashboardClassroomsClassroomIdPeopleRouteRoute =
   DashboardClassroomsClassroomIdPeopleRouteRouteImport.update({
     id: '/people',
@@ -143,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/classrooms/students': typeof DashboardClassroomsStudentsRoute
   '/dashboard/classrooms/': typeof DashboardClassroomsIndexRoute
   '/dashboard/classrooms/$classroomId/people': typeof DashboardClassroomsClassroomIdPeopleRouteRouteWithChildren
+  '/dashboard/classrooms/$classroomId/billing': typeof DashboardClassroomsClassroomIdBillingRoute
   '/dashboard/classrooms/$classroomId/schedule': typeof DashboardClassroomsClassroomIdScheduleRoute
   '/dashboard/classrooms/$classroomId/': typeof DashboardClassroomsClassroomIdIndexRoute
   '/dashboard/classrooms/$classroomId/people/': typeof DashboardClassroomsClassroomIdPeopleIndexRoute
@@ -160,6 +168,7 @@ export interface FileRoutesByTo {
   '/dashboard/classrooms/schedule': typeof DashboardClassroomsScheduleRoute
   '/dashboard/classrooms/students': typeof DashboardClassroomsStudentsRoute
   '/dashboard/classrooms': typeof DashboardClassroomsIndexRoute
+  '/dashboard/classrooms/$classroomId/billing': typeof DashboardClassroomsClassroomIdBillingRoute
   '/dashboard/classrooms/$classroomId/schedule': typeof DashboardClassroomsClassroomIdScheduleRoute
   '/dashboard/classrooms/$classroomId': typeof DashboardClassroomsClassroomIdIndexRoute
   '/dashboard/classrooms/$classroomId/people': typeof DashboardClassroomsClassroomIdPeopleIndexRoute
@@ -181,6 +190,7 @@ export interface FileRoutesById {
   '/dashboard/classrooms/students': typeof DashboardClassroomsStudentsRoute
   '/dashboard/classrooms/': typeof DashboardClassroomsIndexRoute
   '/dashboard/classrooms/$classroomId/people': typeof DashboardClassroomsClassroomIdPeopleRouteRouteWithChildren
+  '/dashboard/classrooms/$classroomId/billing': typeof DashboardClassroomsClassroomIdBillingRoute
   '/dashboard/classrooms/$classroomId/schedule': typeof DashboardClassroomsClassroomIdScheduleRoute
   '/dashboard/classrooms/$classroomId/': typeof DashboardClassroomsClassroomIdIndexRoute
   '/dashboard/classrooms/$classroomId/people/': typeof DashboardClassroomsClassroomIdPeopleIndexRoute
@@ -203,6 +213,7 @@ export interface FileRouteTypes {
     | '/dashboard/classrooms/students'
     | '/dashboard/classrooms/'
     | '/dashboard/classrooms/$classroomId/people'
+    | '/dashboard/classrooms/$classroomId/billing'
     | '/dashboard/classrooms/$classroomId/schedule'
     | '/dashboard/classrooms/$classroomId/'
     | '/dashboard/classrooms/$classroomId/people/'
@@ -220,6 +231,7 @@ export interface FileRouteTypes {
     | '/dashboard/classrooms/schedule'
     | '/dashboard/classrooms/students'
     | '/dashboard/classrooms'
+    | '/dashboard/classrooms/$classroomId/billing'
     | '/dashboard/classrooms/$classroomId/schedule'
     | '/dashboard/classrooms/$classroomId'
     | '/dashboard/classrooms/$classroomId/people'
@@ -240,6 +252,7 @@ export interface FileRouteTypes {
     | '/dashboard/classrooms/students'
     | '/dashboard/classrooms/'
     | '/dashboard/classrooms/$classroomId/people'
+    | '/dashboard/classrooms/$classroomId/billing'
     | '/dashboard/classrooms/$classroomId/schedule'
     | '/dashboard/classrooms/$classroomId/'
     | '/dashboard/classrooms/$classroomId/people/'
@@ -359,6 +372,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardClassroomsClassroomIdIndexRouteImport
       parentRoute: typeof DashboardClassroomsClassroomIdRouteRoute
     }
+    '/dashboard/classrooms/$classroomId/billing': {
+      id: '/dashboard/classrooms/$classroomId/billing'
+      path: '/billing'
+      fullPath: '/dashboard/classrooms/$classroomId/billing'
+      preLoaderRoute: typeof DashboardClassroomsClassroomIdBillingRouteImport
+      parentRoute: typeof DashboardClassroomsClassroomIdRouteRoute
+    }
     '/dashboard/classrooms/$classroomId/people': {
       id: '/dashboard/classrooms/$classroomId/people'
       path: '/people'
@@ -400,6 +420,7 @@ const DashboardClassroomsClassroomIdPeopleRouteRouteWithChildren =
 
 interface DashboardClassroomsClassroomIdRouteRouteChildren {
   DashboardClassroomsClassroomIdPeopleRouteRoute: typeof DashboardClassroomsClassroomIdPeopleRouteRouteWithChildren
+  DashboardClassroomsClassroomIdBillingRoute: typeof DashboardClassroomsClassroomIdBillingRoute
   DashboardClassroomsClassroomIdScheduleRoute: typeof DashboardClassroomsClassroomIdScheduleRoute
   DashboardClassroomsClassroomIdIndexRoute: typeof DashboardClassroomsClassroomIdIndexRoute
 }
@@ -408,6 +429,8 @@ const DashboardClassroomsClassroomIdRouteRouteChildren: DashboardClassroomsClass
   {
     DashboardClassroomsClassroomIdPeopleRouteRoute:
       DashboardClassroomsClassroomIdPeopleRouteRouteWithChildren,
+    DashboardClassroomsClassroomIdBillingRoute:
+      DashboardClassroomsClassroomIdBillingRoute,
     DashboardClassroomsClassroomIdScheduleRoute:
       DashboardClassroomsClassroomIdScheduleRoute,
     DashboardClassroomsClassroomIdIndexRoute:

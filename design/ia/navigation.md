@@ -30,6 +30,7 @@ Tabs (noun labels, stable order):
 1. `Overview`
 2. `People`
 3. `Schedule`
+4. `Billing`
 
 Breadcrumb pattern: `Dashboard / Classrooms / {Classroom name} [/ Tab]`.
 
