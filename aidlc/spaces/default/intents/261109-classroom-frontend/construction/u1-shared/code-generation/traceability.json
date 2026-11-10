@@ -1,0 +1,62 @@
+{
+  "stage": "code-generation",
+  "unit": "u1-shared",
+  "upstream_ids": [
+    "FR6.1",
+    "FR6.2",
+    "FR7.1",
+    "FR7.2",
+    "FR7.3",
+    "FR7.5",
+    "NFR2",
+    "NFR4",
+    "NFR5"
+  ],
+  "coverage": [
+    {
+      "id": "FR6.1",
+      "status": "OK",
+      "target": "src/shared/lib/gmt7.ts"
+    },
+    {
+      "id": "FR6.2",
+      "status": "OK",
+      "target": "src/shared/lib/gmt7.ts"
+    },
+    {
+      "id": "FR7.1",
+      "status": "OK",
+      "target": "src/shared/ui/loading-screen.tsx"
+    },
+    {
+      "id": "FR7.2",
+      "status": "OK",
+      "target": "src/shared/api/client.ts"
+    },
+    {
+      "id": "FR7.3",
+      "status": "OK",
+      "target": "src/shared/lib/screen-rules.ts"
+    },
+    {
+      "id": "FR7.5",
+      "status": "OK",
+      "target": "src/shared/lib/screen-rules.ts"
+    },
+    {
+      "id": "NFR2",
+      "status": "OK",
+      "target": "src/shared/ui/error-screen.tsx"
+    },
+    {
+      "id": "NFR4",
+      "status": "OK",
+      "target": "src/shared/api/client.ts"
+    },
+    {
+      "id": "NFR5",
+      "status": "OK",
+      "target": "src/shared/lib/text.ts"
+    }
+  ]
+}

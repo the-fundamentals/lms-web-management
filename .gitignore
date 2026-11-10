@@ -26,3 +26,7 @@ aidlc/spaces/*/intents/*/runtime-graph.json
 aidlc/spaces/*/intents/*/.aidlc-*
 aidlc/diagnostics/
 # END AI-DLC:gitignore
+
+# Generated TanStack Query client. Regenerated from openapi.yml.
+src/generated/
+node_modules/

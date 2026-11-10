@@ -1,0 +1,32 @@
+{
+  "stage": "code-generation",
+  "unit": "u1-shared",
+  "version": 1,
+  "writes": [
+    { "path": "package.json" },
+    { "path": "package-lock.json" },
+    { "path": "vitest.config.ts" },
+    { "path": "src/shared/api/base-url.ts" },
+    { "path": "src/shared/api/token.ts" },
+    { "path": "src/shared/api/token.test.ts" },
+    { "path": "src/shared/api/client.ts" },
+    { "path": "src/shared/api/client.test.ts" },
+    { "path": "src/shared/api/query-client.ts" },
+    { "path": "src/shared/api/query-client.integration.test.ts" },
+    { "path": "src/shared/lib/gmt7.ts" },
+    { "path": "src/shared/lib/gmt7.test.ts" },
+    { "path": "src/shared/lib/text.ts" },
+    { "path": "src/shared/lib/text.test.ts" },
+    { "path": "src/shared/lib/screen-rules.ts" },
+    { "path": "src/shared/lib/screen-rules.test.ts" },
+    { "path": "src/shared/ui/loading-screen.tsx" },
+    { "path": "src/shared/ui/loading-screen.test.tsx" },
+    { "path": "src/shared/ui/error-screen.tsx" },
+    { "path": "src/shared/ui/error-screen.test.tsx" },
+    { "path": "src/shared/ui/request-status.tsx" },
+    { "path": "src/shared/ui/request-status.test.tsx" },
+    { "path": "src/shared/ui/test-doubles/skeleton.tsx" },
+    { "path": "src/shared/ui/test-doubles/alert.tsx" },
+    { "path": "src/shared/ui/test-doubles/button.tsx" }
+  ]
+}

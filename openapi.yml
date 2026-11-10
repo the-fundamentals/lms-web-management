@@ -1,0 +1,2851 @@
+openapi: 3.0.3
+info:
+  title: LMS Core API
+  version: 0.2.14
+  description: Core API for the Learning Management System. Management endpoints under `/admin/**` require the ADMIN role. Authenticated self-service endpoints live under `/private/**`.
+  contact:
+    name: Sang Dang
+    email: contact@fundamentals.io.vn
+tags:
+  - name: AccountProfile
+    description: Authenticated account profile (`/private/profile`) for any logged-in user
+  - name: Accounts
+    description: Admin-only Account querying capabilities (`/admin/account`)
+  - name: Classroom
+    description: Admin-only classroom management (`/admin/classrooms`)
+  - name: ClassroomMembers
+    description: Admin-only classroom member management (`/admin/classrooms/.../members`)
+  - name: ClassroomMemberPaymentPlans
+    description: Admin-only classroom member payment plans (`/admin/classrooms/.../payment-plans`)
+  - name: ClassroomInvoices
+    description: Admin-only classroom invoices (`/admin/classrooms/.../invoices`)
+  - name: ClassroomScheduleRecurrence
+    description: Admin-only classroom schedule recurrence management (`/admin/classrooms/.../schedule`)
+  - name: ClassroomSessions
+    description: Admin-only classroom session and attendance management (`/admin/classrooms/.../sessions` and member attendance history)
+  - name: Storage
+    description: Private endpoints to upload files to the system
+  - name: _Test
+    description: >
+      Test endpoints
+
+  - name: _Dev
+    description: >
+      Developer endpoints. Registered only on Spring profiles `local` and `test`. Not for production.
+
+security:
+  - cognitoOAuth:
+      - openid
+      - email
+      - profile
+  - bearerAuth: []
+paths:
+  /admin/account/query:
+    post:
+      tags:
+        - Accounts
+      operationId: getAllAccounts
+      summary: Get all accounts
+      description: Query all account profiles in the database.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountFilter"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetAllAccountsResponse"
+  /private/profile:
+    get:
+      tags:
+        - AccountProfile
+      operationId: getMyAccountProfile
+      summary: Get the current user's account profile
+      description: >
+        Returns the account profile for the authenticated Cognito user (JWT `sub`). When no profile row exists yet, responds with `ACCOUNT_PROFILE_NOT_FOUND` so the client can onboard.
+
+      responses:
+        "200":
+          description: Account profile found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountProfileResponse"
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: No account profile for this Cognito user (onboarding required)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      tags:
+        - AccountProfile
+      operationId: updateMyAccountProfile
+      summary: Update the current user's account profile
+      description: >
+        Upserts the account profile for the authenticated user (JWT `sub`). Request body updates `firstName` and `lastName` only. Email is taken from the Cognito ID token supplied in `X-ID-Token` (must be `token_use=id` and the same `sub` as the access token). Creates the profile when none exists yet (onboarding).
+
+      parameters:
+        - $ref: "#/components/parameters/IdToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAccountProfileCommand"
+      responses:
+        "200":
+          description: Account profile created or updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountProfileResponse"
+        "401":
+          description: >
+            Missing/invalid access token, or missing/invalid `X-ID-Token` (`INVALID_ID_TOKEN`)
+
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms:
+    post:
+      tags:
+        - Classroom
+      operationId: createClassroom
+      summary: Create a classroom
+      description: >
+        Creates a new classroom and returns it. Base payment plan defaults to PER_SESSION, amount 0
+        (free) when omitted.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClassroomCommand"
+      responses:
+        "201":
+          description: Classroom created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomResponse"
+        "400":
+          description: Invalid create command
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/query:
+    post:
+      tags:
+        - Classroom
+      operationId: getAllClassrooms
+      summary: Get All Classrooms
+      description: Get all classrooms in the database
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassroomFilter"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetAllClassroomsResponse"
+  /admin/classrooms/{id}:
+    get:
+      tags:
+        - Classroom
+      operationId: getClassroomById
+      summary: Get a classroom by id
+      description: Returns a single classroom by its identifier.
+      parameters:
+        - $ref: "#/components/parameters/ClassroomId"
+      responses:
+        "200":
+          description: Classroom found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomResponse"
+        "404":
+          description: Classroom not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      tags:
+        - Classroom
+      operationId: updateClassroom
+      summary: Update a classroom
+      description: Updates an existing classroom and returns the updated resource.
+      parameters:
+        - $ref: "#/components/parameters/ClassroomId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClassroomCommand"
+      responses:
+        "200":
+          description: Classroom updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomResponse"
+        "400":
+          description: Invalid update command
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Classroom not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/base-payment-plan:
+    put:
+      tags:
+        - Classroom
+      operationId: setClassroomBasePaymentPlan
+      summary: Set the classroom base payment plan
+      description: >
+        Sets the classroom base payment plan. Omitted type defaults to PER_SESSION. When type or
+        amount changes, each ACTIVE STUDENT whose
+        current plan was copied from the classroom base is closed and replaced with the new base.
+        REMOVED members, teachers, individual plans, and students with no current plan are left
+        unchanged. An unchanged base does not rewrite member plans.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetClassroomBasePaymentPlanCommand"
+      responses:
+        "200":
+          description: Classroom base payment plan updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomResponse"
+        "404":
+          description: Classroom not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/members:
+    get:
+      tags:
+        - ClassroomMembers
+      operationId: getAllClassroomMembers
+      summary: Get all classroom members
+      description: >
+        Returns every member of the classroom in one response, not paginated.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetAllClassroomMembersResponse"
+        "404":
+          description: Classroom not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - ClassroomMembers
+      operationId: createClassroomMembers
+      summary: Add members to a classroom
+      description: >
+        Creates classroom memberships, reactivates previously removed members, or updates the role of already active members. Up to 30 members may be submitted in one request. Account profiles and existing memberships are loaded in batch.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClassroomMembersCommand"
+      responses:
+        "201":
+          description: Classroom members created or updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetAllClassroomMembersResponse"
+        "400":
+          description: Invalid create command
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Classroom not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/payment-plans:
+    get:
+      tags:
+        - ClassroomMemberPaymentPlans
+      operationId: getAllClassroomPaymentPlans
+      summary: Get current payment plans for a classroom
+      description: >
+        Returns each member's current payment plan (`effectiveTo` null) for the classroom, not paginated. Replaced plans are omitted. Members with no current plan are omitted. Newest `effectiveFrom` first.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetAllClassroomMemberPaymentPlansResponse"
+        "404":
+          description: Classroom not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/members/{memberId}:
+    delete:
+      tags:
+        - ClassroomMembers
+      operationId: removeClassroomMember
+      summary: Remove a classroom member
+      description: Soft-deletes a classroom member by marking their status as REMOVED.
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/MemberId"
+      responses:
+        "204":
+          description: Classroom member removed
+        "404":
+          description: Classroom member not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/members/{memberId}/payment-plans:
+    get:
+      tags:
+        - ClassroomMemberPaymentPlans
+      operationId: getClassroomMemberPaymentPlans
+      summary: Get payment plans for a classroom member
+      description: >
+        Returns every payment plan for the member, not paginated. The current plan (`effectiveTo` null, if any) is first, then remaining plans by `effectiveFrom` descending. An empty list means the member has no paid plan.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/MemberId"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetAllClassroomMemberPaymentPlansResponse"
+        "404":
+          description: Classroom member not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - ClassroomMemberPaymentPlans
+      operationId: createClassroomMemberPaymentPlan
+      summary: Create a payment plan for a classroom member
+      description: >
+        Inserts a new current payment plan effective immediately. Any existing current plan for the member is closed (`effectiveTo` set) in the same transaction. Does not support future-dated plans. Plans are immutable after create; updates are not allowed.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/MemberId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClassroomMemberPaymentPlanCommand"
+      responses:
+        "201":
+          description: Payment plan created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomMemberPaymentPlanResponse"
+        "400":
+          description: Invalid create command
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Classroom member not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/members/{memberId}/payment-plans/{paymentPlanId}:
+    get:
+      tags:
+        - ClassroomMemberPaymentPlans
+      operationId: getClassroomMemberPaymentPlanById
+      summary: Get a classroom member payment plan by id
+      description: Returns a single payment plan for the member by its identifier.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/MemberId"
+        - $ref: "#/components/parameters/PaymentPlanId"
+      responses:
+        "200":
+          description: Payment plan found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomMemberPaymentPlanResponse"
+        "404":
+          description: Payment plan not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/invoices:
+    post:
+      tags:
+        - ClassroomInvoices
+      operationId: createClassroomInvoiceAdhoc
+      summary: Create an adhoc classroom invoice
+      description: >
+        Creates a DRAFT invoice of type ADHOC for a member of the classroom.
+        Period is left unset. Line totals and the invoice total are computed by the server
+        (`finalAmount = unitPrice * quantity`). At least one line is required.
+        The member must belong to the path classroom.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClassroomInvoiceAdhocCommand"
+      responses:
+        "201":
+          description: Adhoc classroom invoice created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomInvoiceResponse"
+        "404":
+          description: Classroom member not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/invoices/query:
+    post:
+      tags:
+        - ClassroomInvoices
+      operationId: queryClassroomInvoices
+      summary: Query invoices for a classroom
+      description: >
+        Query invoices belonging to a classroom. Always scoped to the path `classroomId` in
+        addition to the filter. Use `memberId` in filters to narrow to one member.
+        Pagination and sorting follow the same pattern as other query endpoints.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassroomInvoiceFilter"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetAllClassroomInvoicesResponse"
+        "404":
+          description: Classroom not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/invoices/{invoiceId}:
+    get:
+      tags:
+        - ClassroomInvoices
+      operationId: getClassroomInvoiceById
+      summary: Get a classroom invoice by id
+      description: Returns a single invoice for the classroom by its identifier.
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/InvoiceId"
+      responses:
+        "200":
+          description: Classroom invoice found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomInvoiceResponse"
+        "404":
+          description: Classroom invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      tags:
+        - ClassroomInvoices
+      operationId: updateClassroomInvoice
+      summary: Update a draft classroom invoice
+      description: >
+        Replaces all lines on a DRAFT invoice and recomputes line and invoice totals on the server.
+        Optional note: omitted leaves the existing note unchanged. Member, type, period, payment
+        fields, and status are unchanged. APPROVED, COMPLETED, and CANCELLED invoices are rejected.
+        Applies to both ADHOC and GENERATED drafts. Line ids are not accepted; lines are replaced.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/InvoiceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClassroomInvoiceCommand"
+      responses:
+        "200":
+          description: Classroom invoice updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomInvoiceResponse"
+        "400":
+          description: Invoice is not DRAFT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Classroom invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/invoices/{invoiceId}/approve:
+    post:
+      tags:
+        - ClassroomInvoices
+      operationId: approveClassroomInvoice
+      summary: Approve a classroom invoice
+      description: >
+        Moves the invoice status from DRAFT to APPROVED. Non-DRAFT invoices are rejected.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/InvoiceId"
+      responses:
+        "200":
+          description: Classroom invoice approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomInvoiceResponse"
+        "400":
+          description: Invoice is not DRAFT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Classroom invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/invoices/{invoiceId}/complete:
+    post:
+      tags:
+        - ClassroomInvoices
+      operationId: completeClassroomInvoice
+      summary: Complete a classroom invoice
+      description: >
+        Moves the invoice status from APPROVED to COMPLETED and records payment.
+        Sets paidAt on the server. Non-APPROVED invoices are rejected.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/InvoiceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteClassroomInvoiceCommand"
+      responses:
+        "200":
+          description: Classroom invoice completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomInvoiceResponse"
+        "400":
+          description: Invoice is not APPROVED
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Classroom invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/invoices/{invoiceId}/cancel:
+    post:
+      tags:
+        - ClassroomInvoices
+      operationId: cancelClassroomInvoice
+      summary: Cancel a classroom invoice
+      description: >
+        Moves the invoice status from DRAFT or APPROVED to CANCELLED.
+        COMPLETED and CANCELLED invoices are rejected.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/InvoiceId"
+      responses:
+        "200":
+          description: Classroom invoice cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomInvoiceResponse"
+        "400":
+          description: Invoice is not DRAFT or APPROVED
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Classroom invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/members/{memberId}/attendances/query:
+    post:
+      tags:
+        - ClassroomSessions
+      operationId: getClassroomMemberAttendances
+      summary: Get classroom session attendances for a member
+      description: >
+        Query a classroom member's session attendance history. Use `attendanceDate` filters (for example `gte` / `lte`) to limit the range, and `status` (for example `ATTENDED`) to see sessions the member joined. Pagination and sorting follow the same pattern as other query endpoints.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/MemberId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassroomSessionAttendanceFilter"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetAllClassroomSessionAttendancesResponse"
+        "404":
+          description: Classroom or classroom member not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/sessions:
+    post:
+      tags:
+        - ClassroomSessions
+      operationId: createClassroomSession
+      summary: Create an adhoc classroom session
+      description: >
+        Creates an adhoc session for a classroom. Status is always OPEN and type is always ADHOC.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClassroomSessionAdhocCommand"
+      responses:
+        "201":
+          description: Classroom session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomSessionResponse"
+        "400":
+          description: Invalid create command
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Classroom not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/sessions/query:
+    post:
+      tags:
+        - ClassroomSessions
+      operationId: getAllClassroomSessions
+      summary: Get all classroom sessions
+      description: Query sessions belonging to a classroom.
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassroomSessionFilter"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetAllClassroomSessionsResponse"
+        "404":
+          description: Classroom not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/sessions/{sessionId}:
+    get:
+      tags:
+        - ClassroomSessions
+      operationId: getClassroomSessionById
+      summary: Get a classroom session by id
+      description: Returns a single classroom session by its identifier.
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Classroom session found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomSessionResponse"
+        "404":
+          description: Classroom session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      tags:
+        - ClassroomSessions
+      operationId: updateClassroomSession
+      summary: Update a classroom session
+      description: >
+        Updates the display name and description of an OPEN classroom session. Date, times, status, and type are unchanged. COMPLETED and CANCELLED sessions are rejected. Omitted name or description clears that field.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClassroomSessionCommand"
+      responses:
+        "200":
+          description: Classroom session updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomSessionResponse"
+        "400":
+          description: Invalid update command, or session is not OPEN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Classroom session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/sessions/{sessionId}/complete:
+    post:
+      tags:
+        - ClassroomSessions
+      operationId: completeClassroomSession
+      summary: Complete a classroom session
+      description: >
+        Moves the session status from OPEN to COMPLETED. COMPLETED and CANCELLED sessions are rejected.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Classroom session completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomSessionResponse"
+        "400":
+          description: Session is not OPEN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Classroom session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/sessions/{sessionId}/cancel:
+    post:
+      tags:
+        - ClassroomSessions
+      operationId: cancelClassroomSession
+      summary: Cancel a classroom session
+      description: >
+        Moves the session status from OPEN to CANCELLED. COMPLETED and CANCELLED sessions are rejected.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Classroom session cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomSessionResponse"
+        "400":
+          description: Session is not OPEN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Classroom session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/sessions/{sessionId}/attendances:
+    get:
+      tags:
+        - ClassroomSessions
+      operationId: getAllClassroomSessionAttendances
+      summary: Get all classroom session attendances
+      description: Returns every attendance record for a classroom session. Not paginated.
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetAllClassroomSessionAttendancesResponse"
+        "404":
+          description: Classroom session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - ClassroomSessions
+      operationId: createClassroomSessionAttendances
+      summary: Create classroom session attendances
+      description: >
+        Records attendance for up to 30 classroom members in a session. Duplicate classroom member ids in the request are rejected. If any member already has attendance for the session, the entire request fails. Session must be OPEN; COMPLETED and CANCELLED are rejected.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClassroomSessionAttendancesCommand"
+      responses:
+        "201":
+          description: Classroom session attendances created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetAllClassroomSessionAttendancesResponse"
+        "400":
+          description: Invalid create command, or session is not OPEN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Classroom, session, or member not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Attendance already exists for a member in this session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/sessions/{sessionId}/attendances/{attendanceId}:
+    put:
+      tags:
+        - ClassroomSessions
+      operationId: updateClassroomSessionAttendance
+      summary: Update a classroom session attendance
+      description: >
+        Updates only the attendance status (present or absent) for an existing classroom session attendance record. Session must be OPEN; COMPLETED and CANCELLED are rejected.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/SessionId"
+        - $ref: "#/components/parameters/AttendanceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClassroomSessionAttendanceCommand"
+      responses:
+        "200":
+          description: Classroom session attendance updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomSessionAttendanceResponse"
+        "400":
+          description: Invalid update command, or session is not OPEN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Classroom session attendance not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags:
+        - ClassroomSessions
+      operationId: deleteClassroomSessionAttendance
+      summary: Delete a classroom session attendance
+      description: >
+        Hard-deletes a classroom session attendance record. Session must be OPEN; COMPLETED and CANCELLED are rejected.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/SessionId"
+        - $ref: "#/components/parameters/AttendanceId"
+      responses:
+        "204":
+          description: Classroom session attendance deleted
+        "400":
+          description: Session is not OPEN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Classroom session attendance not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /private/storage:
+    post:
+      tags:
+        - Storage
+      operationId: uploadToStorage
+      summary: Upload a file to the landing zone storage bucket
+      description: Get a presigned URL to upload a file to the landing zone bucket. Form must be submitted to be moved to public (permanent) bucket
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadToStorageCommand"
+      responses:
+        "200":
+          description: URL Created. Use the URL to upload file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadToStorageResponse"
+  /test/storage/confirm-public:
+    post:
+      tags:
+        - _Test
+      operationId: confirmPublicFileUpload
+      summary: Confirm a public file upload (local only)
+      description: >
+        Moves an object from the landing zone to the public store after upload. Local profile only — this endpoint is registered only when the Spring profile `local` is active.
+
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - objectKey
+              properties:
+                objectKey:
+                  type: string
+                  minLength: 1
+                  description: Object key in the landing zone (must start with `public/`)
+                  example: public/540ba3e4-8026-45e9-9834-54aa0eb1a17a
+      responses:
+        "204":
+          description: Public upload confirmed
+        "400":
+          description: Invalid public object key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Object not found in landing zone
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /test/storage/confirm-private:
+    post:
+      tags:
+        - _Test
+      operationId: confirmPrivateFileUpload
+      summary: Confirm a private file upload (local only)
+      description: >
+        Moves an object from the landing zone to the permanent store and records a storage grant for the owner. Local profile only — this endpoint is registered only when the Spring profile `local` is active.
+
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - objectKey
+                - accountProfileId
+              properties:
+                objectKey:
+                  type: string
+                  minLength: 1
+                  description: Object key in the landing zone (must start with `private/`)
+                  example: private/540ba3e4-8026-45e9-9834-54aa0eb1a17a
+                accountProfileId:
+                  type: string
+                  format: uuid
+                  description: Owner account profile id for the storage grant
+                  example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+      responses:
+        "200":
+          description: Private upload confirmed
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - id
+                  - ownerId
+                  - objectKey
+                  - objectBucket
+                  - createdDate
+                  - lastModifiedDate
+                properties:
+                  id:
+                    type: integer
+                    format: int64
+                    description: Storage grant identifier
+                    example: 1
+                  ownerId:
+                    type: string
+                    format: uuid
+                    description: Owner account profile id
+                    example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                  objectKey:
+                    type: string
+                    description: Object key in the destination bucket
+                    example: private/540ba3e4-8026-45e9-9834-54aa0eb1a17a
+                  objectBucket:
+                    type: string
+                    description: Destination bucket name
+                    example: lms-local-public
+                  createdDate:
+                    type: string
+                    format: date-time
+                    description: When the grant was created
+                  lastModifiedDate:
+                    type: string
+                    format: date-time
+                    description: When the grant was last modified
+        "400":
+          description: Invalid private object key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Object not found in landing zone
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /dev/classroom-sessions/generate-from-recurrence:
+    post:
+      tags:
+        - _Dev
+      operationId: generateClassroomSessionsFromRecurrence
+      summary: Generate classroom sessions for the month after runDate
+      description: >
+        Triggers the same work as the 7th-of-month job: inserts OPEN/SCHEDULE sessions for active classrooms whose recurrences overlap the calendar month after `runDate` (first day through last day, inclusive). Existing generated rows for the same classroom, recurrence, and date are skipped. Local and test profiles only.
+
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateClassroomSessionsFromRecurrenceCommand"
+      responses:
+        "204":
+          description: Generation ran
+  /dev/classroom-invoices/generate:
+    post:
+      tags:
+        - _Dev
+      operationId: generateClassroomInvoices
+      summary: Generate classroom invoices for a date-time window
+      description: >
+        Triggers the same work as the monthly invoice job for an explicit attendance window.
+        Creates GENERATED draft invoices for active STUDENT members (including zero attendances).
+        Unit price comes from the member's current payment plan (`effectiveTo` null); 0 if none.
+        Does not use the plan that was effective on each attendance date (deferred).
+        Existing GENERATED invoices for the same member/period are skipped. Local and test profiles only.
+
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateClassroomInvoicesCommand"
+      responses:
+        "204":
+          description: Generation ran
+  /admin/classrooms/{classroomId}/schedule:
+    get:
+      tags:
+        - ClassroomScheduleRecurrence
+      operationId: getAllClassroomScheduleRecurrences
+      summary: Get all classroom schedule recurrences
+      description: Returns all non-deleted recurrences for a classroom.
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetAllClassroomScheduleRecurrencesResponse"
+        "404":
+          description: Classroom not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - ClassroomScheduleRecurrence
+      operationId: createClassroomScheduleRecurrence
+      summary: Create classroom schedule recurrences for one or more weekdays
+      description: >
+        Creates one schedule recurrence row per weekday in `byDays`, sharing the same frequency, date range, times, and optional name/description. Returns all created rows.
+
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClassroomScheduleRecurrenceCommand"
+      responses:
+        "201":
+          description: Classroom schedule recurrences created (one per weekday)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetAllClassroomScheduleRecurrencesResponse"
+        "400":
+          description: Invalid create command
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Classroom not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/classrooms/{classroomId}/schedule/{scheduleId}:
+    get:
+      tags:
+        - ClassroomScheduleRecurrence
+      operationId: getClassroomScheduleRecurrenceById
+      summary: Get a classroom schedule recurrence by id
+      description: Returns a single classroom schedule recurrence by its identifier.
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/ScheduleId"
+      responses:
+        "200":
+          description: Classroom schedule recurrence found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomScheduleRecurrenceResponse"
+        "404":
+          description: Classroom schedule recurrence not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags:
+        - ClassroomScheduleRecurrence
+      operationId: deleteClassroomScheduleRecurrence
+      summary: Delete a classroom schedule recurrence
+      description: Soft-deletes a classroom schedule recurrence by setting its deleted date for audit purposes.
+      parameters:
+        - $ref: "#/components/parameters/ClassroomIdPath"
+        - $ref: "#/components/parameters/ScheduleId"
+      responses:
+        "204":
+          description: Classroom schedule deleted
+        "404":
+          description: Classroom schedule not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  securitySchemes:
+    cognitoOAuth:
+      type: oauth2
+      description: >
+        Cognito Hosted UI (authorization code + PKCE). Click Authorize in Swagger UI to open the Cognito login page. OAuth URLs are injected at runtime from COGNITO_DOMAIN (or COGNITO_AUTHORIZATION_URI / COGNITO_TOKEN_URI) — see application.yml under app.cognito. Client id comes from COGNITO_APP_CLIENT_ID. Cognito must allowlist http://localhost:8080/swagger-ui/oauth2-redirect.html (or your API origin) as a callback URL.
+
+      flows:
+        authorizationCode:
+          # Replaced at serve time by OpenApiSpecController from app.cognito settings.
+          authorizationUrl: __COGNITO_DOMAIN__/oauth2/authorize
+          tokenUrl: __COGNITO_DOMAIN__/oauth2/token
+          scopes:
+            openid: OpenID Connect
+            email: Email address
+            profile: User profile
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Paste a Cognito JWT access token manually (alternative to Hosted UI login). Admin endpoints require the ADMIN Cognito group.
+
+  parameters:
+    ClassroomId:
+      name: id
+      in: path
+      required: true
+      description: Classroom identifier
+      schema:
+        type: string
+        format: uuid
+        description: Classroom UUID
+        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+    ClassroomIdPath:
+      name: classroomId
+      in: path
+      required: true
+      description: Classroom identifier
+      schema:
+        type: string
+        format: uuid
+        description: Classroom UUID
+        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+    MemberId:
+      name: memberId
+      in: path
+      required: true
+      description: Classroom member identifier
+      schema:
+        type: string
+        format: uuid
+        description: Classroom member UUID
+        example: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      description: Classroom session identifier
+      schema:
+        type: string
+        format: uuid
+        description: Classroom session UUID
+        example: 9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d
+    PaymentPlanId:
+      name: paymentPlanId
+      in: path
+      required: true
+      description: Classroom member payment plan identifier
+      schema:
+        type: string
+        format: uuid
+        description: Classroom member payment plan UUID
+        example: 550e8400-e29b-41d4-a716-446655440000
+    InvoiceId:
+      name: invoiceId
+      in: path
+      required: true
+      description: Classroom invoice identifier
+      schema:
+        type: string
+        format: uuid
+        description: Classroom invoice UUID
+        example: 6ba7b810-9dad-11d1-80b4-00c04fd430c8
+    AttendanceId:
+      name: attendanceId
+      in: path
+      required: true
+      description: Classroom session attendance identifier
+      schema:
+        type: string
+        format: uuid
+        description: Classroom session attendance UUID
+        example: 1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed
+    ScheduleId:
+      name: scheduleId
+      in: path
+      required: true
+      description: Classroom schedule identifier
+      schema:
+        type: string
+        format: uuid
+        description: Classroom schedule UUID
+        example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+    IdToken:
+      name: X-ID-Token
+      in: header
+      required: true
+      description: Authentication Provider ID Token
+      schema:
+        type: string
+        description: ID Token JWT
+  schemas:
+    UploadToStorageCommand:
+      description: A command to generate presigned URLs to upload an item to storage
+      properties:
+        isPublic:
+          type: boolean
+          default: false
+          description: Set to true if this is a public resource to be stored in the public bucket
+          example: false
+    UploadToStorageResponse:
+      description: Response containing the presigned URL for uploading files
+      required:
+        - uploadUrl
+        - objectKey
+      properties:
+        uploadUrl:
+          type: string
+          example: http://localhost:8080/upload
+          description: Presigned URL to upload the file
+        downloadUrl:
+          type: string
+          example: http://localhost:8080/download
+          description: Presigned URL to download the file
+        objectKey:
+          type: string
+          example: 540ba3e4-8026-45e9-9834-54aa0eb1a17a
+          description: The key of the object saved in S3
+    ClassroomFilter:
+      type: object
+      description: Student filter
+      additionalProperties: false
+      properties:
+        page:
+          type: integer
+          default: 0
+          minimum: 0
+        size:
+          type: integer
+          default: 10
+          minimum: 1
+          maximum: 50
+        sortBy:
+          type: string
+          pattern: '^(name|createdDate|lastModifiedDate)$'
+        sortDirection:
+          type: string
+          enum: [ASC, DESC]
+          default: ASC
+        filters:
+          type: array
+          items:
+            type: object
+            required: [field, operator, value]
+            properties:
+              field:
+                type: string
+                pattern: '^(name)$'
+              operator:
+                type: string
+                pattern: '^(eq|like|gt|lt|gte|lte)$'
+              value:
+                type: string
+    ClassroomResponse:
+      type: object
+      description: Classroom resource returned by the API
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - numberOfMembers
+        - status
+        - createdDate
+        - lastModifiedDate
+        - basePaymentPlanType
+        - basePaymentPlanAmount
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique classroom identifier
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        name:
+          type: string
+          description: Display name of the classroom
+          minLength: 1
+          maxLength: 255
+          example: Algebra I
+        bannerKey:
+          type: string
+          description: Key to the stored classroom banner image in the Public S3 Bucket
+          minLength: 1
+          maxLength: 64
+          example: public/3e4ef8d1-9581-402f-9e27-fec209aeb2d8
+          pattern: ^public\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+        numberOfMembers:
+          type: integer
+          minimum: 0
+          description: Number of active members in the classroom
+          example: 12
+        status:
+          $ref: "#/components/schemas/ClassroomStatus"
+        createdDate:
+          type: string
+          format: date-time
+          description: When the classroom was created
+          example: 2026-07-14T00:00:00
+        lastModifiedDate:
+          type: string
+          format: date-time
+          description: When the classroom was last modified
+          example: 2026-07-14T00:00:00
+        basePaymentPlanType:
+          $ref: "#/components/schemas/PaymentPlanType"
+        basePaymentPlanAmount:
+          type: integer
+          format: int64
+          description: Classroom base amount in the smallest currency unit. 0 means the class is free.
+          minimum: 0
+          example: 0
+    GetAllClassroomsResponse:
+      type: array
+      description: Collection of classrooms
+      items:
+        $ref: "#/components/schemas/ClassroomResponse"
+    ClassroomStatus:
+      type: string
+      description: Lifecycle status of a classroom
+      enum:
+        - ACTIVE
+        - ARCHIVED
+      example: ACTIVE
+    GetAllClassroomMembersResponse:
+      type: array
+      description: Collection of classroom members
+      items:
+        $ref: "#/components/schemas/ClassroomMemberResponse"
+    ClassroomBasePaymentPlanInput:
+      type: object
+      description: >
+        Optional base payment plan on classroom create. Omitted amount is 0 (free). Omitted type is
+        PER_SESSION.
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+            - $ref: "#/components/schemas/PaymentPlanType"
+          default: PER_SESSION
+          description: How the classroom is billed. Defaults to PER_SESSION when omitted.
+        amount:
+          type: integer
+          format: int64
+          description: Amount in the smallest currency unit. Omitted means 0.
+          minimum: 0
+          example: 150000
+    SetClassroomBasePaymentPlanCommand:
+      type: object
+      description: >
+        Command to set the classroom base payment plan. Omitted type defaults to PER_SESSION.
+      additionalProperties: false
+      required:
+        - amount
+      properties:
+        type:
+          allOf:
+            - $ref: "#/components/schemas/PaymentPlanType"
+          default: PER_SESSION
+          description: How the classroom is billed. Defaults to PER_SESSION when omitted.
+        amount:
+          type: integer
+          format: int64
+          description: Amount in the smallest currency unit. 0 means the class is free.
+          minimum: 0
+          example: 150000
+    PaymentPlanType:
+      type: string
+      description: How the member is billed
+      enum:
+        - PER_SESSION
+      example: PER_SESSION
+    CreateClassroomMemberPaymentPlanCommand:
+      type: object
+      description: >
+        Command to create a current payment plan for a classroom member. Takes effect immediately;
+        effective dates are set by the server (no future scheduling).
+      additionalProperties: false
+      required:
+        - type
+        - amount
+      properties:
+        type:
+          $ref: "#/components/schemas/PaymentPlanType"
+        amount:
+          type: integer
+          format: int64
+          description: Amount in the smallest currency unit
+          minimum: 0
+          example: 150000
+    ClassroomMemberPaymentPlanResponse:
+      type: object
+      description: Classroom member payment plan returned by the API
+      additionalProperties: false
+      required:
+        - id
+        - classroomMemberId
+        - type
+        - amount
+        - effectiveFrom
+        - createdDate
+        - lastModifiedDate
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique payment plan identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        classroomMemberId:
+          type: string
+          format: uuid
+          description: Classroom member this plan belongs to
+          example: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+        type:
+          $ref: "#/components/schemas/PaymentPlanType"
+        amount:
+          type: integer
+          format: int64
+          description: Amount in the smallest currency unit
+          example: 150000
+        effectiveFrom:
+          type: string
+          format: date-time
+          description: When this plan became current
+          example: 2026-07-14T00:00:00Z
+        effectiveTo:
+          type: string
+          format: date-time
+          description: When this plan stopped being current. Null while current.
+          example: 2026-07-14T00:05:00Z
+        createdDate:
+          type: string
+          format: date-time
+          description: When the plan was created
+          example: 2026-07-14T00:00:00Z
+        lastModifiedDate:
+          type: string
+          format: date-time
+          description: When the plan was last modified
+          example: 2026-07-14T00:00:00Z
+    GetAllClassroomMemberPaymentPlansResponse:
+      type: array
+      description: Collection of classroom member payment plans
+      items:
+        $ref: "#/components/schemas/ClassroomMemberPaymentPlanResponse"
+    GetAllClassroomsQuery:
+      type: object
+      description: Query to retrieve all classrooms
+      additionalProperties: false
+      properties: {}
+    GetClassroomByIdQuery:
+      type: object
+      description: Query to retrieve a classroom by id
+      additionalProperties: false
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Classroom identifier to look up
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+    CreateClassroomCommand:
+      type: object
+      description: Command to create a classroom
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Display name of the classroom
+          minLength: 1
+          maxLength: 255
+          example: Algebra I
+        bannerKey:
+          type: string
+          description: Key to the stored classroom banner image in the Public S3 Bucket
+          minLength: 1
+          maxLength: 64
+          example: public/3e4ef8d1-9581-402f-9e27-fec209aeb2d8
+          pattern: ^public\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+        basePaymentPlan:
+          $ref: "#/components/schemas/ClassroomBasePaymentPlanInput"
+    UpdateClassroomCommand:
+      type: object
+      description: Command to update a classroom
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Updated display name of the classroom
+          minLength: 1
+          maxLength: 255
+          example: Algebra II
+        bannerKey:
+          type: string
+          description: Key to the stored classroom banner image in the Public S3 Bucket
+          minLength: 1
+          maxLength: 64
+          example: public/3e4ef8d1-9581-402f-9e27-fec209aeb2d8
+          pattern: ^public\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+    ClassroomMemberRole:
+      type: string
+      description: Role of a classroom member
+      enum:
+        - ADMIN
+        - TEACHER
+        - STUDENT
+      example: STUDENT
+    ClassroomMemberStatus:
+      type: string
+      description: Membership status
+      enum:
+        - ACTIVE
+        - REMOVED
+      example: ACTIVE
+    CreateClassroomMemberCommand:
+      type: object
+      description: A single membership to create or update in a classroom
+      additionalProperties: false
+      required:
+        - accountId
+        - role
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account profile identifier for the member
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        role:
+          $ref: "#/components/schemas/ClassroomMemberRole"
+    CreateClassroomMembersCommand:
+      type: object
+      description: Command to add or update up to 30 classroom members in one request
+      additionalProperties: false
+      required:
+        - members
+      properties:
+        members:
+          type: array
+          minItems: 1
+          maxItems: 30
+          items:
+            $ref: "#/components/schemas/CreateClassroomMemberCommand"
+    ClassroomMemberResponse:
+      type: object
+      description: Classroom member resource returned by the API
+      additionalProperties: false
+      required:
+        - id
+        - classroomId
+        - accountId
+        - role
+        - status
+        - email
+        - name
+        - createdDate
+        - lastModifiedDate
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique classroom member identifier
+          example: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+        classroomId:
+          type: string
+          format: uuid
+          description: Classroom this membership belongs to
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        accountId:
+          type: string
+          format: uuid
+          description: Account profile identifier for the member
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        role:
+          $ref: "#/components/schemas/ClassroomMemberRole"
+        status:
+          $ref: "#/components/schemas/ClassroomMemberStatus"
+        email:
+          type: string
+          format: email
+          description: Denormalized member email from the account profile
+          minLength: 1
+          maxLength: 255
+          example: alex@example.com
+        name:
+          type: string
+          description: Denormalized member display name from the account profile
+          minLength: 1
+          maxLength: 255
+          example: Alex Nguyen
+        avatar:
+          type: string
+          description: >
+            Denormalized avatar key from the account profile (copied at membership create/upsert; null when the profile has no avatar)
+
+          maxLength: 255
+          example: public/3e4ef8d1-9581-402f-9e27-fec209aeb2d8
+        removedDate:
+          type: string
+          format: date-time
+          description: When the member was removed; null while ACTIVE
+          example: 2026-07-20T00:00:00Z
+        createdDate:
+          type: string
+          format: date-time
+          description: When the membership was created
+          example: 2026-07-14T00:00:00
+        lastModifiedDate:
+          type: string
+          format: date-time
+          description: When the membership was last modified
+          example: 2026-07-14T00:00:00
+    ClassroomSessionAttendanceStatus:
+      type: string
+      description: Attendance status for a classroom session
+      enum:
+        - ATTENDED
+        - ABSENT
+        - UNSET
+      example: UNSET
+    ClassroomSessionStatus:
+      type: string
+      description: Lifecycle status of a classroom session
+      enum:
+        - OPEN
+        - COMPLETED
+        - CANCELLED
+      example: OPEN
+    ClassroomSessionType:
+      type: string
+      description: How the classroom session was created
+      enum:
+        - ADHOC
+        - SCHEDULE
+      example: SCHEDULE
+    CreateClassroomSessionAdhocCommand:
+      type: object
+      description: >
+        Command to create an adhoc classroom session. Status is always OPEN and type is always ADHOC.
+
+      additionalProperties: false
+      required:
+        - sessionDate
+        - startTime
+        - endTime
+      properties:
+        sessionDate:
+          type: string
+          format: date
+          description: Calendar date of the classroom session
+          example: "2026-07-19"
+        startTime:
+          type: string
+          format: time-local
+          description: Session start time
+          example: "09:00:00"
+        endTime:
+          type: string
+          format: time-local
+          description: Session end time
+          example: "10:30:00"
+        name:
+          type: string
+          description: Optional display name of the classroom session
+          minLength: 1
+          maxLength: 255
+          example: Week 1 lecture
+        description:
+          type: string
+          description: Optional description of the classroom session
+          minLength: 1
+          maxLength: 2000
+          example: Introduction to the course and classroom expectations
+    UpdateClassroomSessionCommand:
+      type: object
+      description: >
+        Command to update a classroom session's display name and description. Date, times, status, and type cannot be changed here.
+
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: Updated display name; omit or null to clear
+          minLength: 1
+          maxLength: 255
+          example: Week 1 lecture (reschedule)
+        description:
+          type: string
+          description: Updated description; omit or null to clear
+          minLength: 1
+          maxLength: 2000
+          example: Moved to room B; bring worksheets
+    GenerateClassroomSessionsFromRecurrenceCommand:
+      type: object
+      description: >
+        Command to generate classroom sessions for the calendar month after runDate (same as the monthly job on the 7th).
+
+      additionalProperties: false
+      required:
+        - runDate
+      properties:
+        runDate:
+          type: string
+          format: date
+          description: Date this ran; sessions are created for the following calendar month
+          example: "2026-10-07"
+    GenerateClassroomInvoicesCommand:
+      type: object
+      description: >
+        Command to generate classroom invoices for an inclusive attendance window
+        (job uses previous-month start through first day of the current month).
+
+      additionalProperties: false
+      required:
+        - startDateTime
+        - endDateTime
+      properties:
+        startDateTime:
+          type: string
+          format: date-time
+          description: Inclusive attendance window start
+          example: "2026-09-01T00:00:00"
+        endDateTime:
+          type: string
+          format: date-time
+          description: Inclusive attendance window end
+          example: "2026-10-01T00:00:00"
+    ClassroomSessionFilter:
+      type: object
+      description: Filter for querying classroom sessions
+      additionalProperties: false
+      properties:
+        page:
+          type: integer
+          default: 0
+          minimum: 0
+        size:
+          type: integer
+          default: 10
+          minimum: 1
+          maximum: 50
+        sortBy:
+          type: string
+          pattern: '^(sessionDate|startTime|endTime|name|createdDate|status|type)$'
+        sortDirection:
+          type: string
+          enum: [ASC, DESC]
+          default: ASC
+        filters:
+          type: array
+          items:
+            type: object
+            required: [field, operator, value]
+            properties:
+              field:
+                type: string
+                pattern: '^(sessionDate|startTime|endTime|name|status|type)$'
+              operator:
+                type: string
+                pattern: '^(eq|like|gt|lt|gte|lte)$'
+              value:
+                type: string
+    ClassroomSessionResponse:
+      type: object
+      description: Classroom session resource returned by the API
+      additionalProperties: false
+      required:
+        - id
+        - classroomId
+        - sessionDate
+        - startTime
+        - endTime
+        - status
+        - type
+        - createdDate
+        - lastModifiedDate
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique classroom session identifier
+          example: 9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d
+        classroomId:
+          type: string
+          format: uuid
+          description: Classroom this session belongs to
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        sessionDate:
+          type: string
+          format: date
+          description: Calendar date of the classroom session
+          example: "2026-07-19"
+        startTime:
+          type: string
+          format: time-local
+          description: Session start time
+          example: "09:00:00"
+        endTime:
+          type: string
+          format: time-local
+          description: Session end time
+          example: "10:30:00"
+        name:
+          type: string
+          description: Optional display name of the classroom session
+          minLength: 1
+          maxLength: 255
+          example: Week 1 lecture
+        description:
+          type: string
+          description: Optional description of the classroom session
+          minLength: 1
+          maxLength: 2000
+          example: Introduction to the course and classroom expectations
+        status:
+          $ref: "#/components/schemas/ClassroomSessionStatus"
+        type:
+          $ref: "#/components/schemas/ClassroomSessionType"
+        createdDate:
+          type: string
+          format: date-time
+          description: When the session was created
+          example: 2026-07-14T00:00:00Z
+        lastModifiedDate:
+          type: string
+          format: date-time
+          description: When the session was last modified
+          example: 2026-07-14T00:00:00Z
+    GetAllClassroomSessionsResponse:
+      type: array
+      description: Collection of classroom sessions
+      items:
+        $ref: "#/components/schemas/ClassroomSessionResponse"
+    CreateClassroomSessionAttendanceCommand:
+      type: object
+      description: Command to create a classroom session attendance record
+      additionalProperties: false
+      required:
+        - classroomMemberId
+        - status
+      properties:
+        classroomMemberId:
+          type: string
+          format: uuid
+          description: Classroom member whose attendance is being recorded
+          example: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+        attendanceDate:
+          type: string
+          format: date-time
+          description: When attendance was recorded; defaults to now when omitted
+          example: 2026-07-19T09:05:00Z
+        status:
+          $ref: "#/components/schemas/ClassroomSessionAttendanceStatus"
+    CreateClassroomSessionAttendancesCommand:
+      type: object
+      description: Command to create up to 30 classroom session attendance records in one request
+      additionalProperties: false
+      required:
+        - attendances
+      properties:
+        attendances:
+          type: array
+          minItems: 1
+          maxItems: 30
+          items:
+            $ref: "#/components/schemas/CreateClassroomSessionAttendanceCommand"
+    UpdateClassroomSessionAttendanceCommand:
+      type: object
+      description: Command to update a classroom session attendance status
+      additionalProperties: false
+      required:
+        - status
+      properties:
+        status:
+          $ref: "#/components/schemas/ClassroomSessionAttendanceStatus"
+    ClassroomSessionAttendanceFilter:
+      type: object
+      description: Filter for querying a classroom member's session attendance history
+      additionalProperties: false
+      properties:
+        page:
+          type: integer
+          default: 0
+          minimum: 0
+        size:
+          type: integer
+          default: 10
+          minimum: 1
+          maximum: 50
+        sortBy:
+          type: string
+          pattern: '^(attendanceDate|status|createdDate)$'
+        sortDirection:
+          type: string
+          enum: [ASC, DESC]
+          default: ASC
+        filters:
+          type: array
+          items:
+            type: object
+            required: [field, operator, value]
+            properties:
+              field:
+                type: string
+                pattern: '^(attendanceDate|status|sessionId)$'
+              operator:
+                type: string
+                pattern: '^(eq|like|gt|lt|gte|lte)$'
+              value:
+                type: string
+    GetAllClassroomSessionAttendancesResponse:
+      type: array
+      description: Collection of classroom session attendance records
+      items:
+        $ref: "#/components/schemas/ClassroomSessionAttendanceResponse"
+    ClassroomSessionAttendanceResponse:
+      type: object
+      description: Classroom session attendance resource returned by the API
+      additionalProperties: false
+      required:
+        - id
+        - sessionId
+        - classroomMemberId
+        - status
+        - createdDate
+        - lastModifiedDate
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique attendance identifier
+          example: 1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed
+        sessionId:
+          type: string
+          format: uuid
+          description: Session this attendance belongs to
+          example: 9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d
+        classroomMemberId:
+          type: string
+          format: uuid
+          description: Classroom member whose attendance was recorded
+          example: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+        attendanceDate:
+          type: string
+          format: date-time
+          description: When attendance was recorded
+          example: 2026-07-19T09:05:00Z
+        status:
+          $ref: "#/components/schemas/ClassroomSessionAttendanceStatus"
+        createdDate:
+          type: string
+          format: date-time
+          description: When the attendance record was created
+          example: 2026-07-14T00:00:00Z
+        lastModifiedDate:
+          type: string
+          format: date-time
+          description: When the attendance record was last modified
+          example: 2026-07-14T00:00:00Z
+    AccountFilter:
+      type: object
+      description: Filter for querying account profiles
+      additionalProperties: false
+      properties:
+        page:
+          type: integer
+          default: 0
+          minimum: 0
+        size:
+          type: integer
+          default: 10
+          minimum: 1
+          maximum: 50
+        sortBy:
+          type: string
+          pattern: '^(email|firstName|lastName|createdDate|lastModifiedDate)$'
+        sortDirection:
+          type: string
+          enum: [ASC, DESC]
+          default: ASC
+        filters:
+          type: array
+          items:
+            type: object
+            required: [field, operator, value]
+            properties:
+              field:
+                type: string
+                pattern: '^(email|firstName|lastName|cognitoSub)$'
+              operator:
+                type: string
+                pattern: '^(eq|like|gt|lt|gte|lte)$'
+              value:
+                type: string
+    GetAllAccountsResponse:
+      type: array
+      description: Collection of account profiles
+      items:
+        $ref: "#/components/schemas/AccountProfileResponse"
+    CreateClassroomScheduleRecurrenceCommand:
+      type: object
+      description: >
+        Command to create classroom schedule recurrences — one persisted row per weekday in `byDays`
+
+      additionalProperties: false
+      required:
+        - frequency
+        - byDays
+        - recurrenceStartDate
+        - startTime
+        - endTime
+      properties:
+        frequency:
+          $ref: "#/components/schemas/RecurrenceFrequency"
+        byDays:
+          type: array
+          description: Weekdays to create a recurrence for (one row each)
+          minItems: 1
+          maxItems: 7
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/RecurrenceByDay"
+          example:
+            - MONDAY
+            - WEDNESDAY
+        recurrenceStartDate:
+          type: string
+          format: date
+          description: Calendar date when the recurrence begins
+          example: "2026-07-20"
+        recurUntil:
+          type: string
+          format: date
+          description: Inclusive last calendar date of the recurrence; omit for no end
+          example: "2026-12-31"
+        startTime:
+          type: string
+          format: time-local
+          description: Daily start time of the scheduled session
+          example: "09:00:00"
+        endTime:
+          type: string
+          format: time-local
+          description: Daily end time of the scheduled session
+          example: "10:30:00"
+        name:
+          type: string
+          description: Optional display name copied onto generated classroom sessions
+          minLength: 1
+          maxLength: 255
+          example: Week 1 lecture
+        description:
+          type: string
+          description: Optional description copied onto generated classroom sessions
+          minLength: 1
+          maxLength: 2000
+          example: Introduction to the course and classroom expectations
+    RecurrenceFrequency:
+      type: string
+      description: How often the recurrence repeats
+      enum:
+        - WEEKLY
+      example: WEEKLY
+    RecurrenceByDay:
+      type: string
+      description: Weekday the recurrence falls on
+      enum:
+        - MONDAY
+        - TUESDAY
+        - WEDNESDAY
+        - THURSDAY
+        - FRIDAY
+        - SATURDAY
+        - SUNDAY
+      example: MONDAY
+    ClassroomScheduleRecurrenceResponse:
+      type: object
+      description: Classroom schedule recurrence resource returned by the API
+      additionalProperties: false
+      required:
+        - id
+        - classroomId
+        - frequency
+        - byDay
+        - recurrenceStartDate
+        - startTime
+        - endTime
+        - createdDate
+        - lastModifiedDate
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique classroom schedule identifier
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        classroomId:
+          type: string
+          format: uuid
+          description: Classroom this schedule belongs to
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        frequency:
+          $ref: "#/components/schemas/RecurrenceFrequency"
+        byDay:
+          $ref: "#/components/schemas/RecurrenceByDay"
+        recurrenceStartDate:
+          type: string
+          format: date
+          description: Calendar date when the recurrence begins
+          example: "2026-07-20"
+        recurUntil:
+          type: string
+          format: date
+          description: Inclusive last calendar date of the recurrence; null if none
+          example: "2026-12-31"
+        startTime:
+          type: string
+          format: time-local
+          description: Daily start time of the scheduled session
+          example: "09:00:00"
+        endTime:
+          type: string
+          format: time-local
+          description: Daily end time of the scheduled session
+          example: "10:30:00"
+        name:
+          type: string
+          description: Optional display name copied onto generated classroom sessions
+          minLength: 1
+          maxLength: 255
+          example: Week 1 lecture
+        description:
+          type: string
+          description: Optional description copied onto generated classroom sessions
+          minLength: 1
+          maxLength: 2000
+          example: Introduction to the course and classroom expectations
+        deletedDate:
+          type: string
+          format: date-time
+          description: When the schedule was soft-deleted (null if active)
+          example: null
+        createdDate:
+          type: string
+          format: date-time
+          description: When the schedule was created
+          example: 2026-07-14T00:00:00Z
+        lastModifiedDate:
+          type: string
+          format: date-time
+          description: When the schedule was last modified
+          example: 2026-07-14T00:00:00Z
+    GetAllClassroomScheduleRecurrencesResponse:
+      type: array
+      description: Collection of classroom schedule recurrences
+      items:
+        $ref: "#/components/schemas/ClassroomScheduleRecurrenceResponse"
+    AccountProfileResponse:
+      type: object
+      description: Account profile for the authenticated user (app-owned user data)
+      additionalProperties: false
+      required:
+        - id
+        - cognitoSub
+        - email
+        - firstName
+        - lastName
+        - avatarKey
+        - createdDate
+        - lastModifiedDate
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Internal account profile identifier
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        cognitoSub:
+          type: string
+          description: Cognito user id from the JWT `sub` claim
+          minLength: 1
+          maxLength: 255
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        email:
+          type: string
+          format: email
+          description: User email address
+          minLength: 1
+          maxLength: 255
+          example: jane.doe@example.com
+        firstName:
+          type: string
+          description: Given name
+          minLength: 1
+          maxLength: 255
+          example: Jane
+        lastName:
+          type: string
+          description: Family name
+          minLength: 1
+          maxLength: 255
+          example: Doe
+        avatarKey:
+          type: string
+          description: Key to the stored avatar image in the Public S3 Bucket
+          minLength: 1
+          maxLength: 64
+          example: public/3e4ef8d1-9581-402f-9e27-fec209aeb2d8
+          pattern: ^public\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+        createdDate:
+          type: string
+          format: date-time
+          description: When the profile was created
+          example: 2026-07-14T00:00:00Z
+        lastModifiedDate:
+          type: string
+          format: date-time
+          description: When the profile was last modified
+          example: 2026-07-14T00:00:00Z
+    UpdateAccountProfileCommand:
+      type: object
+      description: >
+        Command to update the authenticated user's account profile. Only first and last name are accepted here; email is taken from `X-ID-Token`.
+
+      additionalProperties: false
+      required:
+        - firstName
+        - lastName
+        - avatarKey
+      properties:
+        firstName:
+          type: string
+          description: Updated given name
+          minLength: 1
+          maxLength: 255
+          example: Jane
+        lastName:
+          type: string
+          description: Updated family name
+          minLength: 1
+          maxLength: 255
+          example: Doe
+        avatarKey:
+          type: string
+          description: Key to the stored avatar image in the Public S3 Bucket
+          minLength: 1
+          maxLength: 64
+          example: public/3e4ef8d1-9581-402f-9e27-fec209aeb2d8
+          pattern: ^public\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+    ClassroomInvoiceStatus:
+      type: string
+      description: Lifecycle status of a classroom invoice
+      enum:
+        - DRAFT
+        - APPROVED
+        - COMPLETED
+        - CANCELLED
+      example: DRAFT
+    ClassroomInvoiceType:
+      type: string
+      description: How the classroom invoice was created
+      enum:
+        - GENERATED
+        - ADHOC
+      example: GENERATED
+    ClassroomInvoicePeriodRange:
+      type: string
+      description: Billing period range for a generated invoice
+      enum:
+        - MONTH
+      example: MONTH
+    ClassroomInvoicePaymentMethod:
+      type: string
+      description: How the invoice was paid
+      enum:
+        - BANK
+        - CASH
+        - OTHER
+      example: BANK
+    ClassroomInvoiceLineKind:
+      type: string
+      description: Kind of invoice line
+      enum:
+        - LESSON
+        - OTHER
+      example: LESSON
+    CreateClassroomInvoiceAdhocCommand:
+      type: object
+      description: >
+        Command to create an adhoc classroom invoice. Status is always DRAFT and type is always ADHOC.
+        Period is not set. Totals are computed by the server.
+
+      additionalProperties: false
+      required:
+        - memberId
+        - lines
+      properties:
+        memberId:
+          type: string
+          format: uuid
+          description: Classroom member this invoice belongs to
+          example: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+        note:
+          type: string
+          description: Optional invoice note
+          minLength: 1
+          maxLength: 2000
+          example: Makeup fee for missed materials
+        lines:
+          type: array
+          description: Invoice lines. At least one.
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/CreateClassroomInvoiceAdhocLineCommand"
+    CreateClassroomInvoiceAdhocLineCommand:
+      type: object
+      description: >
+        One line on an adhoc classroom invoice. finalAmount is not accepted; the server sets it to unitPrice * quantity.
+
+      additionalProperties: false
+      required:
+        - kind
+        - description
+        - unitPrice
+        - quantity
+      properties:
+        kind:
+          $ref: "#/components/schemas/ClassroomInvoiceLineKind"
+        description:
+          type: string
+          description: Line description
+          minLength: 1
+          maxLength: 2000
+          example: Replacement workbook
+        unitPrice:
+          type: integer
+          format: int64
+          description: Unit price in the smallest currency unit
+          minimum: 0
+          example: 50000
+        quantity:
+          type: integer
+          format: int32
+          description: Quantity
+          minimum: 0
+          example: 1
+    UpdateClassroomInvoiceCommand:
+      type: object
+      description: >
+        Command to replace lines on a DRAFT classroom invoice. Totals are computed by the server.
+        Member, type, period, payment fields, and status cannot be changed. Omitted note leaves
+        the existing note unchanged.
+
+      additionalProperties: false
+      required:
+        - lines
+      properties:
+        note:
+          type: string
+          description: Optional invoice note; omit to keep the current note
+          minLength: 1
+          maxLength: 2000
+          example: Adjusted lesson count for October
+        lines:
+          type: array
+          description: Replacement invoice lines. At least one. Line ids are not accepted.
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/CreateClassroomInvoiceAdhocLineCommand"
+    CompleteClassroomInvoiceCommand:
+      type: object
+      description: >
+        Command to mark an APPROVED classroom invoice COMPLETED and record payment.
+        paidAt is set by the server. paidAmount is not required to equal totalAmount
+        (partial payment is allowed); use paymentNote to explain shortfalls or other
+        payment details.
+      additionalProperties: false
+      required:
+        - paidAmount
+        - paymentMethod
+      properties:
+        paidAmount:
+          type: integer
+          format: int64
+          description: >
+            Amount paid in the smallest currency unit. May be less than (or differ from)
+            the invoice totalAmount; the server does not enforce equality.
+          minimum: 0
+          example: 1200000
+        paymentMethod:
+          $ref: "#/components/schemas/ClassroomInvoicePaymentMethod"
+        paymentReference:
+          type: string
+          description: External payment reference
+          minLength: 1
+          maxLength: 255
+          example: TXN-12345
+        paymentNote:
+          type: string
+          description: >
+            Optional payment note — e.g. why paidAmount is less than totalAmount
+          minLength: 1
+          maxLength: 2000
+          example: Parent paid half now; remainder next week
+    ClassroomInvoiceFilter:
+      type: object
+      description: Filter for querying classroom invoices
+      additionalProperties: false
+      properties:
+        page:
+          type: integer
+          default: 0
+          minimum: 0
+        size:
+          type: integer
+          default: 10
+          minimum: 1
+          maximum: 50
+        sortBy:
+          type: string
+          pattern: '^(createdDate|periodStart|totalAmount|status|type|memberId)$'
+        sortDirection:
+          type: string
+          enum: [ASC, DESC]
+          default: DESC
+        filters:
+          type: array
+          items:
+            type: object
+            required: [field, operator, value]
+            properties:
+              field:
+                type: string
+                pattern: '^(memberId|status|type|periodStart|periodRange|createdDate|totalAmount)$'
+              operator:
+                type: string
+                pattern: '^(eq|like|gt|lt|gte|lte)$'
+              value:
+                type: string
+    ClassroomInvoiceLineResponse:
+      type: object
+      description: Line item on a classroom invoice
+      additionalProperties: false
+      required:
+        - id
+        - kind
+        - description
+        - unitPrice
+        - quantity
+        - finalAmount
+        - createdDate
+        - lastModifiedDate
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique invoice line identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        kind:
+          $ref: "#/components/schemas/ClassroomInvoiceLineKind"
+        description:
+          type: string
+          description: Line description
+          example: 8 lessons in October
+        unitPrice:
+          type: integer
+          format: int64
+          description: Unit price in the smallest currency unit
+          minimum: 0
+          example: 150000
+        quantity:
+          type: integer
+          format: int32
+          description: Quantity
+          minimum: 0
+          example: 8
+        finalAmount:
+          type: integer
+          format: int64
+          description: Line total (unitPrice * quantity)
+          example: 1200000
+        createdDate:
+          type: string
+          format: date-time
+          description: When the line was created
+          example: 2026-07-14T00:00:00Z
+        lastModifiedDate:
+          type: string
+          format: date-time
+          description: When the line was last modified
+          example: 2026-07-14T00:00:00Z
+    ClassroomInvoiceResponse:
+      type: object
+      description: Classroom invoice resource returned by the API
+      additionalProperties: false
+      required:
+        - id
+        - classroomId
+        - memberId
+        - status
+        - type
+        - totalAmount
+        - lines
+        - createdDate
+        - lastModifiedDate
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique classroom invoice identifier
+          example: 6ba7b810-9dad-11d1-80b4-00c04fd430c8
+        classroomId:
+          type: string
+          format: uuid
+          description: Classroom this invoice belongs to
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        memberId:
+          type: string
+          format: uuid
+          description: Classroom member this invoice belongs to
+          example: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+        status:
+          $ref: "#/components/schemas/ClassroomInvoiceStatus"
+        type:
+          $ref: "#/components/schemas/ClassroomInvoiceType"
+        periodStart:
+          type: string
+          format: date
+          description: Period start date (generated invoices)
+          example: "2026-10-01"
+        periodRange:
+          $ref: "#/components/schemas/ClassroomInvoicePeriodRange"
+        totalAmount:
+          type: integer
+          format: int64
+          description: Invoice total in the smallest currency unit
+          minimum: 0
+          example: 1200000
+        note:
+          type: string
+          description: Optional invoice note
+          example: October tuition
+        approvedAt:
+          type: string
+          format: date-time
+          description: When the invoice was approved
+          example: 2026-10-05T00:00:00Z
+        paidAt:
+          type: string
+          format: date-time
+          description: When the invoice was marked paid
+          example: 2026-10-10T00:00:00Z
+        paidAmount:
+          type: integer
+          format: int64
+          description: Amount paid in the smallest currency unit
+          example: 1200000
+        paymentMethod:
+          $ref: "#/components/schemas/ClassroomInvoicePaymentMethod"
+        paymentReference:
+          type: string
+          description: External payment reference
+          example: TXN-12345
+        paymentNote:
+          type: string
+          description: Optional payment note
+          example: Paid via bank transfer
+        lines:
+          type: array
+          description: Invoice line items
+          items:
+            $ref: "#/components/schemas/ClassroomInvoiceLineResponse"
+        createdDate:
+          type: string
+          format: date-time
+          description: When the invoice was created
+          example: 2026-07-14T00:00:00Z
+        lastModifiedDate:
+          type: string
+          format: date-time
+          description: When the invoice was last modified
+          example: 2026-07-14T00:00:00Z
+    GetAllClassroomInvoicesResponse:
+      type: array
+      description: Collection of classroom invoices
+      items:
+        $ref: "#/components/schemas/ClassroomInvoiceResponse"
+    ErrorResponse:
+      type: object
+      description: Standard API error payload
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - status
+        - timestamp
+        - path
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code
+          minLength: 1
+          maxLength: 64
+          example: CLASSROOM_NOT_FOUND
+        message:
+          type: string
+          description: Human-readable error message
+          minLength: 1
+          maxLength: 1024
+          example: Classroom not found
+        status:
+          type: integer
+          description: HTTP status code
+          example: 404
+        timestamp:
+          type: string
+          format: date-time
+          description: When the error occurred
+          example: 2026-07-16T00:00:00Z
+        path:
+          type: string
+          description: Request path that caused the error
+          minLength: 1
+          maxLength: 2048
+          example: /admin/classrooms/3fa85f64-5717-4562-b3fc-2c963f66afa6
