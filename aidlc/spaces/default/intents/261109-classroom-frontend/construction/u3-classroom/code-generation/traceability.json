@@ -1,0 +1,92 @@
+{
+  "stage": "code-generation",
+  "unit": "u3-classroom",
+  "upstream_ids": [
+    "FR1.1",
+    "FR1.2",
+    "FR2.1",
+    "FR2.2",
+    "FR2.3",
+    "FR2.4",
+    "FR2.5",
+    "FR2.6",
+    "FR7.3",
+    "FR7.4",
+    "FR8.4",
+    "NFR2",
+    "NFR3",
+    "NFR5"
+  ],
+  "coverage": [
+    {
+      "id": "FR1.1",
+      "status": "OK",
+      "target": "src/routes/index.tsx"
+    },
+    {
+      "id": "FR1.2",
+      "status": "OK",
+      "target": "src/routes/index.tsx"
+    },
+    {
+      "id": "FR2.1",
+      "status": "OK",
+      "target": "src/routes/classrooms/index.tsx"
+    },
+    {
+      "id": "FR2.2",
+      "status": "OK",
+      "target": "src/features/classroom/components/classroom-list.tsx"
+    },
+    {
+      "id": "FR2.3",
+      "status": "OK",
+      "target": "src/features/classroom/components/classroom-create.tsx"
+    },
+    {
+      "id": "FR2.4",
+      "status": "OK",
+      "target": "src/features/classroom/lib/classroom-name.ts"
+    },
+    {
+      "id": "FR2.5",
+      "status": "OK",
+      "target": "src/features/classroom/components/classroom-layout.tsx"
+    },
+    {
+      "id": "FR2.6",
+      "status": "OK",
+      "target": "src/features/classroom/components/classroom-rename.tsx"
+    },
+    {
+      "id": "FR7.3",
+      "status": "OK",
+      "target": "src/features/classroom/lib/classroom-name.ts"
+    },
+    {
+      "id": "FR7.4",
+      "status": "OK",
+      "target": "src/features/classroom/components/classroom-create.tsx"
+    },
+    {
+      "id": "FR8.4",
+      "status": "OK",
+      "target": "src/features/classroom/lib/classroom-api.ts"
+    },
+    {
+      "id": "NFR2",
+      "status": "OK",
+      "target": "src/features/app-shell/components/app-shell.tsx"
+    },
+    {
+      "id": "NFR3",
+      "status": "OK",
+      "target": "src/features/app-shell/components/app-shell.tsx"
+    },
+    {
+      "id": "NFR5",
+      "status": "OK",
+      "target": "src/features/classroom/components/classroom-layout.tsx"
+    }
+  ]
+}

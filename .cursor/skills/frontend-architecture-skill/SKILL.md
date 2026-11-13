@@ -42,8 +42,8 @@ Structure a frontend so that a new engineer can find the code for a feature in u
 
 ## Workflow
 
-1. **Organize by TanStack Router file route, not by kind** — A route directory under `src/routes/` holds that feature's screens and private files. `components/`, `hooks/`, and `api/` each containing a slice of every feature is the layout to avoid. TanStack Router file routes are the feature folders. A parallel `features/` tree is not used.
-2. **Draw the import rules** — A route directory may import from `shared/`. A route directory may not import another route directory; if two need the same thing, it moves to `shared/`. Enforce this with a lint rule, not a convention document.
+1. **Organize by domain, then by SWE function** — Level 1 is the feature domain (`src/features/<feature>/`). Level 2+ prioritizes SWE function (`components/`, `lib/`, optional `hooks/`) — not nested domain slices like `session/` or `profile/`. Thin route files live only in `src/routes/` (TanStack Router official `routesDirectory`). A route file imports a screen and renders it. Top-level `components/`, `hooks/`, and `api/` each containing a slice of every feature is the layout to avoid.
+2. **Draw the import rules** — A feature may import `src/shared`. A feature must not import another feature. Route files may import a feature. If two features need the same thing, it moves to `shared/`. Enforce this with a lint rule, not a convention document.
 3. **Layer the state deliberately** — Server data in a query cache. Genuinely global client state (theme, session) in one store. Everything else stays local. Most "global state" is server state in disguise.
 4. **Centralize the API client** — One place that knows about base URLs, auth headers, error mapping, and retries. Feature code calls typed functions, not `fetch`.
 5. **Budget the bundle** — Set a size limit per route and fail the build when it is exceeded. Bundle size regresses one dependency at a time.
@@ -59,24 +59,24 @@ Structure a frontend so that a new engineer can find the code for a feature in u
 
 ## Examples
 
-**TanStack Router defaults.** File-based routing. No custom routes directory and no virtual file routes. Generator defaults: `routesDirectory` `./src/routes`, `generatedRouteTree` `./src/routeTree.gen.ts`, `routeFileIgnorePrefix` `-`, `indexToken` `index`, `routeToken` `route`, single quotes, no semicolons, target `react`. Do not edit `routeTree.gen.ts`.
+**TanStack Router defaults.** File-based routing. Official defaults only: `routesDirectory` `./src/routes`, `generatedRouteTree` `./src/routeTree.gen.ts`, `routeFileIgnorePrefix` `-` (leading `-` ignores a non-route file), `indexToken` `index`, `routeToken` `route`, single quotes, no semicolons, target `react`. Do not edit `routeTree.gen.ts`. Feature code stays under `src/features/<feature>/` (domain → SWE function); route files stay thin and only wire URL → screen.
 
 ```text
 src/
   main.tsx                         # createRouter and providers
   routeTree.gen.ts                 # generated from src/routes. Do not edit.
-  routes/
-    __root.tsx                     # root layout
-    sign-in.tsx                    # public auth route
-    _authenticated.tsx             # pathless signed-in layout
-    _authenticated/
-      classroom/
-        index.tsx                  # /classroom
-        -list.tsx                  # not a route. A leading "-" is the default ignore prefix.
-      members/
-      schedule/
-      payment/
-      tools/
+  routes/                          # routesDirectory. Thin route files only.
+    __root.tsx
+    index.tsx                      # wires /
+    sign-in.tsx                    # wires /sign-in
+    onboarding.tsx                 # wires /onboarding
+    -ignored.ts                    # not a route. A leading "-" is the ignore prefix.
+  features/
+    auth/                          # Level 1 = domain. Must not import another feature.
+      components/                  # Level 2+ = SWE function (UI)
+        sign-in-screen.tsx
+      lib/                         # hooks, utils, api helpers, session bridge
+    classroom/
   shared/
     ui/                            # design-system primitives
     api/                           # http client, auth, error mapping
@@ -85,20 +85,14 @@ src/
 
 ```javascript
 // eslint.config.js — the boundary is enforced, not merely documented.
-// Repeat the zone for each route directory.
+// Repeat the zone for each feature.
 {
   rules: {
     "import/no-restricted-paths": ["error", {
       zones: [{
-        target: "./src/routes/_authenticated/classroom",
-        from: [
-          "./src/routes/sign-in.tsx",
-          "./src/routes/_authenticated/members",
-          "./src/routes/_authenticated/schedule",
-          "./src/routes/_authenticated/payment",
-          "./src/routes/_authenticated/tools",
-        ],
-        message: "A route directory must not import another. Move shared code to src/shared.",
+        target: "./src/features/auth",
+        from: ["./src/features/classroom"],
+        message: "A feature must not import another feature. Move shared code to src/shared.",
       }],
     }],
   },
@@ -118,6 +112,6 @@ src/
 
 ## Notes
 
-- The single most effective architectural rule in a frontend codebase is "route directories may not import each other". It is trivially enforceable and prevents the coupling that makes large frontends unchangeable.
+- The single most effective architectural rule in a frontend codebase is "a feature must not import another feature". It is trivially enforceable and prevents the coupling that makes large frontends unchangeable.
 - Analyze the bundle before optimizing it. `vite-bundle-visualizer` or `source-map-explorer` will usually show one date library or one icon set accounting for a third of the payload.
 - Monorepos solve a versioning problem between packages. If you have one application, a monorepo is overhead with no corresponding benefit.

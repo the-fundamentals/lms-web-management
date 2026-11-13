@@ -1,0 +1,33 @@
+{
+  "stage": "code-generation",
+  "unit": "u5-schedule",
+  "version": 1,
+  "writes": [
+    { "path": "eslint.config.js" },
+    { "path": "src/features/schedule/lib/session-time.ts" },
+    { "path": "src/features/schedule/lib/session-time.test.ts" },
+    { "path": "src/features/schedule/lib/session-buckets.ts" },
+    { "path": "src/features/schedule/lib/session-buckets.test.ts" },
+    { "path": "src/features/schedule/lib/calendar-month.ts" },
+    { "path": "src/features/schedule/lib/session-api.ts" },
+    { "path": "src/features/schedule/lib/session-api.test.ts" },
+    { "path": "src/features/schedule/components/session-overview.tsx" },
+    { "path": "src/features/schedule/components/session-overview.test.tsx" },
+    { "path": "src/features/schedule/components/session-calendar.tsx" },
+    { "path": "src/features/schedule/components/session-calendar.test.tsx" },
+    { "path": "src/features/schedule/components/weekly-schedule.tsx" },
+    { "path": "src/features/schedule/components/weekly-schedule.test.tsx" },
+    { "path": "src/features/schedule/components/session-create.tsx" },
+    { "path": "src/features/schedule/components/session-create.test.tsx" },
+    { "path": "src/features/schedule/components/session-attendance.tsx" },
+    { "path": "src/features/schedule/components/session-attendance.test.tsx" },
+    { "path": "src/features/schedule/components/schedule.integration.test.tsx" },
+    { "path": "src/routes/classrooms/$classroomId/index.tsx" },
+    { "path": "src/routes/classrooms/$classroomId/calendar.tsx" },
+    { "path": "src/routes/classrooms/$classroomId/weekly.tsx" },
+    { "path": "src/routes/classrooms/$classroomId/sessions/new.tsx" },
+    { "path": "src/routes/classrooms/$classroomId/sessions/$sessionId.tsx" },
+    { "path": "src/features/classroom/components/classroom-layout.tsx" },
+    { "path": "src/routeTree.gen.ts" }
+  ]
+}

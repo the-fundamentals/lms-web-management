@@ -85,23 +85,23 @@ Test-after. Each layer is implemented, then its tests are written and run, befor
 
 ### Step 1. Project structure
 
-- [ ] Run `npx shadcn@latest init --template vite` in this project. Use CSS variables, TypeScript, and `src/components/ui`. Do not pass a preset. Do not add a community registry.
-- [ ] Keep one Vite app. Do not add a second bundler or a second app folder.
-- [ ] After init, keep `typescript` at `6.0.3`, the `generate:api` script, and the packages already in `package.json`.
-- [ ] Add `@fontsource/figtree` and `@fontsource/newsreader`. No font CDN and no secret.
-- [ ] Leave `src/routes/` and the signed-in layout to the app unit. If the template writes `src/main.tsx`, keep it only as the Vite entry. Do not put screens in it.
-- [ ] Point the `@/` alias at `src/` in Vite and in Vitest.
-- [ ] Remove the Vitest aliases that send `@/components/ui/skeleton`, `alert`, and `button` to `src/shared/ui/test-doubles`. Those doubles were only for the shared unit before this folder existed.
+- [x] Run `npx shadcn@latest init --template vite` in this project. Use CSS variables, TypeScript, and `src/components/ui`. Do not pass a preset. Do not add a community registry.
+- [x] Keep one Vite app. Do not add a second bundler or a second app folder.
+- [x] After init, keep `typescript` at `6.0.3`, the `generate:api` script, and the packages already in `package.json`.
+- [x] Add `@fontsource/figtree` and `@fontsource/newsreader`. No font CDN and no secret.
+- [x] Leave `src/routes/` and the signed-in layout to the app unit. If the template writes `src/main.tsx`, keep it only as the Vite entry. Do not put screens in it.
+- [x] Point the `@/` alias at `src/` in Vite and in Vitest.
+- [x] Remove the Vitest aliases that send `@/components/ui/skeleton`, `alert`, and `button` to `src/shared/ui/test-doubles`. Those doubles were only for the shared unit before this folder existed.
 
 Stories: NFR6, NFR7.
 
 ### Step 2. Test runner
 
-- [ ] Vitest, jsdom, and React Testing Library are already installed. Do not add a second runner.
-- [ ] Keep `include` as `src/**/*.test.ts` and `src/**/*.test.tsx`.
-- [ ] This unit's command is `npx vitest run src/components`.
-- [ ] Do not set a coverage threshold. This scope has no line-coverage floor.
-- [ ] After the aliases in Step 1 are removed, `npx vitest run src/shared` still passes.
+- [x] Vitest, jsdom, and React Testing Library are already installed. Do not add a second runner.
+- [x] Keep `include` as `src/**/*.test.ts` and `src/**/*.test.tsx`.
+- [x] This unit's command is `npx vitest run src/components`.
+- [x] Do not set a coverage threshold. This scope has no line-coverage floor.
+- [x] After the aliases in Step 1 are removed, `npx vitest run src/shared` still passes.
 
 Stories: none.
 
@@ -109,28 +109,28 @@ Stories: none.
 
 Implement, then write and run 5 tests.
 
-- [ ] Write the NFR3 light and dark values as CSS variables on the semantic names in the global stylesheet the CLI creates.
-- [ ] Light: background `#F6F1E7`, foreground `#1F1A14`, card `#FFFCF6`, primary `#0E6B62`, primary foreground `#F6F1E7`, secondary `#E6DDD0`, muted `#EFE8DC`, muted foreground `#5E574E`, accent `#E7D7A8`, destructive `#8E2F2F`, border `#D8CFC2`, ring `#0E6B62`. Card, secondary, muted, accent, and destructive foregrounds are `#1F1A14` except destructive foreground `#F6F1E7`.
-- [ ] Dark: background `#1A1714`, foreground `#F6F1E7`, card `#24201C`, primary `#3DADA3`, primary foreground `#1A1714`, secondary `#3A342C`, muted `#2C2824`, muted foreground `#C4B8A8`, accent `#C4A86A`, destructive `#E07A7A`, border `#3A342C`, ring `#3DADA3`. Card and secondary foregrounds are `#F6F1E7`. Accent and destructive foregrounds are `#1A1714`.
-- [ ] Radius `8px`. UI font Figtree. Page titles Newsreader. Type classes: page 24px semibold, section 18px semibold, body 16px, secondary 14px.
-- [ ] Spacing steps for screens: 8px, 16px, 24px, 32px. Document them as the gap and padding steps. Do not restyle shadcn internals with a second scale.
-- [ ] Five tests in `src/components/theme.test.ts`. They read the stylesheet. Run `npx vitest run src/components/theme.test.ts`.
+- [x] Write the NFR3 light and dark values as CSS variables on the semantic names in the global stylesheet the CLI creates.
+- [x] Light: background `#F6F1E7`, foreground `#1F1A14`, card `#FFFCF6`, primary `#0E6B62`, primary foreground `#F6F1E7`, secondary `#E6DDD0`, muted `#EFE8DC`, muted foreground `#5E574E`, accent `#E7D7A8`, destructive `#8E2F2F`, border `#D8CFC2`, ring `#0E6B62`. Card, secondary, muted, accent, and destructive foregrounds are `#1F1A14` except destructive foreground `#F6F1E7`.
+- [x] Dark: background `#1A1714`, foreground `#F6F1E7`, card `#24201C`, primary `#3DADA3`, primary foreground `#1A1714`, secondary `#3A342C`, muted `#2C2824`, muted foreground `#C4B8A8`, accent `#C4A86A`, destructive `#E07A7A`, border `#3A342C`, ring `#3DADA3`. Card and secondary foregrounds are `#F6F1E7`. Accent and destructive foregrounds are `#1A1714`.
+- [x] Radius `8px`. UI font Figtree. Page titles Newsreader. Type classes: page 24px semibold, section 18px semibold, body 16px, secondary 14px.
+- [x] Spacing steps for screens: 8px, 16px, 24px, 32px. Document them as the gap and padding steps. Do not restyle shadcn internals with a second scale.
+- [x] Five tests in `src/components/theme.test.ts`. They read the stylesheet. Run `npx vitest run src/components/theme.test.ts`.
 
 Stories: NFR3, NFR6.
 
 ### Step 4. Controls, then their tests
 
-- [ ] Add only `button`, `alert`, and `skeleton` with `npx shadcn@latest add button alert skeleton`.
-- [ ] Set the default button height to 36px. Do not add a hex color, a raw gray class, or a `space-y` class.
-- [ ] Five tests each in `button.test.tsx`, `alert.test.tsx`, and `skeleton.test.tsx` under `src/components/ui/`. Each test renders the real component, checks a semantic class, and checks that the markup has no hex color.
-- [ ] Run `npx vitest run src/components`.
+- [x] Add only `button`, `alert`, and `skeleton` with `npx shadcn@latest add button alert skeleton`.
+- [x] Set the default button height to 36px. Do not add a hex color, a raw gray class, or a `space-y` class.
+- [x] Five tests each in `button.test.tsx`, `alert.test.tsx`, and `skeleton.test.tsx` under `src/components/ui/`. Each test renders the real component, checks a semantic class, and checks that the markup has no hex color.
+- [x] Run `npx vitest run src/components`.
 
 Stories: NFR2, NFR3, NFR6.
 
 ### Step 5. Traceability
 
-- [ ] Write `traceability.json` for this unit after the code exists. NFR3, NFR6, and NFR7 point at the stylesheet, the components, and the Vite config.
-- [ ] Write `code-summary.md`.
+- [x] Write `traceability.json` for this unit after the code exists. NFR3, NFR6, and NFR7 point at the stylesheet, the components, and the Vite config.
+- [x] Write `code-summary.md`.
 
 ## Requirement map
 

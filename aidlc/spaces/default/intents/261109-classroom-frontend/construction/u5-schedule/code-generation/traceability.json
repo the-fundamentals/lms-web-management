@@ -1,0 +1,110 @@
+{
+  "stage": "code-generation",
+  "unit": "u5-schedule",
+  "upstream_ids": [
+    "FR2.5",
+    "FR4.1",
+    "FR4.2",
+    "FR4.3",
+    "FR4.4",
+    "FR4.5",
+    "FR4.6",
+    "FR4.7",
+    "FR4.8",
+    "FR4.9",
+    "FR6.1",
+    "FR6.2",
+    "FR7.3",
+    "FR7.4",
+    "FR8.4",
+    "NFR2",
+    "NFR3"
+  ],
+  "coverage": [
+    {
+      "id": "FR2.5",
+      "status": "OK",
+      "target": "src/features/schedule/components/session-overview.tsx"
+    },
+    {
+      "id": "FR4.1",
+      "status": "OK",
+      "target": "src/features/schedule/components/session-overview.tsx"
+    },
+    {
+      "id": "FR4.2",
+      "status": "OK",
+      "target": "src/features/schedule/components/session-calendar.tsx"
+    },
+    {
+      "id": "FR4.3",
+      "status": "OK",
+      "target": "src/features/schedule/components/weekly-schedule.tsx"
+    },
+    {
+      "id": "FR4.4",
+      "status": "OK",
+      "target": "src/features/schedule/components/weekly-schedule.tsx"
+    },
+    {
+      "id": "FR4.5",
+      "status": "OK",
+      "target": "src/features/schedule/components/session-create.tsx"
+    },
+    {
+      "id": "FR4.6",
+      "status": "OK",
+      "target": "src/features/schedule/components/session-attendance.tsx"
+    },
+    {
+      "id": "FR4.7",
+      "status": "OK",
+      "target": "src/features/schedule/components/session-attendance.tsx"
+    },
+    {
+      "id": "FR4.8",
+      "status": "OK",
+      "target": "src/features/schedule/components/session-attendance.tsx"
+    },
+    {
+      "id": "FR4.9",
+      "status": "OK",
+      "target": "src/features/schedule/components/session-attendance.tsx"
+    },
+    {
+      "id": "FR6.1",
+      "status": "OK",
+      "target": "src/features/schedule/lib/session-time.ts"
+    },
+    {
+      "id": "FR6.2",
+      "status": "OK",
+      "target": "src/features/schedule/lib/session-time.ts"
+    },
+    {
+      "id": "FR7.3",
+      "status": "OK",
+      "target": "src/features/schedule/components/session-create.tsx"
+    },
+    {
+      "id": "FR7.4",
+      "status": "OK",
+      "target": "src/features/schedule/components/weekly-schedule.tsx"
+    },
+    {
+      "id": "FR8.4",
+      "status": "OK",
+      "target": "src/features/schedule/lib/session-api.ts"
+    },
+    {
+      "id": "NFR2",
+      "status": "OK",
+      "target": "src/features/schedule/components/session-overview.tsx"
+    },
+    {
+      "id": "NFR3",
+      "status": "OK",
+      "target": "eslint.config.js"
+    }
+  ]
+}

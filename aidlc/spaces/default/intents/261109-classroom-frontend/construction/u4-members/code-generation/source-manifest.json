@@ -1,0 +1,27 @@
+{
+  "stage": "code-generation",
+  "unit": "u4-members",
+  "version": 1,
+  "writes": [
+    { "path": "eslint.config.js" },
+    { "path": "src/components/ui/alert-dialog.tsx" },
+    { "path": "src/features/members/lib/member-api.ts" },
+    { "path": "src/features/members/lib/member-api.test.ts" },
+    { "path": "src/features/members/lib/member-row-fixture.ts" },
+    { "path": "src/features/members/components/member-list.tsx" },
+    { "path": "src/features/members/components/member-list.test.tsx" },
+    { "path": "src/features/members/components/member-add.tsx" },
+    { "path": "src/features/members/components/member-add.test.tsx" },
+    { "path": "src/features/members/components/member-remove-dialog.tsx" },
+    { "path": "src/features/members/components/member-remove-dialog.test.tsx" },
+    { "path": "src/features/members/components/member-attendance.tsx" },
+    { "path": "src/features/members/components/member-attendance.test.tsx" },
+    { "path": "src/features/members/components/members.integration.test.tsx" },
+    { "path": "src/routes/classrooms/$classroomId/members/index.tsx" },
+    { "path": "src/routes/classrooms/$classroomId/members/$memberId.tsx" },
+    { "path": "src/features/classroom/components/classroom-layout.tsx" },
+    { "path": "src/features/classroom/components/classroom-layout.test.tsx" },
+    { "path": "src/features/classroom/components/classroom.integration.test.tsx" },
+    { "path": "src/routeTree.gen.ts" }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "stage": "code-generation",
+  "unit": "u2-auth",
+  "upstream_ids": [
+    "FR1.1",
+    "FR1.2",
+    "FR1.3",
+    "FR1.4",
+    "FR1.5",
+    "FR1.6",
+    "FR7.1",
+    "FR7.3",
+    "FR7.4",
+    "FR8.4",
+    "NFR2",
+    "NFR3",
+    "NFR4",
+    "NFR5",
+    "NFR6",
+    "NFR7"
+  ],
+  "coverage": [
+    {
+      "id": "FR1.1",
+      "status": "OK",
+      "target": "src/features/auth/profile/profile-gate.ts"
+    },
+    {
+      "id": "FR1.2",
+      "status": "OK",
+      "target": "src/features/auth/screens/name-form.tsx"
+    },
+    {
+      "id": "FR1.3",
+      "status": "OK",
+      "target": "src/features/auth/screens/sign-out.tsx"
+    },
+    {
+      "id": "FR1.4",
+      "status": "OK",
+      "target": "src/features/auth/profile/profile-gate.ts"
+    },
+    {
+      "id": "FR1.5",
+      "status": "OK",
+      "target": "src/features/auth/profile/profile-gate.ts"
+    },
+    {
+      "id": "FR1.6",
+      "status": "OK",
+      "target": "src/features/auth/session/session.ts"
+    },
+    {
+      "id": "FR7.1",
+      "status": "OK",
+      "target": "src/features/auth/screens/sign-in-screen.tsx"
+    },
+    {
+      "id": "FR7.3",
+      "status": "OK",
+      "target": "src/features/auth/screens/name-form.tsx"
+    },
+    {
+      "id": "FR7.4",
+      "status": "OK",
+      "target": "src/features/auth/screens/name-form.tsx"
+    },
+    {
+      "id": "FR8.4",
+      "status": "OK",
+      "target": "src/features/auth/profile/profile.ts"
+    },
+    {
+      "id": "NFR2",
+      "status": "OK",
+      "target": "src/features/auth/screens/name-form.tsx"
+    },
+    {
+      "id": "NFR3",
+      "status": "OK",
+      "target": "src/features/auth/screens/sign-in-screen.tsx"
+    },
+    {
+      "id": "NFR4",
+      "status": "OK",
+      "target": "src/features/auth/session/session.ts"
+    },
+    {
+      "id": "NFR5",
+      "status": "OK",
+      "target": "src/features/auth/screens/name-form.tsx"
+    },
+    {
+      "id": "NFR6",
+      "status": "OK",
+      "target": "src/components/ui/input.tsx"
+    },
+    {
+      "id": "NFR7",
+      "status": "OK",
+      "target": "package.json"
+    }
+  ]
+}

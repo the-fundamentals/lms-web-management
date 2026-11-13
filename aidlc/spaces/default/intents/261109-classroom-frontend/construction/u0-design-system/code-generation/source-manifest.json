@@ -1,0 +1,26 @@
+{
+  "stage": "code-generation",
+  "unit": "u0-design-system",
+  "version": 1,
+  "writes": [
+    { "path": "package.json" },
+    { "path": "package-lock.json" },
+    { "path": "components.json" },
+    { "path": "index.html" },
+    { "path": "vite.config.ts" },
+    { "path": "vitest.config.ts" },
+    { "path": "tsconfig.json" },
+    { "path": "tsconfig.app.json" },
+    { "path": "tsconfig.node.json" },
+    { "path": "src/main.tsx" },
+    { "path": "src/index.css" },
+    { "path": "src/shared/lib/cn.ts" },
+    { "path": "src/components/theme.test.ts" },
+    { "path": "src/components/ui/button.tsx" },
+    { "path": "src/components/ui/button.test.tsx" },
+    { "path": "src/components/ui/alert.tsx" },
+    { "path": "src/components/ui/alert.test.tsx" },
+    { "path": "src/components/ui/skeleton.tsx" },
+    { "path": "src/components/ui/skeleton.test.tsx" }
+  ]
+}

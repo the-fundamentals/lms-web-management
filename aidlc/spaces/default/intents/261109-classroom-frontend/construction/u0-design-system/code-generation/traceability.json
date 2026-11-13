@@ -1,0 +1,32 @@
+{
+  "stage": "code-generation",
+  "unit": "u0-design-system",
+  "upstream_ids": ["FR7.1", "NFR2", "NFR3", "NFR6", "NFR7"],
+  "coverage": [
+    {
+      "id": "FR7.1",
+      "status": "OK",
+      "target": "src/components/ui/skeleton.tsx"
+    },
+    {
+      "id": "NFR2",
+      "status": "OK",
+      "target": "src/components/ui/button.tsx"
+    },
+    {
+      "id": "NFR3",
+      "status": "OK",
+      "target": "src/index.css"
+    },
+    {
+      "id": "NFR6",
+      "status": "OK",
+      "target": "src/components/ui/alert.tsx"
+    },
+    {
+      "id": "NFR7",
+      "status": "OK",
+      "target": "vite.config.ts"
+    }
+  ]
+}

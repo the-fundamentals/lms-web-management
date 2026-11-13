@@ -3,12 +3,16 @@
 
 ## Interpretations
 <!-- example: 2026-05-29T10:14:32Z — chose REST over GraphQL; the consuming team only needs CRUD, revisit if subscriptions land -->
+- 2026-11-12T08:17:33Z — [unit u4-members] Members tab uses URL `/classrooms/$id/members` + shared Outlet so classroom never imports members (L1).
 
 ## Deviations
 <!-- example: 2026-05-29T10:14:32Z — skipped the optional caching layer the stage prose suggested; the dataset is small enough that it adds risk -->
+- 2026-11-12T08:17:33Z — [unit u4-members] Hand-wrote `alert-dialog` from radix-ui; shadcn CLI hung on overwrite. Account search is email `like` only (filter AND). Native checkbox in add sheet.
 
 ## Tradeoffs
 <!-- example: 2026-05-29T10:14:32Z — picked TDD over BDD this run; the team is unit-first and the domain is well-understood -->
+- 2026-11-12T08:17:33Z — [unit u4-members] One Outlet shared by Sessions/Members tabs vs two Outlets (invalid for TanStack).
 
 ## Open questions
 <!-- example: 2026-05-29T10:14:32Z — confirm the retention window with compliance before the next stage hardens the schema -->
+

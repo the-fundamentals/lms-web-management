@@ -52,11 +52,43 @@
 
 
 
-- **Active Unit**: u0-design-system
 
-- **Unit Stage**: code-generation
 
-- **Unit State**: in-progress
+
+- **Construction Verification Command**: npx vitest run && npx vite build
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
@@ -118,7 +150,7 @@
 - **Current Stage**: code-generation
 - **Next Stage**: build-and-test
 - **Status**: Running
-- **Last Updated**: 2026-11-10T19:47:56Z
+- **Last Updated**: 2026-11-13T09:00:47Z
 
 - **Construction Autonomy Mode**: gated
 

@@ -1,0 +1,92 @@
+{
+  "stage": "code-generation",
+  "unit": "u6-payment",
+  "upstream_ids": [
+    "FR5.1",
+    "FR5.2",
+    "FR5.3",
+    "FR5.4",
+    "FR5.5",
+    "FR5.6",
+    "FR5.7",
+    "FR5.8",
+    "FR7.1",
+    "FR7.3",
+    "FR7.4",
+    "FR8.3",
+    "FR8.4",
+    "NFR2"
+  ],
+  "coverage": [
+    {
+      "id": "FR5.1",
+      "status": "OK",
+      "target": "src/features/payment/lib/vnd.ts"
+    },
+    {
+      "id": "FR5.2",
+      "status": "OK",
+      "target": "src/features/payment/components/money-pricing.tsx"
+    },
+    {
+      "id": "FR5.3",
+      "status": "OK",
+      "target": "src/features/payment/components/money-pricing.tsx"
+    },
+    {
+      "id": "FR5.4",
+      "status": "OK",
+      "target": "src/features/payment/lib/payment-api.ts"
+    },
+    {
+      "id": "FR5.5",
+      "status": "OK",
+      "target": "src/features/payment/components/invoice-list.tsx"
+    },
+    {
+      "id": "FR5.6",
+      "status": "OK",
+      "target": "src/features/payment/components/invoice-create.tsx"
+    },
+    {
+      "id": "FR5.7",
+      "status": "OK",
+      "target": "src/features/payment/components/invoice-detail.tsx"
+    },
+    {
+      "id": "FR5.8",
+      "status": "OK",
+      "target": "src/features/payment/components/invoice-list.tsx"
+    },
+    {
+      "id": "FR7.1",
+      "status": "OK",
+      "target": "src/features/payment/components/invoice-list.tsx"
+    },
+    {
+      "id": "FR7.3",
+      "status": "OK",
+      "target": "src/features/payment/components/invoice-create.tsx"
+    },
+    {
+      "id": "FR7.4",
+      "status": "OK",
+      "target": "src/features/payment/components/invoice-create.tsx"
+    },
+    {
+      "id": "FR8.3",
+      "status": "OK",
+      "target": "src/features/payment/components/invoice-list.tsx"
+    },
+    {
+      "id": "FR8.4",
+      "status": "OK",
+      "target": "src/features/payment/lib/payment-api.ts"
+    },
+    {
+      "id": "NFR2",
+      "status": "OK",
+      "target": "src/features/payment/components/money-pricing.tsx"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "stage": "code-generation",
+  "unit": "u4-members",
+  "upstream_ids": [
+    "FR3.1",
+    "FR3.2",
+    "FR3.3",
+    "FR3.4",
+    "FR3.5",
+    "FR7.3",
+    "FR7.4",
+    "FR8.4",
+    "NFR2",
+    "NFR3"
+  ],
+  "coverage": [
+    {
+      "id": "FR3.1",
+      "status": "OK",
+      "target": "src/features/members/components/member-list.tsx"
+    },
+    {
+      "id": "FR3.2",
+      "status": "OK",
+      "target": "src/features/members/components/member-add.tsx"
+    },
+    {
+      "id": "FR3.3",
+      "status": "OK",
+      "target": "src/features/members/lib/member-api.ts"
+    },
+    {
+      "id": "FR3.4",
+      "status": "OK",
+      "target": "src/features/members/components/member-remove-dialog.tsx"
+    },
+    {
+      "id": "FR3.5",
+      "status": "OK",
+      "target": "src/features/members/components/member-attendance.tsx"
+    },
+    {
+      "id": "FR7.3",
+      "status": "OK",
+      "target": "src/features/members/components/member-add.tsx"
+    },
+    {
+      "id": "FR7.4",
+      "status": "OK",
+      "target": "src/features/members/components/member-add.tsx"
+    },
+    {
+      "id": "FR8.4",
+      "status": "OK",
+      "target": "src/features/members/lib/member-api.ts"
+    },
+    {
+      "id": "NFR2",
+      "status": "OK",
+      "target": "src/features/members/components/member-list.tsx"
+    },
+    {
+      "id": "NFR3",
+      "status": "OK",
+      "target": "src/components/ui/alert-dialog.tsx"
+    }
+  ]
+}

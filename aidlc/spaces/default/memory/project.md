@@ -66,3 +66,7 @@
 
 <!-- Project-specific corrections from human feedback. -->
 <!-- Format: NEVER/ALWAYS [behavior] (learned [date]) -->
+- Keep shadcn components in src/components/ui and put shadcn helpers in src/shared/lib. (learned 2026-11-11) <!-- cid:261109-classroom-frontend:code-generation:d1e5a244b32bcd1b85fdaa3a7533151ee31f79c986dfb2f04cd6f2412a383780 -->
+- Signed-in Overview lives at `/`; the live classroom list lives at `/classrooms`. (learned 2026-11-12) <!-- cid:261109-classroom-frontend:code-generation:7ed9bf883c22ccadc179d02a30b5d7dfff00bf8becaaa5c76e1a501d5773f135 -->
+- Classroom create may include optional banner upload and optional payment plan fields. (learned 2026-11-12) <!-- cid:261109-classroom-frontend:code-generation:f70137c245889abc12330da68cd8df858c16b0ea2aa673c6e431fa6a05eea092 -->
+- Classroom list supports OpenAPI name `like` search and List/Card views (Table may stay disabled until ready). (learned 2026-11-12) <!-- cid:261109-classroom-frontend:code-generation:3741c321768c7154c291a9d8b2a07bff5b2dd3091eeb51878906b0d538b49b3a -->
