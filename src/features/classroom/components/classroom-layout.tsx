@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { BookOpen, CalendarDays, Users, Wallet } from "lucide-react";
+import {
+  BookOpen,
+  CalendarDays,
+  LayoutDashboard,
+  Settings2,
+  Users,
+  Wallet,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/shared/lib/cn";
 import { publicAssetUrl } from "@/shared/lib/public-asset-url";
 import { RequestStatus } from "@/shared/ui/request-status";
+import { ClassroomTabsLoadingSkeleton } from "@/shared/ui/section-loading-skeleton";
 import { fetchClassroom, type ClassroomRow } from "../lib/classroom-api";
 import {
   formatClassroomCreated,
@@ -219,7 +227,9 @@ export function ClassroomLayout({ classroomId, onTitleChange }: ClassroomLayoutP
       onRetry={() => {
         void query.refetch();
       }}
+      pending={<ClassroomTabsLoadingSkeleton />}
       status={query.isPending ? "pending" : query.isError ? "error" : "success"}
+      title="Couldn't load this classroom"
     >
       {classroom ? (
         <ClassroomShell
@@ -254,6 +264,7 @@ export function ClassroomLayout({ classroomId, onTitleChange }: ClassroomLayoutP
                   onClick={() => goOverview()}
                   value="overview"
                 >
+                  <LayoutDashboard aria-hidden className="size-3.5" />
                   Overview
                 </TabsTrigger>
                 <TabsTrigger
@@ -261,6 +272,7 @@ export function ClassroomLayout({ classroomId, onTitleChange }: ClassroomLayoutP
                   onClick={() => goSessions()}
                   value="sessions"
                 >
+                  <CalendarDays aria-hidden className="size-3.5" />
                   Sessions
                 </TabsTrigger>
                 <TabsTrigger
@@ -268,20 +280,15 @@ export function ClassroomLayout({ classroomId, onTitleChange }: ClassroomLayoutP
                   onClick={() => goMembers()}
                   value="members"
                 >
+                  <Users aria-hidden className="size-3.5" />
                   Members
-                </TabsTrigger>
-                <TabsTrigger
-                  disabled
-                  title="Attendance comes in a later unit"
-                  value="attendance"
-                >
-                  Attendance
                 </TabsTrigger>
                 <TabsTrigger
                   data-testid="classroom-tab-money"
                   onClick={() => goMoney()}
                   value="money"
                 >
+                  <Wallet aria-hidden className="size-3.5" />
                   Money
                 </TabsTrigger>
                 <TabsTrigger
@@ -289,6 +296,7 @@ export function ClassroomLayout({ classroomId, onTitleChange }: ClassroomLayoutP
                   onClick={() => goSettings()}
                   value="settings"
                 >
+                  <Settings2 aria-hidden className="size-3.5" />
                   Settings
                 </TabsTrigger>
               </TabsList>

@@ -6,33 +6,26 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/shared/lib/cn";
 import {
-  civilMonthRangeContaining,
   civilToLocalDate,
-  civilWeekRangeContaining,
   clampCivilRangeToHorizon,
   localDateToCivil,
   maxFutureCivilDate,
-  nextCivilMonthRange,
 } from "../lib/calendar-month";
 import type { SessionDateRange } from "../lib/session-api";
+import {
+  rangeForPreset,
+  type ListRangePreset,
+} from "../lib/session-list-range";
 import { nowCivilInGmt7, sessionDateParts } from "../lib/session-time";
 
-export type ListRangePreset = "this_week" | "this_month" | "next_month" | "custom";
+export type { ListRangePreset };
+export { rangeForPreset };
 
 const PRESETS: Array<{ id: Exclude<ListRangePreset, "custom">; label: string }> = [
   { id: "this_week", label: "This week" },
   { id: "this_month", label: "This month" },
   { id: "next_month", label: "Next month" },
 ];
-
-export function rangeForPreset(
-  preset: Exclude<ListRangePreset, "custom">,
-  todayCivil: string = nowCivilInGmt7().date,
-): SessionDateRange {
-  if (preset === "this_week") return civilWeekRangeContaining(todayCivil);
-  if (preset === "this_month") return civilMonthRangeContaining(todayCivil);
-  return nextCivilMonthRange(todayCivil);
-}
 
 function formatRangeLabel(range: SessionDateRange): string {
   const from = sessionDateParts(range.from);

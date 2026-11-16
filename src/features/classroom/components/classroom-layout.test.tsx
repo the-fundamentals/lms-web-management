@@ -72,7 +72,7 @@ describe("classroom layout", () => {
     expect(screen.getAllByText("ACTIVE").length).toBeGreaterThan(0);
   });
 
-  it("sessions outlet stays mounted; Members Money Settings enabled; Attendance stays disabled", async () => {
+  it("sessions outlet stays mounted; Members Money Settings enabled", async () => {
     fetchClassroom.mockResolvedValue(classroomRow({ id: "c1", name: "Algebra" }));
     renderLayout();
     await waitFor(() => expect(screen.getByTestId("classroom-tabs")).toBeTruthy());
@@ -81,7 +81,7 @@ describe("classroom layout", () => {
     expect(screen.getByRole("tab", { name: "Members" }).hasAttribute("disabled")).toBe(false);
     expect(screen.getByRole("tab", { name: "Money" }).hasAttribute("disabled")).toBe(false);
     expect(screen.getByRole("tab", { name: "Settings" }).hasAttribute("disabled")).toBe(false);
-    expect(screen.getByRole("tab", { name: "Attendance" }).hasAttribute("disabled")).toBe(true);
+    expect(screen.queryByRole("tab", { name: "Attendance" })).toBeNull();
   });
 
   it("Money tab navigates to invoices", async () => {

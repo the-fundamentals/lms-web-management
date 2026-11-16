@@ -25,8 +25,19 @@ export function ProfileEntry({ onSignIn = () => undefined }: { onSignIn?: () => 
     load();
   }, [load]);
 
-  if (phase.kind === "pending") return <LoadingScreen />;
-  if (phase.kind === "failed") return <ErrorScreen message={visibleFailure(phase.error)} onRetry={load} />;
+  if (phase.kind === "pending") {
+    return <LoadingScreen hint="Fetching your profile" label="Almost there" />;
+  }
+  if (phase.kind === "failed") {
+    return (
+      <ErrorScreen
+        message={visibleFailure(phase.error)}
+        onRetry={load}
+        title="Couldn't load your profile"
+        variant="page"
+      />
+    );
+  }
   return <ProfileDestination onSignIn={onSignIn} onRetry={load} result={phase.result} />;
 }
 
@@ -47,10 +58,19 @@ function ProfileDestination({
     if (signedOut) markSignedOutByServer();
   }, [home, signedOut]);
 
-  if ("error" in result) return <ErrorScreen message={result.error} onRetry={onRetry} />;
+  if ("error" in result) {
+    return (
+      <ErrorScreen
+        message={result.error}
+        onRetry={onRetry}
+        title="Couldn't load your profile"
+        variant="page"
+      />
+    );
+  }
   if (result.destination === "/onboarding") {
     return <OnboardingScreen avatarKey={result.avatarKey} onSignIn={onSignIn} />;
   }
   if (signedOut) return <SignInScreen notice={result.notice} onSignIn={onSignIn} />;
-  return <LoadingScreen />;
+  return <LoadingScreen hint="Opening your workspace" label="Loading" />;
 }

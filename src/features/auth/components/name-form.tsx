@@ -355,7 +355,9 @@ export function OnboardingScreen({
     }
   }
 
-  if (status === "pending" || status === "done") return <LoadingScreen />;
+  if (status === "pending" || status === "done") {
+    return <LoadingScreen hint="Saving your profile" label="Almost there" />;
+  }
   if (status === "signed-out") return <SignInScreen notice="unsaved" onSignIn={onSignIn} />;
   if (status === "error") {
     return (
@@ -364,6 +366,8 @@ export function OnboardingScreen({
         onRetry={() => {
           if (draft) void submit(draft);
         }}
+        title="Couldn't save your profile"
+        variant="page"
       />
     );
   }

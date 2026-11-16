@@ -161,7 +161,6 @@ export function SessionComposeSheet({
               />
             ) : (
               <WeeklySchedule
-                active={open && mode === "recurring"}
                 classroomId={classroomId}
                 embedded
                 initialEndTime={defaults?.endTime}

@@ -39,4 +39,11 @@ describe("LoadingScreen", () => {
 
     expect(screen.queryByRole("button", { name: /try again|retry/i })).toBeNull();
   });
+
+  it("accepts a custom label and hint", () => {
+    render(<LoadingScreen hint="Opening Cognito" label="Signing in" />);
+
+    expect(screen.getByText("Signing in")).toBeTruthy();
+    expect(screen.getByText("Opening Cognito")).toBeTruthy();
+  });
 });

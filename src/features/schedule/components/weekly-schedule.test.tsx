@@ -4,9 +4,7 @@ import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WeeklySchedule } from "./weekly-schedule";
 
-const listRecurrences = vi.hoisted(() => vi.fn());
 const createRecurrence = vi.hoisted(() => vi.fn());
-const deleteRecurrence = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, to, ...rest }: { children?: ReactNode; to: string }) => (
@@ -21,62 +19,26 @@ vi.mock("../lib/session-api", async () => {
   const actual = await vi.importActual<typeof import("../lib/session-api")>("../lib/session-api");
   return {
     ...actual,
-    recurrencesQueryOptions: (classroomId: string) => ({
-      queryKey: ["rec", classroomId],
-      queryFn: () => listRecurrences(classroomId),
-    }),
     createRecurrence: (...args: unknown[]) => createRecurrence(...args),
-    deleteRecurrence: (...args: unknown[]) => deleteRecurrence(...args),
   };
 });
 
-function renderWeekly() {
+function renderWeekly(props?: { initialStartDate?: string; embedded?: boolean }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <WeeklySchedule classroomId="c1" />
+      <WeeklySchedule classroomId="c1" {...props} />
     </QueryClientProvider>,
   );
 }
 
 describe("weekly schedule", () => {
   beforeEach(() => {
-    listRecurrences.mockReset();
     createRecurrence.mockReset();
-    deleteRecurrence.mockReset();
   });
   afterEach(() => cleanup());
 
-  it("lists rows and can delete", async () => {
-    listRecurrences.mockResolvedValue([
-      {
-        id: "r1",
-        classroomId: "c1",
-        byDay: "MONDAY",
-        recurrenceStartDate: "2026-07-01",
-        startTime: "09:00:00",
-        endTime: "10:00:00",
-      },
-    ]);
-    deleteRecurrence.mockResolvedValue(undefined);
-    listRecurrences.mockResolvedValueOnce([
-      {
-        id: "r1",
-        classroomId: "c1",
-        byDay: "MONDAY",
-        recurrenceStartDate: "2026-07-01",
-        startTime: "09:00:00",
-        endTime: "10:00:00",
-      },
-    ]).mockResolvedValueOnce([]);
-    renderWeekly();
-    await waitFor(() => expect(screen.getByTestId("weekly-row-r1")).toBeTruthy());
-    fireEvent.click(screen.getByTestId("weekly-delete-r1"));
-    await waitFor(() => expect(deleteRecurrence).toHaveBeenCalledWith("c1", "r1"));
-  });
-
   it("save posts WEEKLY recurrence", async () => {
-    listRecurrences.mockResolvedValue([]);
     createRecurrence.mockResolvedValue([]);
     renderWeekly();
     await waitFor(() => expect(screen.getByTestId("weekly-form")).toBeTruthy());
@@ -95,8 +57,18 @@ describe("weekly schedule", () => {
     );
   });
 
+  it("initialStartDate prefills that weekday (calendar + → recurring)", async () => {
+    // 2026-11-14 = Saturday
+    renderWeekly({ embedded: true, initialStartDate: "2026-11-14" });
+    await waitFor(() => expect(screen.getByTestId("weekly-form")).toBeTruthy());
+    expect((screen.getByTestId("weekly-start-date") as HTMLInputElement).value).toBe(
+      "2026-11-14",
+    );
+    expect((screen.getByTestId("weekly-day-SATURDAY") as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByTestId("weekly-day-MONDAY") as HTMLInputElement).checked).toBe(false);
+  });
+
   it("double-submit does not stack saves", async () => {
-    listRecurrences.mockResolvedValue([]);
     let resolveSave: (v: unknown) => void = () => undefined;
     createRecurrence.mockImplementation(
       () =>
@@ -120,7 +92,6 @@ describe("weekly schedule", () => {
 
   it("dirty form arms leave blocker", async () => {
     const { useBlocker } = await import("@tanstack/react-router");
-    listRecurrences.mockResolvedValue([]);
     renderWeekly();
     await waitFor(() => expect(screen.getByTestId("weekly-form")).toBeTruthy());
     fireEvent.click(screen.getByTestId("weekly-day-MONDAY"));
@@ -136,17 +107,9 @@ describe("weekly schedule", () => {
   });
 
   it("save does not invent session rows on the form copy", async () => {
-    listRecurrences.mockResolvedValue([]);
     createRecurrence.mockResolvedValue([]);
     renderWeekly();
     await waitFor(() => expect(screen.getByTestId("weekly-schedule")).toBeTruthy());
     expect(screen.getByText(/does not create sessions/i)).toBeTruthy();
   });
-
-  it("empty list copy when no weekly rows", async () => {
-    listRecurrences.mockResolvedValue([]);
-    renderWeekly();
-    await waitFor(() => expect(screen.getByText(/no weekly times yet/i)).toBeTruthy());
-  });
 });
-

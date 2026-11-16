@@ -4,7 +4,6 @@ import {
   completeClassroomInvoice,
   createClassroomInvoiceAdhoc,
   createClassroomMemberPaymentPlan,
-  getAllClassroomMembers,
   getAllClassroomPaymentPlans,
   getClassroomById,
   getClassroomInvoiceById,
@@ -18,7 +17,6 @@ import type {
   ClassroomInvoiceResponse,
   ClassroomInvoiceStatus,
   ClassroomInvoiceType,
-  ClassroomMemberResponse,
   ClassroomMemberPaymentPlanResponse,
   ClassroomResponse,
   CompleteClassroomInvoiceCommand,
@@ -27,6 +25,7 @@ import type {
   CreateClassroomMemberPaymentPlanCommand,
   SetClassroomBasePaymentPlanCommand,
 } from "@/generated/types.gen";
+import type { ClassroomMemberRow } from "@/shared/api/classroom-members";
 import { queryClient } from "@/shared/api/query-client";
 
 export const paymentPlansQueryKey = ["classroom-payment-plans"] as const;
@@ -39,12 +38,21 @@ export type InvoiceRow = {
   memberId: string;
   status: ClassroomInvoiceStatus;
   type: ClassroomInvoiceType;
+  /** Civil `YYYY-MM-DD` — GENERATED billing window start; omitted on ADHOC. */
+  billingStart?: string;
+  /** Civil `YYYY-MM-DD` — GENERATED billing window end; omitted on ADHOC. */
+  billingEnd?: string;
   totalAmount: number;
   note?: string;
+  approvedAt?: string;
+  paidAt?: string;
   paidAmount?: number;
   paymentMethod?: ClassroomInvoicePaymentMethod;
+  paymentReference?: string;
+  paymentNote?: string;
   lines: ClassroomInvoiceResponse["lines"];
   createdDate: string;
+  lastModifiedDate: string;
 };
 
 export type MemberPick = {
@@ -52,8 +60,8 @@ export type MemberPick = {
   accountId: string;
   name: string;
   email: string;
-  role: ClassroomMemberResponse["role"];
-  status: ClassroomMemberResponse["status"];
+  role: ClassroomMemberRow["role"];
+  status: ClassroomMemberRow["status"];
 };
 
 export type PaymentPlanRow = {
@@ -143,13 +151,20 @@ export function mapInvoiceRow(invoice: ClassroomInvoiceResponse): InvoiceRow {
     totalAmount: invoice.totalAmount,
     lines: invoice.lines,
     createdDate: invoice.createdDate,
+    lastModifiedDate: invoice.lastModifiedDate,
+    ...(invoice.billingStart ? { billingStart: invoice.billingStart } : {}),
+    ...(invoice.billingEnd ? { billingEnd: invoice.billingEnd } : {}),
     ...(invoice.note ? { note: invoice.note } : {}),
+    ...(invoice.approvedAt ? { approvedAt: invoice.approvedAt } : {}),
+    ...(invoice.paidAt ? { paidAt: invoice.paidAt } : {}),
     ...(invoice.paidAmount !== undefined ? { paidAmount: invoice.paidAmount } : {}),
     ...(invoice.paymentMethod ? { paymentMethod: invoice.paymentMethod } : {}),
+    ...(invoice.paymentReference ? { paymentReference: invoice.paymentReference } : {}),
+    ...(invoice.paymentNote ? { paymentNote: invoice.paymentNote } : {}),
   };
 }
 
-export function mapMemberPick(member: ClassroomMemberResponse): MemberPick {
+export function mapMemberPick(member: ClassroomMemberRow): MemberPick {
   return {
     id: member.id,
     accountId: member.accountId,
@@ -158,6 +173,13 @@ export function mapMemberPick(member: ClassroomMemberResponse): MemberPick {
     role: member.role,
     status: member.status,
   };
+}
+
+/** ACTIVE students only — Money pricing / invoice create. */
+export function activeStudents(members: ClassroomMemberRow[]): MemberPick[] {
+  return members
+    .filter((m) => m.status === "ACTIVE" && m.role === "STUDENT")
+    .map(mapMemberPick);
 }
 
 export function mapPaymentPlanRow(
@@ -246,16 +268,6 @@ export async function setStudentPrice(
   });
   await invalidateClassroomMoney(classroomId);
   return mapPaymentPlanRow(result.data);
-}
-
-export async function listActiveStudents(classroomId: string): Promise<MemberPick[]> {
-  const result = await getAllClassroomMembers({
-    path: { classroomId },
-    throwOnError: true,
-  });
-  return (result.data ?? [])
-    .filter((m) => m.status === "ACTIVE" && m.role === "STUDENT")
-    .map(mapMemberPick);
 }
 
 export async function listInvoices(

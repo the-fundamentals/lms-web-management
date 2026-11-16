@@ -5,6 +5,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Plus, RefreshCw } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { cn } from "@/shared/lib/cn";
 import { RequestStatus } from "@/shared/ui/request-status";
+import { CalendarLoadingSkeleton } from "@/shared/ui/section-loading-skeleton";
 import {
   buildMonthGrid,
   canShiftYearMonth,
@@ -243,6 +244,7 @@ export function SessionCalendar({
           onRetry={() => {
             void query.refetch();
           }}
+          pending={<CalendarLoadingSkeleton />}
           status={queryStatus}
         >
           {grid}
@@ -279,6 +281,7 @@ export function SessionCalendar({
         onRetry={() => {
           void query.refetch();
         }}
+        pending={<CalendarLoadingSkeleton />}
         status={queryStatus}
       >
         {grid}

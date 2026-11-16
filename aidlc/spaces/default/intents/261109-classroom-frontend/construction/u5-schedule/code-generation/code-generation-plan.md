@@ -76,7 +76,7 @@
 
 Features do not import each other. U3's classroom layout already hosts a Sessions tab and `<Outlet />`. U5 fills child routes under `/classrooms/$classroomId/`; classroom never imports `@/features/schedule`. Session generation from Tools stays U7. Money stays U6. The classroom **Attendance** tab (all-class rollup) stays disabled.
 
-OpenAPI ops: `getAllClassroomSessions`, `createClassroomSession`, `getClassroomSessionById`, `completeClassroomSession`, `cancelClassroomSession`, `getAllClassroomSessionAttendances`, `createClassroomSessionAttendances`, `updateClassroomSessionAttendance`, `getAllClassroomScheduleRecurrences`, `createClassroomScheduleRecurrence`, `deleteClassroomScheduleRecurrence`. Reuse `getAllClassroomMembers` only via the members helpers' pattern duplicated under schedule (or thin shared mapping in schedule that calls the SDK directly — **no** import of `@/features/members`).
+OpenAPI ops: `getAllClassroomSessions`, `createClassroomSession`, `getClassroomSessionById`, `completeClassroomSession`, `manuallyCancelClassroomSession`, `getAllClassroomSessionAttendances`, `createClassroomSessionAttendances`, `updateClassroomSessionAttendance`, `getAllClassroomScheduleRecurrences`, `createClassroomScheduleRecurrence`, `deleteClassroomScheduleRecurrence`. Reuse `getAllClassroomMembers` only via the members helpers' pattern duplicated under schedule (or thin shared mapping in schedule that calls the SDK directly — **no** import of `@/features/members`).
 
 Date/time: teacher enters calendar date + clock in GMT+7; convert at the boundary with existing `src/shared/lib/gmt7.ts`. A session crossing midnight shows on the start civil date; end time may show next date (FR6.2).
 

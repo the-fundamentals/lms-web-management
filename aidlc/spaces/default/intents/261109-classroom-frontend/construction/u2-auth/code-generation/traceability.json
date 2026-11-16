@@ -23,72 +23,74 @@
     {
       "id": "FR1.1",
       "status": "OK",
-      "target": "src/features/auth/profile/profile-gate.ts"
+      "target": "src/features/auth/lib/profile-gate.ts",
+      "note": "Paths retargeted after auth folder layout moved to lib/ + components/"
     },
     {
       "id": "FR1.2",
       "status": "OK",
-      "target": "src/features/auth/screens/name-form.tsx"
+      "target": "src/features/auth/components/name-form.tsx"
     },
     {
       "id": "FR1.3",
       "status": "OK",
-      "target": "src/features/auth/screens/sign-out.tsx"
+      "target": "src/features/auth/components/sign-out.tsx"
     },
     {
       "id": "FR1.4",
       "status": "OK",
-      "target": "src/features/auth/profile/profile-gate.ts"
+      "target": "src/features/auth/lib/profile-gate.ts"
     },
     {
       "id": "FR1.5",
       "status": "OK",
-      "target": "src/features/auth/profile/profile-gate.ts"
+      "target": "src/features/auth/lib/profile-gate.ts",
+      "note": "Single signed-in ADMIN owner path; no teacher/student sign-in"
     },
     {
       "id": "FR1.6",
       "status": "OK",
-      "target": "src/features/auth/session/session.ts"
+      "target": "src/features/auth/lib/session.ts"
     },
     {
       "id": "FR7.1",
       "status": "OK",
-      "target": "src/features/auth/screens/sign-in-screen.tsx"
+      "target": "src/features/auth/components/sign-in-screen.tsx"
     },
     {
       "id": "FR7.3",
       "status": "OK",
-      "target": "src/features/auth/screens/name-form.tsx"
+      "target": "src/features/auth/components/name-form.tsx"
     },
     {
       "id": "FR7.4",
       "status": "OK",
-      "target": "src/features/auth/screens/name-form.tsx"
+      "target": "src/features/auth/components/name-form.tsx"
     },
     {
       "id": "FR8.4",
       "status": "OK",
-      "target": "src/features/auth/profile/profile.ts"
+      "target": "src/features/auth/lib/profile.ts"
     },
     {
       "id": "NFR2",
       "status": "OK",
-      "target": "src/features/auth/screens/name-form.tsx"
+      "target": "src/features/auth/components/name-form.tsx"
     },
     {
       "id": "NFR3",
       "status": "OK",
-      "target": "src/features/auth/screens/sign-in-screen.tsx"
+      "target": "src/features/auth/components/sign-in-screen.tsx"
     },
     {
       "id": "NFR4",
       "status": "OK",
-      "target": "src/features/auth/session/session.ts"
+      "target": "src/features/auth/lib/session.ts"
     },
     {
       "id": "NFR5",
       "status": "OK",
-      "target": "src/features/auth/screens/name-form.tsx"
+      "target": "src/features/auth/components/name-form.tsx"
     },
     {
       "id": "NFR6",

@@ -1,0 +1,30 @@
+{
+  "stage": "code-generation",
+  "unit": "u7-tools",
+  "upstream_ids": ["FR8.1", "FR8.2", "FR8.3", "NFR2"],
+  "coverage": [
+    {
+      "id": "FR8.1",
+      "status": "N/A",
+      "target": "Tools cancelled — no account-menu Tools entry in this intent",
+      "note": "FR8.1 not built; person cancelled Tools unit"
+    },
+    {
+      "id": "FR8.2",
+      "status": "N/A",
+      "target": "Generate sessions from weekly recurrence not built in this intent",
+      "note": "FR8.2 deferred with cancelled Tools unit"
+    },
+    {
+      "id": "FR8.3",
+      "status": "OK",
+      "target": "aidlc/spaces/default/intents/261109-classroom-frontend/construction/u7-tools/code-generation/code-summary.md",
+      "note": "No Tools invoice generation; U6 already omits Generate invoices"
+    },
+    {
+      "id": "NFR2",
+      "status": "N/A",
+      "target": "no UI shipped in cancelled Tools unit"
+    }
+  ]
+}

@@ -57,7 +57,7 @@ export type SessionStatusFilter = Record<ClassroomSessionStatus, boolean>;
 export const DEFAULT_SESSION_STATUS_FILTER: SessionStatusFilter = {
   OPEN: true,
   COMPLETED: true,
-  CANCELLED: true,
+  CANCELLED: false,
 };
 
 export const SESSION_STATUS_FILTER_ORDER = [

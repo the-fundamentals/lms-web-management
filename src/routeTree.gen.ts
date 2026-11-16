@@ -17,6 +17,7 @@ import { Route as ClassroomsClassroomIdRouteRouteImport } from './routes/classro
 import { Route as ClassroomsNewRouteImport } from './routes/classrooms/new'
 import { Route as ClassroomsClassroomIdIndexRouteImport } from './routes/classrooms/$classroomId/index'
 import { Route as ClassroomsClassroomIdCalendarRouteImport } from './routes/classrooms/$classroomId/calendar'
+import { Route as ClassroomsClassroomIdSessionsRouteRouteImport } from './routes/classrooms/$classroomId/sessions/route'
 import { Route as ClassroomsClassroomIdSettingsRouteRouteImport } from './routes/classrooms/$classroomId/settings/route'
 import { Route as ClassroomsClassroomIdWeeklyRouteImport } from './routes/classrooms/$classroomId/weekly'
 import { Route as ClassroomsClassroomIdMembersIndexRouteImport } from './routes/classrooms/$classroomId/members/index'
@@ -74,6 +75,12 @@ const ClassroomsClassroomIdCalendarRoute =
     path: '/calendar',
     getParentRoute: () => ClassroomsClassroomIdRouteRoute,
   } as any)
+const ClassroomsClassroomIdSessionsRouteRoute =
+  ClassroomsClassroomIdSessionsRouteRouteImport.update({
+    id: '/sessions',
+    path: '/sessions',
+    getParentRoute: () => ClassroomsClassroomIdRouteRoute,
+  } as any)
 const ClassroomsClassroomIdSettingsRouteRoute =
   ClassroomsClassroomIdSettingsRouteRouteImport.update({
     id: '/settings',
@@ -106,21 +113,21 @@ const ClassroomsClassroomIdMoneyIndexRoute =
   } as any)
 const ClassroomsClassroomIdSessionsIndexRoute =
   ClassroomsClassroomIdSessionsIndexRouteImport.update({
-    id: '/sessions/',
-    path: '/sessions/',
-    getParentRoute: () => ClassroomsClassroomIdRouteRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => ClassroomsClassroomIdSessionsRouteRoute,
   } as any)
 const ClassroomsClassroomIdSessionsSessionIdRoute =
   ClassroomsClassroomIdSessionsSessionIdRouteImport.update({
-    id: '/sessions/$sessionId',
-    path: '/sessions/$sessionId',
-    getParentRoute: () => ClassroomsClassroomIdRouteRoute,
+    id: '/$sessionId',
+    path: '/$sessionId',
+    getParentRoute: () => ClassroomsClassroomIdSessionsRouteRoute,
   } as any)
 const ClassroomsClassroomIdSessionsNewRoute =
   ClassroomsClassroomIdSessionsNewRouteImport.update({
-    id: '/sessions/new',
-    path: '/sessions/new',
-    getParentRoute: () => ClassroomsClassroomIdRouteRoute,
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => ClassroomsClassroomIdSessionsRouteRoute,
   } as any)
 const ClassroomsClassroomIdSettingsIndexRoute =
   ClassroomsClassroomIdSettingsIndexRouteImport.update({
@@ -160,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/classrooms/$classroomId': typeof ClassroomsClassroomIdRouteRouteWithChildren
   '/classrooms/new': typeof ClassroomsNewRoute
   '/classrooms/': typeof ClassroomsIndexRoute
+  '/classrooms/$classroomId/sessions': typeof ClassroomsClassroomIdSessionsRouteRouteWithChildren
   '/classrooms/$classroomId/settings': typeof ClassroomsClassroomIdSettingsRouteRouteWithChildren
   '/classrooms/$classroomId/calendar': typeof ClassroomsClassroomIdCalendarRoute
   '/classrooms/$classroomId/weekly': typeof ClassroomsClassroomIdWeeklyRoute
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/classrooms/$classroomId': typeof ClassroomsClassroomIdRouteRouteWithChildren
   '/classrooms/new': typeof ClassroomsNewRoute
   '/classrooms/': typeof ClassroomsIndexRoute
+  '/classrooms/$classroomId/sessions': typeof ClassroomsClassroomIdSessionsRouteRouteWithChildren
   '/classrooms/$classroomId/settings': typeof ClassroomsClassroomIdSettingsRouteRouteWithChildren
   '/classrooms/$classroomId/calendar': typeof ClassroomsClassroomIdCalendarRoute
   '/classrooms/$classroomId/weekly': typeof ClassroomsClassroomIdWeeklyRoute
@@ -230,6 +239,7 @@ export interface FileRouteTypes {
     | '/classrooms/$classroomId'
     | '/classrooms/new'
     | '/classrooms/'
+    | '/classrooms/$classroomId/sessions'
     | '/classrooms/$classroomId/settings'
     | '/classrooms/$classroomId/calendar'
     | '/classrooms/$classroomId/weekly'
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/classrooms/$classroomId'
     | '/classrooms/new'
     | '/classrooms/'
+    | '/classrooms/$classroomId/sessions'
     | '/classrooms/$classroomId/settings'
     | '/classrooms/$classroomId/calendar'
     | '/classrooms/$classroomId/weekly'
@@ -358,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClassroomsClassroomIdCalendarRouteImport
       parentRoute: typeof ClassroomsClassroomIdRouteRoute
     }
+    '/classrooms/$classroomId/sessions': {
+      id: '/classrooms/$classroomId/sessions'
+      path: '/sessions'
+      fullPath: '/classrooms/$classroomId/sessions'
+      preLoaderRoute: typeof ClassroomsClassroomIdSessionsRouteRouteImport
+      parentRoute: typeof ClassroomsClassroomIdRouteRoute
+    }
     '/classrooms/$classroomId/settings': {
       id: '/classrooms/$classroomId/settings'
       path: '/settings'
@@ -395,24 +413,24 @@ declare module '@tanstack/react-router' {
     }
     '/classrooms/$classroomId/sessions/': {
       id: '/classrooms/$classroomId/sessions/'
-      path: '/sessions'
+      path: '/'
       fullPath: '/classrooms/$classroomId/sessions/'
       preLoaderRoute: typeof ClassroomsClassroomIdSessionsIndexRouteImport
-      parentRoute: typeof ClassroomsClassroomIdRouteRoute
+      parentRoute: typeof ClassroomsClassroomIdSessionsRouteRoute
     }
     '/classrooms/$classroomId/sessions/$sessionId': {
       id: '/classrooms/$classroomId/sessions/$sessionId'
-      path: '/sessions/$sessionId'
+      path: '/$sessionId'
       fullPath: '/classrooms/$classroomId/sessions/$sessionId'
       preLoaderRoute: typeof ClassroomsClassroomIdSessionsSessionIdRouteImport
-      parentRoute: typeof ClassroomsClassroomIdRouteRoute
+      parentRoute: typeof ClassroomsClassroomIdSessionsRouteRoute
     }
     '/classrooms/$classroomId/sessions/new': {
       id: '/classrooms/$classroomId/sessions/new'
-      path: '/sessions/new'
+      path: '/new'
       fullPath: '/classrooms/$classroomId/sessions/new'
       preLoaderRoute: typeof ClassroomsClassroomIdSessionsNewRouteImport
-      parentRoute: typeof ClassroomsClassroomIdRouteRoute
+      parentRoute: typeof ClassroomsClassroomIdSessionsRouteRoute
     }
     '/classrooms/$classroomId/settings/': {
       id: '/classrooms/$classroomId/settings/'
@@ -452,6 +470,27 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ClassroomsClassroomIdSessionsRouteRouteChildren {
+  ClassroomsClassroomIdSessionsSessionIdRoute: typeof ClassroomsClassroomIdSessionsSessionIdRoute
+  ClassroomsClassroomIdSessionsNewRoute: typeof ClassroomsClassroomIdSessionsNewRoute
+  ClassroomsClassroomIdSessionsIndexRoute: typeof ClassroomsClassroomIdSessionsIndexRoute
+}
+
+const ClassroomsClassroomIdSessionsRouteRouteChildren: ClassroomsClassroomIdSessionsRouteRouteChildren =
+  {
+    ClassroomsClassroomIdSessionsSessionIdRoute:
+      ClassroomsClassroomIdSessionsSessionIdRoute,
+    ClassroomsClassroomIdSessionsNewRoute:
+      ClassroomsClassroomIdSessionsNewRoute,
+    ClassroomsClassroomIdSessionsIndexRoute:
+      ClassroomsClassroomIdSessionsIndexRoute,
+  }
+
+const ClassroomsClassroomIdSessionsRouteRouteWithChildren =
+  ClassroomsClassroomIdSessionsRouteRoute._addFileChildren(
+    ClassroomsClassroomIdSessionsRouteRouteChildren,
+  )
+
 interface ClassroomsClassroomIdSettingsRouteRouteChildren {
   ClassroomsClassroomIdSettingsPricingRoute: typeof ClassroomsClassroomIdSettingsPricingRoute
   ClassroomsClassroomIdSettingsIndexRoute: typeof ClassroomsClassroomIdSettingsIndexRoute
@@ -471,16 +510,14 @@ const ClassroomsClassroomIdSettingsRouteRouteWithChildren =
   )
 
 interface ClassroomsClassroomIdRouteRouteChildren {
+  ClassroomsClassroomIdSessionsRouteRoute: typeof ClassroomsClassroomIdSessionsRouteRouteWithChildren
   ClassroomsClassroomIdSettingsRouteRoute: typeof ClassroomsClassroomIdSettingsRouteRouteWithChildren
   ClassroomsClassroomIdCalendarRoute: typeof ClassroomsClassroomIdCalendarRoute
   ClassroomsClassroomIdWeeklyRoute: typeof ClassroomsClassroomIdWeeklyRoute
   ClassroomsClassroomIdIndexRoute: typeof ClassroomsClassroomIdIndexRoute
   ClassroomsClassroomIdMembersMemberIdRoute: typeof ClassroomsClassroomIdMembersMemberIdRoute
-  ClassroomsClassroomIdSessionsSessionIdRoute: typeof ClassroomsClassroomIdSessionsSessionIdRoute
-  ClassroomsClassroomIdSessionsNewRoute: typeof ClassroomsClassroomIdSessionsNewRoute
   ClassroomsClassroomIdMembersIndexRoute: typeof ClassroomsClassroomIdMembersIndexRoute
   ClassroomsClassroomIdMoneyIndexRoute: typeof ClassroomsClassroomIdMoneyIndexRoute
-  ClassroomsClassroomIdSessionsIndexRoute: typeof ClassroomsClassroomIdSessionsIndexRoute
   ClassroomsClassroomIdMoneyInvoicesInvoiceIdRoute: typeof ClassroomsClassroomIdMoneyInvoicesInvoiceIdRoute
   ClassroomsClassroomIdMoneyInvoicesNewRoute: typeof ClassroomsClassroomIdMoneyInvoicesNewRoute
   ClassroomsClassroomIdMoneyInvoicesIndexRoute: typeof ClassroomsClassroomIdMoneyInvoicesIndexRoute
@@ -488,6 +525,8 @@ interface ClassroomsClassroomIdRouteRouteChildren {
 
 const ClassroomsClassroomIdRouteRouteChildren: ClassroomsClassroomIdRouteRouteChildren =
   {
+    ClassroomsClassroomIdSessionsRouteRoute:
+      ClassroomsClassroomIdSessionsRouteRouteWithChildren,
     ClassroomsClassroomIdSettingsRouteRoute:
       ClassroomsClassroomIdSettingsRouteRouteWithChildren,
     ClassroomsClassroomIdCalendarRoute: ClassroomsClassroomIdCalendarRoute,
@@ -495,15 +534,9 @@ const ClassroomsClassroomIdRouteRouteChildren: ClassroomsClassroomIdRouteRouteCh
     ClassroomsClassroomIdIndexRoute: ClassroomsClassroomIdIndexRoute,
     ClassroomsClassroomIdMembersMemberIdRoute:
       ClassroomsClassroomIdMembersMemberIdRoute,
-    ClassroomsClassroomIdSessionsSessionIdRoute:
-      ClassroomsClassroomIdSessionsSessionIdRoute,
-    ClassroomsClassroomIdSessionsNewRoute:
-      ClassroomsClassroomIdSessionsNewRoute,
     ClassroomsClassroomIdMembersIndexRoute:
       ClassroomsClassroomIdMembersIndexRoute,
     ClassroomsClassroomIdMoneyIndexRoute: ClassroomsClassroomIdMoneyIndexRoute,
-    ClassroomsClassroomIdSessionsIndexRoute:
-      ClassroomsClassroomIdSessionsIndexRoute,
     ClassroomsClassroomIdMoneyInvoicesInvoiceIdRoute:
       ClassroomsClassroomIdMoneyInvoicesInvoiceIdRoute,
     ClassroomsClassroomIdMoneyInvoicesNewRoute:

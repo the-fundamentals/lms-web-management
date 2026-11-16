@@ -36,9 +36,29 @@ export function OnboardingEntry({ onSignIn }: { onSignIn?: () => void } = {}) {
     if (signedOut) markSignedOutByServer();
   }, [signedOut]);
 
-  if (phase.kind === "pending") return <LoadingScreen />;
-  if (phase.kind === "failed") return <ErrorScreen message={visibleFailure(phase.error)} onRetry={load} />;
-  if ("error" in phase.result) return <ErrorScreen message={phase.result.error} onRetry={load} />;
+  if (phase.kind === "pending") {
+    return <LoadingScreen hint="Fetching your profile" label="Almost there" />;
+  }
+  if (phase.kind === "failed") {
+    return (
+      <ErrorScreen
+        message={visibleFailure(phase.error)}
+        onRetry={load}
+        title="Couldn't continue onboarding"
+        variant="page"
+      />
+    );
+  }
+  if ("error" in phase.result) {
+    return (
+      <ErrorScreen
+        message={phase.result.error}
+        onRetry={load}
+        title="Couldn't continue onboarding"
+        variant="page"
+      />
+    );
+  }
   if (signedOut) return <SignInScreen notice={phase.result.notice} onSignIn={signIn} />;
   return <OnboardingScreen avatarKey={phase.result.avatarKey} onSignIn={signIn} />;
 }

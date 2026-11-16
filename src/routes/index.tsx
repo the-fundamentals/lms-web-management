@@ -18,7 +18,9 @@ function HomePage() {
     enabled: auth.isAuthenticated,
   });
 
-  if (auth.isLoading) return <LoadingScreen />;
+  if (auth.isLoading) {
+    return <LoadingScreen hint="Connecting to your school account" label="Signing in" />;
+  }
   if (!auth.isAuthenticated) return <SignInRoute />;
 
   const classrooms = classroomsQuery.data ?? [];
@@ -44,6 +46,7 @@ function HomePage() {
         status={
           classroomsQuery.isPending ? "pending" : classroomsQuery.isError ? "error" : "success"
         }
+        title="Couldn't load classrooms"
       >
         <OverviewDashboard stats={stats} />
       </RequestStatus>

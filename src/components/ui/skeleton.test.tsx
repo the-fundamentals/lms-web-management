@@ -19,10 +19,12 @@ describe("Skeleton", () => {
     expect(document.querySelector("[data-slot='skeleton']")).not.toBeNull();
   });
 
-  it("the markup uses a semantic color class", () => {
+  it("the markup uses a quiet muted wash", () => {
     render(<Skeleton />);
 
-    expect(document.querySelector("[data-slot='skeleton']")?.className).toContain("bg-accent");
+    expect(document.querySelector("[data-slot='skeleton']")?.className).toContain(
+      "bg-muted-foreground/8",
+    );
   });
 
   it("the markup contains no hex color", () => {

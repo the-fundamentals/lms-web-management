@@ -8,21 +8,45 @@ describe("RequestStatus", () => {
     cleanup();
   });
 
-  it("pending shows the loading screen and no retry", () => {
+  it("pending shows a skeleton and no retry", () => {
     render(
       <RequestStatus onRetry={vi.fn()} status="pending">
         Ready
       </RequestStatus>,
     );
 
-    expect(screen.getByText("Loading")).toBeTruthy();
+    expect(screen.getByTestId("loading-screen")).toBeTruthy();
+    expect(screen.getByLabelText("Loading")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /try again/i })).toBeNull();
   });
 
+  it("pending can render a custom skeleton", () => {
+    render(
+      <RequestStatus
+        onRetry={vi.fn()}
+        pending={<div data-testid="custom-pending">Wait</div>}
+        status="pending"
+      >
+        Ready
+      </RequestStatus>,
+    );
+
+    expect(screen.getByTestId("custom-pending")).toBeTruthy();
+    expect(screen.queryByTestId("loading-screen")).toBeNull();
+  });
+
   it("a timeout leaves loading and names the timeout", () => {
-    render(<RequestStatus error={new RequestTimeoutError()} onRetry={vi.fn()} status="error" />);
+    render(
+      <RequestStatus
+        error={new RequestTimeoutError()}
+        onRetry={vi.fn()}
+        status="error"
+        title="Couldn't load sessions"
+      />,
+    );
 
     expect(screen.queryByText("Loading")).toBeNull();
+    expect(screen.getByText("Couldn't load sessions")).toBeTruthy();
     expect(screen.getByText("The request timed out")).toBeTruthy();
   });
 

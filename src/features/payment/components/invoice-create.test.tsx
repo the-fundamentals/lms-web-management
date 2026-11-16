@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { InvoiceCreate } from "./invoice-create";
 
 const createAdhocInvoice = vi.hoisted(() => vi.fn());
-const listActiveStudents = vi.hoisted(() => vi.fn());
+const listClassroomMembers = vi.hoisted(() => vi.fn());
 const navigate = vi.hoisted(() => vi.fn(async () => undefined));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -18,12 +18,20 @@ vi.mock("@tanstack/react-router", () => ({
   useBlocker: vi.fn(),
 }));
 
+vi.mock("@/shared/api/classroom-members", () => ({
+  classroomMembersQueryKey: ["classroom-members"],
+  classroomMembersQueryOptions: (classroomId: string) => ({
+    queryKey: ["classroom-members", classroomId],
+    queryFn: () => listClassroomMembers(classroomId),
+  }),
+  listClassroomMembers: (...args: unknown[]) => listClassroomMembers(...args),
+}));
+
 vi.mock("../lib/payment-api", async () => {
   const actual = await vi.importActual<typeof import("../lib/payment-api")>("../lib/payment-api");
   return {
     ...actual,
     createAdhocInvoice: (...args: unknown[]) => createAdhocInvoice(...args),
-    listActiveStudents: (...args: unknown[]) => listActiveStudents(...args),
   };
 });
 
@@ -39,11 +47,12 @@ function renderCreate() {
 describe("invoice create", () => {
   beforeEach(() => {
     createAdhocInvoice.mockReset();
-    listActiveStudents.mockReset();
+    listClassroomMembers.mockReset();
     navigate.mockReset();
-    listActiveStudents.mockResolvedValue([
+    listClassroomMembers.mockResolvedValue([
       {
         id: "m1",
+        classroomId: "c1",
         accountId: "a1",
         name: "Ann",
         email: "a@x.com",

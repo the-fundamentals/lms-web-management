@@ -8,8 +8,9 @@ describe("ErrorScreen", () => {
   });
 
   it("the screen names what failed", () => {
-    render(<ErrorScreen message="Classrooms failed" onRetry={vi.fn()} />);
+    render(<ErrorScreen message="Classrooms failed" onRetry={vi.fn()} title="Couldn't load classrooms" />);
 
+    expect(screen.getByText("Couldn't load classrooms")).toBeTruthy();
     expect(screen.getByText("Classrooms failed")).toBeTruthy();
   });
 

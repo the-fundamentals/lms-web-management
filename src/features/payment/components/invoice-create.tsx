@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useBlocker, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
@@ -6,10 +6,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { classroomMembersQueryOptions } from "@/shared/api/classroom-members";
 import { parseMoneyDigits } from "@/shared/lib/money";
 import { RequestStatus, requestFailedMessage } from "@/shared/ui/request-status";
 import type { ClassroomInvoiceLineKind } from "@/generated/types.gen";
-import { createAdhocInvoice, listActiveStudents } from "../lib/payment-api";
+import { activeStudents, createAdhocInvoice } from "../lib/payment-api";
 
 type InvoiceCreateProps = {
   classroomId: string;
@@ -34,10 +35,11 @@ const selectClassName =
 
 export function InvoiceCreate({ classroomId }: InvoiceCreateProps) {
   const navigate = useNavigate();
-  const studentsQuery = useQuery({
-    queryKey: ["classroom-money-students", classroomId],
-    queryFn: () => listActiveStudents(classroomId),
-  });
+  const membersQuery = useQuery(classroomMembersQueryOptions(classroomId));
+  const students = useMemo(
+    () => activeStudents(membersQuery.data ?? []),
+    [membersQuery.data],
+  );
 
   const [memberId, setMemberId] = useState("");
   const [note, setNote] = useState("");
@@ -59,10 +61,10 @@ export function InvoiceCreate({ classroomId }: InvoiceCreateProps) {
   });
 
   useEffect(() => {
-    if (!memberId && (studentsQuery.data?.length ?? 0) > 0) {
-      setMemberId(studentsQuery.data![0]!.id);
+    if (!memberId && students.length > 0) {
+      setMemberId(students[0]!.id);
     }
-  }, [memberId, studentsQuery.data]);
+  }, [memberId, students]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -103,12 +105,12 @@ export function InvoiceCreate({ classroomId }: InvoiceCreateProps) {
 
   return (
     <RequestStatus
-      error={studentsQuery.error}
+      error={membersQuery.error}
       onRetry={() => {
-        void studentsQuery.refetch();
+        void membersQuery.refetch();
       }}
       status={
-        studentsQuery.isPending ? "pending" : studentsQuery.isError ? "error" : "success"
+        membersQuery.isPending ? "pending" : membersQuery.isError ? "error" : "success"
       }
     >
       <form className="flex flex-col gap-8" data-testid="invoice-create" onSubmit={onSubmit}>
@@ -140,7 +142,7 @@ export function InvoiceCreate({ classroomId }: InvoiceCreateProps) {
               onChange={(e) => setMemberId(e.target.value)}
               value={memberId}
             >
-              {(studentsQuery.data ?? []).map((student) => (
+              {students.map((student) => (
                 <option key={student.id} value={student.id}>
                   {student.name}
                 </option>

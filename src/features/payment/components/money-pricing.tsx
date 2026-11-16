@@ -11,13 +11,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { classroomMembersQueryOptions } from "@/shared/api/classroom-members";
 import { parseMoneyDigits } from "@/shared/lib/money";
 import { MoneyInput } from "@/shared/ui/money-input";
 import { RequestStatus, requestFailedMessage } from "@/shared/ui/request-status";
 import {
+  activeStudents,
   classroomMoneyQueryKey,
   fetchClassroomMoney,
-  listActiveStudents,
   listCurrentPaymentPlans,
   paymentPlansQueryKey,
   setClassroomPrice,
@@ -57,15 +58,16 @@ export function MoneyPricing({ classroomId }: MoneyPricingProps) {
     queryKey: [...paymentPlansQueryKey, classroomId],
     queryFn: () => listCurrentPaymentPlans(classroomId),
   });
-  const studentsQuery = useQuery({
-    queryKey: ["classroom-money-students", classroomId],
-    queryFn: () => listActiveStudents(classroomId),
-  });
+  const membersQuery = useQuery(classroomMembersQueryOptions(classroomId));
+  const students = useMemo(
+    () => activeStudents(membersQuery.data ?? []),
+    [membersQuery.data],
+  );
 
   const pending =
-    moneyQuery.isPending || plansQuery.isPending || studentsQuery.isPending;
-  const error = moneyQuery.error ?? plansQuery.error ?? studentsQuery.error;
-  const failed = moneyQuery.isError || plansQuery.isError || studentsQuery.isError;
+    moneyQuery.isPending || plansQuery.isPending || membersQuery.isPending;
+  const error = moneyQuery.error ?? plansQuery.error ?? membersQuery.error;
+  const failed = moneyQuery.isError || plansQuery.isError || membersQuery.isError;
 
   const plansByMember = useMemo(() => {
     const map = new Map<string, PaymentPlanRow>();
@@ -165,7 +167,7 @@ export function MoneyPricing({ classroomId }: MoneyPricingProps) {
         onRetry={() => {
           void moneyQuery.refetch();
           void plansQuery.refetch();
-          void studentsQuery.refetch();
+          void membersQuery.refetch();
         }}
         status={pending ? "pending" : failed ? "error" : "success"}
       >
@@ -228,7 +230,7 @@ export function MoneyPricing({ classroomId }: MoneyPricingProps) {
                 immediately.
               </p>
             </div>
-            {(studentsQuery.data ?? []).length === 0 ? (
+            {students.length === 0 ? (
               <p
                 className="rounded-xl border border-dashed border-border px-4 py-6 type-secondary text-muted-foreground"
                 data-testid="student-prices-empty"
@@ -237,7 +239,7 @@ export function MoneyPricing({ classroomId }: MoneyPricingProps) {
               </p>
             ) : (
               <ul className="overflow-hidden rounded-xl border border-border divide-y divide-border">
-                {(studentsQuery.data ?? []).map((student) => {
+                {students.map((student) => {
                   const plan = plansByMember.get(student.id);
                   const kind = studentPriceKind(plan);
                   const editing = Boolean(customizingIds[student.id]);

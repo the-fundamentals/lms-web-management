@@ -6,7 +6,8 @@ function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="skeleton"
-      className={cn("animate-pulse rounded-md bg-accent", className)}
+      // Quiet wash — muted at low opacity; gold accent was too loud while pulsing.
+      className={cn("animate-pulse rounded-md bg-muted-foreground/8", className)}
       {...props}
     />
   )

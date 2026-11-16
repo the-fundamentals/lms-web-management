@@ -1,0 +1,25 @@
+{
+  "stage": "code-generation",
+  "unit": "u8-app",
+  "version": 1,
+  "writes": [
+    { "path": "src/main.tsx" },
+    { "path": "src/routes/__root.tsx" },
+    { "path": "src/routeTree.gen.ts" },
+    { "path": "src/features/app-shell/components/app-shell.tsx" },
+    { "path": "src/features/app-shell/components/app-shell.test.tsx" },
+    { "path": "src/features/app-shell/components/app-sidebar.tsx" },
+    { "path": "src/features/app-shell/components/app-header.tsx" },
+    { "path": "src/features/app-shell/components/nav-user.tsx" },
+    { "path": "src/features/app-shell/components/brand-mark.tsx" },
+    { "path": "src/features/app-shell/components/overview-dashboard.tsx" },
+    { "path": "src/features/app-shell/lib/shell-user.ts" },
+    { "path": "src/features/app-shell/lib/shell-user.test.ts" },
+    { "path": "src/features/app-shell/lib/shell-profile.ts" },
+    { "path": "src/features/app-shell/lib/header-trail.ts" },
+    { "path": "src/features/app-shell/lib/header-trail.test.ts" },
+    { "path": "src/devtools/tanstack-devtools.tsx" },
+    { "path": "src/devtools/lms-panel.tsx" },
+    { "path": "src/devtools/lms-events.ts" }
+  ]
+}

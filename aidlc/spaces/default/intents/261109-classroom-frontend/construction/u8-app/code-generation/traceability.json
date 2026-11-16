@@ -1,0 +1,57 @@
+{
+  "stage": "code-generation",
+  "unit": "u8-app",
+  "upstream_ids": [
+    "FR1.3",
+    "FR2.1",
+    "FR7.1",
+    "FR7.4",
+    "FR8.1",
+    "FR8.4",
+    "NFR1",
+    "NFR2"
+  ],
+  "coverage": [
+    {
+      "id": "FR1.3",
+      "status": "OK",
+      "target": "src/features/app-shell/components/nav-user.tsx"
+    },
+    {
+      "id": "FR2.1",
+      "status": "OK",
+      "target": "src/features/app-shell/components/app-sidebar.tsx"
+    },
+    {
+      "id": "FR7.1",
+      "status": "OK",
+      "target": "src/features/app-shell/components/app-shell.tsx"
+    },
+    {
+      "id": "FR7.4",
+      "status": "N/A",
+      "target": "feature screens own empty/error copy; shell only hosts chrome"
+    },
+    {
+      "id": "FR8.1",
+      "status": "N/A",
+      "target": "Tools account-menu entry not in this intent (U7 cancelled)",
+      "note": "Aligned with u7 cancel; N/A so assemble gate treats FR8.1 as not applicable"
+    },
+    {
+      "id": "FR8.4",
+      "status": "N/A",
+      "target": "operation screen paths owned by U2–U6 feature units"
+    },
+    {
+      "id": "NFR1",
+      "status": "OK",
+      "target": "src/features/app-shell/components/app-shell.tsx"
+    },
+    {
+      "id": "NFR2",
+      "status": "OK",
+      "target": "src/features/app-shell/components/app-shell.tsx"
+    }
+  ]
+}

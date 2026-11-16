@@ -150,19 +150,7 @@ describe("schedule integration", () => {
         },
       ],
     });
-    getAllClassroomSessionAttendances
-      .mockResolvedValueOnce({ data: [] })
-      .mockResolvedValueOnce({
-        data: [
-          {
-            id: "att1",
-            sessionId: "s1",
-            classroomMemberId: "m1",
-            status: "ATTENDED",
-          },
-        ],
-      });
-    createClassroomSessionAttendances.mockResolvedValue({
+    const persistedAttendance = {
       data: [
         {
           id: "att1",
@@ -171,7 +159,12 @@ describe("schedule integration", () => {
           status: "ATTENDED",
         },
       ],
-    });
+    };
+    // First paint empty; every later list (save refetch + remount) returns persisted.
+    getAllClassroomSessionAttendances
+      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValue(persistedAttendance);
+    createClassroomSessionAttendances.mockResolvedValue(persistedAttendance);
 
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
@@ -179,10 +172,10 @@ describe("schedule integration", () => {
         <SessionAttendance classroomId="c1" sessionId="s1" />
       </QueryClientProvider>,
     );
-    await waitFor(() => expect(screen.getByTestId("attendance-edit")).toBeTruthy());
-    fireEvent.click(screen.getByTestId("attendance-edit"));
+    // Roster is always editable when OPEN — no separate attendance-edit unlock.
     await waitFor(() => expect(screen.getByTestId("attendance-present-m1")).toBeTruthy());
     fireEvent.click(screen.getByTestId("attendance-present-m1"));
+    await waitFor(() => expect(screen.getByTestId("attendance-save")).toBeTruthy());
     fireEvent.click(screen.getByTestId("attendance-save"));
     await waitFor(() => expect(createClassroomSessionAttendances).toHaveBeenCalled());
 
@@ -192,8 +185,9 @@ describe("schedule integration", () => {
         <SessionAttendance classroomId="c1" sessionId="s1" />
       </QueryClientProvider>,
     );
-    await waitFor(() => expect(screen.getByTestId("attendance-mark-m1")).toBeTruthy());
-    expect(screen.getByTestId("attendance-mark-m1").textContent).toMatch(/Present/i);
+    // OPEN sessions keep Present/Absent toggles; persisted ATTENDED shows as selected.
+    await waitFor(() => expect(screen.getByTestId("attendance-present-m1")).toBeTruthy());
+    expect(screen.getByTestId("attendance-summary").textContent).toMatch(/1 Present/i);
     expect(createClassroomSessionAttendances).toHaveBeenCalled();
     expect(getAllClassroomSessionAttendances.mock.calls.length).toBeGreaterThanOrEqual(2);
   });

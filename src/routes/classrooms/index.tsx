@@ -10,7 +10,9 @@ function ClassroomsPage() {
   const auth = useAuth();
   const navigate = useNavigate();
 
-  if (auth.isLoading) return <LoadingScreen />;
+  if (auth.isLoading) {
+    return <LoadingScreen hint="Connecting to your school account" label="Signing in" />;
+  }
   if (!auth.isAuthenticated) return <SignInRoute />;
 
   return (

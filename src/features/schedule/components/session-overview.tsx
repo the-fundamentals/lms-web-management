@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
@@ -13,15 +13,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/shared/lib/cn";
 import { RequestStatus } from "@/shared/ui/request-status";
+import { SectionLoadingSkeleton } from "@/shared/ui/section-loading-skeleton";
 import {
-  DEFAULT_SESSION_STATUS_FILTER,
   filterSessionsByStatus,
   overviewBuckets,
   sessionTypeLabel,
   type SessionBucket,
   type SessionStatusFilter,
 } from "../lib/session-buckets";
+import {
+  listRangeFromPrefs,
+  readSessionOverviewPrefs,
+  writeSessionOverviewPrefs,
+  type ListGroupsOpen,
+  type SessionOverviewView,
+} from "../lib/session-overview-prefs";
 import { sessionsQueryOptions, type SessionDateRange, type SessionRow } from "../lib/session-api";
+import type { ListRangePreset } from "../lib/session-list-range";
 import {
   formatSessionClockRange,
   sessionDateParts,
@@ -29,18 +37,12 @@ import {
 import { SessionCalendar } from "./session-calendar";
 import { SessionComposeSheet } from "./session-compose-sheet";
 import type { SessionCreateDefaults } from "./session-create";
-import {
-  rangeForPreset,
-  SessionListRangeFilter,
-  type ListRangePreset,
-} from "./session-list-range-filter";
+import { SessionListRangeFilter } from "./session-list-range-filter";
 import { SessionStatusFilterControl } from "./session-status-filter";
 
 type SessionOverviewProps = {
   classroomId: string;
 };
-
-type SessionView = "calendar" | "list";
 
 const LABELS: Record<SessionBucket, string> = {
   active: "Active",
@@ -53,15 +55,16 @@ function SessionGroup({
   bucket,
   title,
   sessions,
-  defaultOpen = true,
+  open,
+  onOpenChange,
 }: {
   classroomId: string;
   bucket: SessionBucket;
   title: string;
   sessions: SessionRow[];
-  defaultOpen?: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
   if (sessions.length === 0) return null;
   return (
     <section className="flex flex-col gap-2" data-testid={`session-group-${bucket}`}>
@@ -73,7 +76,7 @@ function SessionGroup({
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
         )}
         data-testid={`session-group-toggle-${bucket}`}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => onOpenChange(!open)}
         type="button"
       >
         <ChevronDown
@@ -187,15 +190,23 @@ function SessionListView({
   classroomId,
   onNew,
   statusFilter,
+  listPreset,
+  listRange,
+  onListRangeChange,
+  listGroupsOpen,
+  onListGroupsOpenChange,
 }: {
   classroomId: string;
   onNew: () => void;
   statusFilter: SessionStatusFilter;
+  listPreset: ListRangePreset;
+  listRange: SessionDateRange;
+  onListRangeChange: (preset: ListRangePreset, range: SessionDateRange) => void;
+  listGroupsOpen: ListGroupsOpen;
+  onListGroupsOpenChange: (next: ListGroupsOpen) => void;
 }) {
-  const [preset, setPreset] = useState<ListRangePreset>("this_week");
-  const [range, setRange] = useState<SessionDateRange>(() => rangeForPreset("this_week"));
   const query = useQuery({
-    ...sessionsQueryOptions(classroomId, range),
+    ...sessionsQueryOptions(classroomId, listRange),
     placeholderData: keepPreviousData,
   });
   const filtered = filterSessionsByStatus(query.data ?? [], statusFilter);
@@ -206,18 +217,16 @@ function SessionListView({
   return (
     <div className="flex flex-col gap-4">
       <SessionListRangeFilter
-        onPresetChange={(nextPreset, nextRange) => {
-          setPreset(nextPreset);
-          setRange(nextRange);
-        }}
-        preset={preset}
-        range={range}
+        onPresetChange={onListRangeChange}
+        preset={listPreset}
+        range={listRange}
       />
       <RequestStatus
         error={query.error}
         onRetry={() => {
           void query.refetch();
         }}
+        pending={<SectionLoadingSkeleton rows={5} />}
         status={
           query.isPending && !query.isPlaceholderData
             ? "pending"
@@ -225,6 +234,7 @@ function SessionListView({
               ? "error"
               : "success"
         }
+        title="Couldn't load sessions"
       >
         {total === 0 ? (
           <div
@@ -253,8 +263,11 @@ function SessionListView({
               <SessionGroup
                 bucket={key}
                 classroomId={classroomId}
-                defaultOpen={key !== "past"}
                 key={key}
+                onOpenChange={(open) =>
+                  onListGroupsOpenChange({ ...listGroupsOpen, [key]: open })
+                }
+                open={listGroupsOpen[key]}
                 sessions={buckets[key] as SessionRow[]}
                 title={LABELS[key]}
               />
@@ -267,12 +280,43 @@ function SessionListView({
 }
 
 export function SessionOverview({ classroomId }: SessionOverviewProps) {
-  const [view, setView] = useState<SessionView>("calendar");
+  const [view, setView] = useState<SessionOverviewView>(
+    () => readSessionOverviewPrefs(classroomId).view,
+  );
   const [statusFilter, setStatusFilter] = useState<SessionStatusFilter>(
-    DEFAULT_SESSION_STATUS_FILTER,
+    () => readSessionOverviewPrefs(classroomId).statusFilter,
+  );
+  const [listPreset, setListPreset] = useState<ListRangePreset>(
+    () => readSessionOverviewPrefs(classroomId).listPreset,
+  );
+  const [listRange, setListRange] = useState<SessionDateRange>(() =>
+    listRangeFromPrefs(readSessionOverviewPrefs(classroomId)),
+  );
+  const [listGroupsOpen, setListGroupsOpen] = useState<ListGroupsOpen>(
+    () => readSessionOverviewPrefs(classroomId).listGroupsOpen,
   );
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeDefaults, setComposeDefaults] = useState<SessionCreateDefaults | undefined>();
+
+  // Re-hydrate when switching classrooms (same component instance).
+  useEffect(() => {
+    const prefs = readSessionOverviewPrefs(classroomId);
+    setView(prefs.view);
+    setStatusFilter(prefs.statusFilter);
+    setListPreset(prefs.listPreset);
+    setListRange(listRangeFromPrefs(prefs));
+    setListGroupsOpen(prefs.listGroupsOpen);
+  }, [classroomId]);
+
+  useEffect(() => {
+    writeSessionOverviewPrefs(classroomId, {
+      view,
+      statusFilter,
+      listPreset,
+      listRange,
+      listGroupsOpen,
+    });
+  }, [classroomId, view, statusFilter, listPreset, listRange, listGroupsOpen]);
 
   function openCompose(defaults?: SessionCreateDefaults) {
     setComposeDefaults(defaults);
@@ -351,6 +395,14 @@ export function SessionOverview({ classroomId }: SessionOverviewProps) {
       ) : (
         <SessionListView
           classroomId={classroomId}
+          listGroupsOpen={listGroupsOpen}
+          listPreset={listPreset}
+          listRange={listRange}
+          onListGroupsOpenChange={setListGroupsOpen}
+          onListRangeChange={(preset, range) => {
+            setListPreset(preset);
+            setListRange(range);
+          }}
           onNew={() => openCompose()}
           statusFilter={statusFilter}
         />

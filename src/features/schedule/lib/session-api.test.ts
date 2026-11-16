@@ -4,8 +4,16 @@ import {
   createRecurrenceBody,
   createSessionBody,
   defaultSessionListFilter,
+  deleteRecurrence,
+  deleteRecurrenceBody,
   sessionListFilter,
+  updateSession,
+  updateSessionBody,
 } from "./session-api";
+import {
+  deleteClassroomScheduleRecurrence,
+  updateClassroomSession,
+} from "@/generated/sdk.gen";
 
 vi.mock("@/generated/sdk.gen", () => ({
   cancelClassroomSession: vi.fn(),
@@ -19,6 +27,7 @@ vi.mock("@/generated/sdk.gen", () => ({
   getAllClassroomSessionAttendances: vi.fn(),
   getAllClassroomSessions: vi.fn(),
   getClassroomSessionById: vi.fn(),
+  updateClassroomSession: vi.fn(),
   updateClassroomSessionAttendance: vi.fn(),
 }));
 
@@ -64,9 +73,82 @@ describe("session api helpers", () => {
     });
   });
 
+  it("delete recurrence body requires cutoffDate", () => {
+    expect(deleteRecurrenceBody("2026-11-14")).toEqual({ cutoffDate: "2026-11-14" });
+  });
+
+  it("deleteRecurrence posts cutoffDate and invalidates", async () => {
+    vi.mocked(deleteClassroomScheduleRecurrence).mockResolvedValue({
+      data: undefined,
+      request: new Request("http://local"),
+      response: new Response(),
+    } as never);
+    await deleteRecurrence("c1", "r1", "2026-11-14");
+    expect(deleteClassroomScheduleRecurrence).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: { classroomId: "c1", scheduleId: "r1" },
+        body: { cutoffDate: "2026-11-14" },
+        throwOnError: true,
+      }),
+    );
+  });
+
   it("attendance body is status only", () => {
     expect(attendanceStatusBody("ATTENDED")).toEqual({ status: "ATTENDED" });
     expect(attendanceStatusBody("ABSENT")).toEqual({ status: "ABSENT" });
+  });
+
+  it("update session body can change ADHOC date/time and name", () => {
+    expect(
+      updateSessionBody({
+        sessionDate: "2026-07-20",
+        startTime: "10:00",
+        endTime: "11:30",
+        name: " Make-up ",
+      }),
+    ).toEqual({
+      sessionDate: "2026-07-20",
+      startTime: "10:00:00",
+      endTime: "11:30:00",
+      name: "Make-up",
+    });
+  });
+
+  it("updateSession posts body and invalidates", async () => {
+    vi.mocked(updateClassroomSession).mockResolvedValue({
+      data: {
+        id: "s1",
+        classroomId: "c1",
+        sessionDate: "2026-07-20",
+        startTime: "10:00:00",
+        endTime: "11:30:00",
+        status: "OPEN",
+        type: "ADHOC",
+        name: "Make-up",
+        createdDate: "2026-01-01T00:00:00Z",
+        lastModifiedDate: "2026-01-01T00:00:00Z",
+      },
+      request: new Request("http://local"),
+      response: new Response(),
+    } as never);
+    await updateSession("c1", "s1", {
+      sessionDate: "2026-07-20",
+      startTime: "10:00",
+      endTime: "11:30",
+      name: "Make-up",
+    });
+    expect(updateClassroomSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: { classroomId: "c1", sessionId: "s1" },
+        body: {
+          sessionDate: "2026-07-20",
+          startTime: "10:00:00",
+          endTime: "11:30:00",
+          name: "Make-up",
+        },
+        throwOnError: true,
+      }),
+    );
   });
 
   it("session list filter size is at most 50", () => {

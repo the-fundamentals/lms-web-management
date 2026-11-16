@@ -10,6 +10,7 @@ import {
   getAllClassroomSessionAttendances,
   getAllClassroomSessions,
   getClassroomSessionById,
+  updateClassroomSession,
   updateClassroomSessionAttendance,
 } from "@/generated/sdk.gen";
 import type {
@@ -17,11 +18,13 @@ import type {
   ClassroomScheduleRecurrenceResponse,
   ClassroomSessionAttendanceResponse,
   ClassroomSessionAttendanceStatus,
+  ClassroomSessionCancelCause,
   ClassroomSessionFilter,
   ClassroomSessionResponse,
   CreateClassroomScheduleRecurrenceCommand,
   CreateClassroomSessionAdhocCommand,
   RecurrenceByDay,
+  UpdateClassroomSessionCommand,
 } from "@/generated/types.gen";
 import { queryClient } from "@/shared/api/query-client";
 import { clockHm } from "./session-time";
@@ -52,6 +55,8 @@ export type SessionRow = {
   endTime: string;
   status: ClassroomSessionResponse["status"];
   type: ClassroomSessionResponse["type"];
+  /** Present when status is CANCELLED (MANUAL | REMOVED_FROM_SERIES). */
+  cancelCause?: ClassroomSessionCancelCause;
   name?: string;
   description?: string;
 };
@@ -81,6 +86,8 @@ export type MemberPick = {
   name: string;
   email: string;
   status: ClassroomMemberResponse["status"];
+  /** Denormalized avatar key from the account profile when present. */
+  avatar?: string;
 };
 
 export function mapSessionRow(session: ClassroomSessionResponse): SessionRow {
@@ -92,6 +99,7 @@ export function mapSessionRow(session: ClassroomSessionResponse): SessionRow {
     endTime: session.endTime,
     status: session.status,
     type: session.type,
+    ...(session.cancelCause ? { cancelCause: session.cancelCause } : {}),
     ...(session.name ? { name: session.name } : {}),
     ...(session.description ? { description: session.description } : {}),
   };
@@ -156,6 +164,34 @@ export function createRecurrenceBody(input: {
   };
   if (input.recurUntil) body.recurUntil = input.recurUntil;
   if (input.name?.trim()) body.name = input.name.trim();
+  return body;
+}
+
+/**
+ * Body for PUT updateClassroomSession.
+ * Date/time fields are ADHOC-only on the API (SCHEDULE rejects them).
+ * Omitted name/description clear those fields — callers must pass current values to keep them.
+ */
+export function updateSessionBody(input: {
+  sessionDate?: string;
+  startTime?: string;
+  endTime?: string;
+  name?: string | null;
+  description?: string | null;
+}): UpdateClassroomSessionCommand {
+  const body: UpdateClassroomSessionCommand = {};
+  if (input.sessionDate !== undefined) body.sessionDate = input.sessionDate;
+  if (input.startTime !== undefined) body.startTime = `${clockHm(input.startTime)}:00`;
+  if (input.endTime !== undefined) body.endTime = `${clockHm(input.endTime)}:00`;
+  if (input.name !== undefined) {
+    body.name = input.name === null || input.name.trim() === "" ? undefined : input.name.trim();
+  }
+  if (input.description !== undefined) {
+    body.description =
+      input.description === null || input.description.trim() === ""
+        ? undefined
+        : input.description.trim();
+  }
   return body;
 }
 
@@ -248,6 +284,26 @@ export async function cancelSession(classroomId: string, sessionId: string): Pro
   return mapSessionRow(result.data);
 }
 
+export async function updateSession(
+  classroomId: string,
+  sessionId: string,
+  input: {
+    sessionDate?: string;
+    startTime?: string;
+    endTime?: string;
+    name?: string | null;
+    description?: string | null;
+  },
+): Promise<SessionRow> {
+  const result = await updateClassroomSession({
+    path: { classroomId, sessionId },
+    body: updateSessionBody(input),
+    throwOnError: true,
+  });
+  await invalidateClassroomSessions(classroomId);
+  return mapSessionRow(result.data);
+}
+
 export async function listRecurrences(classroomId: string): Promise<RecurrenceRow[]> {
   const result = await getAllClassroomScheduleRecurrences({
     path: { classroomId },
@@ -282,12 +338,21 @@ export async function createRecurrence(
   return (result.data ?? []).map(mapRecurrenceRow);
 }
 
+/** Body for truncating a recurrence from cutoffDate onward (OPEN sessions cancelled). */
+export function deleteRecurrenceBody(cutoffDate: string): {
+  cutoffDate: string;
+} {
+  return { cutoffDate };
+}
+
 export async function deleteRecurrence(
   classroomId: string,
   scheduleId: string,
+  cutoffDate: string,
 ): Promise<void> {
   await deleteClassroomScheduleRecurrence({
     path: { classroomId, scheduleId },
+    body: deleteRecurrenceBody(cutoffDate),
     throwOnError: true,
   });
   await Promise.all([
@@ -359,6 +424,7 @@ export async function listActiveMembersForAttendance(
       name: m.name,
       email: m.email,
       status: m.status,
+      ...(m.avatar ? { avatar: m.avatar } : {}),
     }));
 }
 

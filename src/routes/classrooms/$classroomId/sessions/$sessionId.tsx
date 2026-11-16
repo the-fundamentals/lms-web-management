@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { SessionAttendanceSheet } from "@/features/schedule/components/session-attendance-sheet";
-import { SessionOverview } from "@/features/schedule/components/session-overview";
 
 export const Route = createFileRoute("/classrooms/$classroomId/sessions/$sessionId")({
   component: ClassroomSessionAttendanceRoute,
@@ -13,7 +12,7 @@ const DIALOG_CLOSE_MS = 220;
 function ClassroomSessionAttendanceRoute() {
   const { classroomId, sessionId } = Route.useParams();
   const navigate = useNavigate();
-  // Local open — navigate after close so the zoom-out animation can finish.
+  // Local open — navigate after close so the fade-out can finish.
   const [open, setOpen] = useState(true);
 
   useEffect(() => {
@@ -32,15 +31,11 @@ function ClassroomSessionAttendanceRoute() {
   }, [open, classroomId, navigate]);
 
   return (
-    <>
-      {/* Keep calendar/list under the modal — same Sessions tab surface. */}
-      <SessionOverview classroomId={classroomId} />
-      <SessionAttendanceSheet
-        classroomId={classroomId}
-        onOpenChange={setOpen}
-        open={open}
-        sessionId={sessionId}
-      />
-    </>
+    <SessionAttendanceSheet
+      classroomId={classroomId}
+      onOpenChange={setOpen}
+      open={open}
+      sessionId={sessionId}
+    />
   );
 }

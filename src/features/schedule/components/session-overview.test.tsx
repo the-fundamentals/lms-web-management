@@ -76,6 +76,7 @@ function renderOverview() {
 
 describe("session overview", () => {
   beforeEach(() => {
+    localStorage.clear();
     listSessions.mockReset();
     listRecurrences.mockReset();
     listRecurrences.mockResolvedValue([]);
@@ -91,7 +92,21 @@ describe("session overview", () => {
     await waitFor(() => expect(screen.getByTestId("calendar-grid")).toBeTruthy());
   });
 
-  it("status filters default on and can hide cancelled from calendar", async () => {
+  it("restores list view from localStorage after remount", async () => {
+    listSessions.mockResolvedValue([]);
+    renderOverview();
+    fireEvent.click(screen.getByTestId("sessions-view-list"));
+    await waitFor(() =>
+      expect(screen.getByTestId("sessions-view-list").getAttribute("aria-pressed")).toBe(
+        "true",
+      ),
+    );
+    cleanup();
+    renderOverview();
+    expect(screen.getByTestId("sessions-view-list").getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("status filter defaults Open+Completed; cancelled hidden until enabled", async () => {
     const now = new Date();
     const shifted = new Date(now.getTime() + 7 * 60 * 60 * 1000);
     const y = shifted.getUTCFullYear();
@@ -120,6 +135,7 @@ describe("session overview", () => {
     ]);
     renderOverview();
     await waitFor(() => expect(screen.getByTestId("sessions-status-filter")).toBeTruthy());
+    expect(screen.getByTestId("sessions-status-filter").textContent).toMatch(/\(2\)/);
     // Radix DropdownMenu opens on pointerdown in jsdom.
     fireEvent.pointerDown(screen.getByTestId("sessions-status-filter"));
     await waitFor(() => expect(screen.getByTestId("sessions-status-filter-menu")).toBeTruthy());
@@ -128,12 +144,12 @@ describe("session overview", () => {
       "checked",
     );
     expect(screen.getByTestId("sessions-status-cancelled").getAttribute("data-state")).toBe(
-      "checked",
+      "unchecked",
     );
-    await waitFor(() => expect(screen.getByTestId("calendar-session-cancel1")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("calendar-session-open1")).toBeTruthy());
+    expect(screen.queryByTestId("calendar-session-cancel1")).toBeNull();
     fireEvent.click(screen.getByTestId("sessions-status-cancelled"));
-    await waitFor(() => expect(screen.queryByTestId("calendar-session-cancel1")).toBeNull());
-    expect(screen.getByTestId("calendar-session-open1")).toBeTruthy();
+    await waitFor(() => expect(screen.getByTestId("calendar-session-cancel1")).toBeTruthy());
   });
 
   it("list empty state offers new session", async () => {
@@ -166,6 +182,54 @@ describe("session overview", () => {
 
     const filter = screen.getByTestId("session-list-range-filter");
     expect(filter.getAttribute("data-range-from")).toMatch(/^\d{4}-\d{2}-01$/);
+  });
+
+  it("restores list range preset after remount", async () => {
+    listSessions.mockResolvedValue([]);
+    renderOverview();
+    fireEvent.click(screen.getByTestId("sessions-view-list"));
+    await waitFor(() => expect(screen.getByTestId("session-list-range-filter")).toBeTruthy());
+    fireEvent.click(screen.getByTestId("list-range-this_month"));
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("list-range-this_month").getAttribute("aria-pressed"),
+      ).toBe("true"),
+    );
+    cleanup();
+    renderOverview();
+    await waitFor(() => expect(screen.getByTestId("session-list-range-filter")).toBeTruthy());
+    expect(screen.getByTestId("list-range-this_month").getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("restores past group expanded after remount", async () => {
+    listSessions.mockResolvedValue([
+      {
+        id: "s1",
+        classroomId: "c1",
+        sessionDate: "2020-01-01",
+        startTime: "09:00:00",
+        endTime: "10:00:00",
+        status: "COMPLETED",
+        type: "SCHEDULE",
+        name: "Past session",
+      },
+    ]);
+    renderOverview();
+    fireEvent.click(screen.getByTestId("sessions-view-list"));
+    await waitFor(() => expect(screen.getByTestId("session-group-toggle-past")).toBeTruthy());
+    expect(screen.getByTestId("session-group-toggle-past").getAttribute("aria-expanded")).toBe(
+      "false",
+    );
+    fireEvent.click(screen.getByTestId("session-group-toggle-past"));
+    expect(screen.getByTestId("session-group-toggle-past").getAttribute("aria-expanded")).toBe(
+      "true",
+    );
+    cleanup();
+    renderOverview();
+    await waitFor(() => expect(screen.getByTestId("session-group-toggle-past")).toBeTruthy());
+    expect(screen.getByTestId("session-group-toggle-past").getAttribute("aria-expanded")).toBe(
+      "true",
+    );
   });
 
   it("header new opens compose sheet with adhoc/recurring toggle", async () => {

@@ -1,36 +1,32 @@
 import {
   createClassroomMembers,
   getAllAccounts,
-  getAllClassroomMembers,
   getClassroomMemberAttendances,
   removeClassroomMember,
 } from "@/generated/sdk.gen";
 import type {
   AccountFilter,
   AccountProfileResponse,
-  ClassroomMemberResponse,
   ClassroomSessionAttendanceFilter,
   ClassroomSessionAttendanceResponse,
   CreateClassroomMembersCommand,
 } from "@/generated/types.gen";
+import {
+  classroomMembersQueryKey,
+  listClassroomMembers,
+  mapClassroomMemberRow,
+  type ClassroomMemberRow,
+} from "@/shared/api/classroom-members";
 import { queryClient } from "@/shared/api/query-client";
 
 export const MAX_ADD_MEMBERS = 30;
 export const DEFAULT_ATTENDANCE_PAGE_SIZE = 20;
 export const DEFAULT_ACCOUNT_SEARCH_SIZE = 20;
 
-export const membersQueryKey = ["classroom-members"] as const;
+/** Same key as `@/shared/api/classroom-members` — Money reuses this cache. */
+export const membersQueryKey = classroomMembersQueryKey;
 
-export type MemberRow = {
-  id: string;
-  classroomId: string;
-  accountId: string;
-  role: ClassroomMemberResponse["role"];
-  status: ClassroomMemberResponse["status"];
-  email: string;
-  name: string;
-  avatar?: string;
-};
+export type MemberRow = ClassroomMemberRow;
 
 export type AccountRow = {
   id: string;
@@ -49,21 +45,12 @@ export type AttendanceRow = {
   createdDate: string;
 };
 
-export function mapMemberRow(member: ClassroomMemberResponse): MemberRow {
-  return {
-    id: member.id,
-    classroomId: member.classroomId,
-    accountId: member.accountId,
-    role: member.role,
-    status: member.status,
-    email: member.email,
-    name: member.name,
-    ...(member.avatar ? { avatar: member.avatar } : {}),
-  };
-}
+export const mapMemberRow = mapClassroomMemberRow;
 
-export function mapMemberRows(members: ClassroomMemberResponse[]): MemberRow[] {
-  return members.map(mapMemberRow);
+export function mapMemberRows(
+  members: Parameters<typeof mapClassroomMemberRow>[0][],
+): MemberRow[] {
+  return members.map(mapClassroomMemberRow);
 }
 
 /** FR3.1 list shows ACTIVE only; REMOVED stay out. */
@@ -137,11 +124,7 @@ export function attendanceFilter(
 }
 
 export async function listMembers(classroomId: string): Promise<MemberRow[]> {
-  const result = await getAllClassroomMembers({
-    path: { classroomId },
-    throwOnError: true,
-  });
-  return mapMemberRows(result.data ?? []);
+  return listClassroomMembers(classroomId);
 }
 
 export async function addMembers(
@@ -193,12 +176,7 @@ export async function listMemberAttendances(
   return (result.data ?? []).map(mapAttendanceRow);
 }
 
-export function membersQueryOptions(classroomId: string) {
-  return {
-    queryKey: [...membersQueryKey, classroomId] as const,
-    queryFn: () => listMembers(classroomId),
-  };
-}
+export { classroomMembersQueryOptions as membersQueryOptions } from "@/shared/api/classroom-members";
 
 export function memberAttendancesQueryOptions(
   classroomId: string,

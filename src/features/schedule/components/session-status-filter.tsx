@@ -20,7 +20,7 @@ type SessionStatusFilterProps = {
   onChange: (next: SessionStatusFilter) => void;
 };
 
-/** Filter icon → dropdown checkboxes for Open / Completed / Cancelled (all on by default). */
+/** Filter icon → dropdown checkboxes. Default: Open + Completed (Cancelled off). */
 export function SessionStatusFilterControl({ value, onChange }: SessionStatusFilterProps) {
   function toggle(status: ClassroomSessionStatus) {
     onChange({ ...value, [status]: !value[status] });

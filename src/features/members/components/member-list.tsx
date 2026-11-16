@@ -12,6 +12,7 @@ import {
 import { cn } from "@/shared/lib/cn";
 import { publicAssetUrl } from "@/shared/lib/public-asset-url";
 import { RequestStatus } from "@/shared/ui/request-status";
+import { SectionLoadingSkeleton } from "@/shared/ui/section-loading-skeleton";
 import {
   activeMembers,
   membersQueryOptions,
@@ -109,6 +110,7 @@ export function MemberList({ classroomId }: MemberListProps) {
       onRetry={() => {
         void query.refetch();
       }}
+      pending={<SectionLoadingSkeleton rows={6} />}
       status={query.isPending ? "pending" : query.isError ? "error" : "success"}
     >
       <div className="flex flex-col gap-4" data-testid="member-list">

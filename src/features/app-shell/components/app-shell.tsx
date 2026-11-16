@@ -18,10 +18,16 @@ type AppShellProps = {
   user?: AppShellUser;
 };
 
+/** Degraded footer when profile fetch fails — keeps nav usable. */
+const PROFILE_UNAVAILABLE: AppShellUser = {
+  name: "Profile unavailable",
+  email: "",
+};
+
 /**
  * Signed-in chrome: always-expanded sidebar + inset main.
  * Profile footer comes from GET /private/profile (name, email, avatarKey URL).
- * Features stay decoupled — route passes onSignOut from auth; shell owns profile fetch.
+ * Profile failure stays in the main pane — does not tear down sidebar/routes.
  */
 export function AppShell({ children, onSignOut, title, actions, user }: AppShellProps) {
   const profileQuery = useQuery({
@@ -29,20 +35,16 @@ export function AppShell({ children, onSignOut, title, actions, user }: AppShell
     enabled: !user,
   });
 
-  if (!user && profileQuery.isPending) return <LoadingScreen />;
-  if (!user && profileQuery.isError) {
-    return (
-      <ErrorScreen
-        message={requestFailedMessage(profileQuery.error)}
-        onRetry={() => {
-          void profileQuery.refetch();
-        }}
-      />
-    );
+  if (!user && profileQuery.isPending) {
+    return <LoadingScreen hint="Opening your workspace" label="Loading" />;
   }
 
-  const resolved = user ?? profileQuery.data;
-  if (!resolved) return <LoadingScreen />;
+  const profileFailed = !user && profileQuery.isError;
+  const resolved = user ?? profileQuery.data ?? (profileFailed ? PROFILE_UNAVAILABLE : undefined);
+
+  if (!resolved) {
+    return <LoadingScreen hint="Opening your workspace" label="Loading" />;
+  }
 
   return (
     <SidebarProvider
@@ -56,7 +58,18 @@ export function AppShell({ children, onSignOut, title, actions, user }: AppShell
         <AppHeader actions={actions} title={title} />
         {/* Header stays put; only this pane scrolls. */}
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 md:gap-6 md:p-6">
-          {children}
+          {profileFailed ? (
+            <ErrorScreen
+              message={requestFailedMessage(profileQuery.error)}
+              onRetry={() => {
+                void profileQuery.refetch();
+              }}
+              title="Couldn't load your profile"
+              variant="section"
+            />
+          ) : (
+            children
+          )}
         </div>
       </SidebarInset>
     </SidebarProvider>

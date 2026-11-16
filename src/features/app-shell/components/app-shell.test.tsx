@@ -104,4 +104,15 @@ describe("app shell", () => {
     fireEvent.click(screen.getByTestId("sign-out"));
     expect(onSignOut).toHaveBeenCalledOnce();
   });
+
+  // U7 Tools cancelled — account footer must not offer a Tools entry.
+  it("account footer has no Tools control", () => {
+    wrap(
+      <AppShell onSignOut={() => undefined} title="Overview" user={user}>
+        <div>main</div>
+      </AppShell>,
+    );
+    expect(screen.queryByTestId("nav-tools")).toBeNull();
+    expect(screen.getByTestId("nav-user").textContent).not.toMatch(/\bTools\b/);
+  });
 });

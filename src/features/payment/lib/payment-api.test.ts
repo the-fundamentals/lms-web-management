@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  activeStudents,
   completeInvoiceBody,
   createAdhocInvoiceBody,
   createStudentPlanBody,
@@ -14,7 +15,6 @@ vi.mock("@/generated/sdk.gen", () => ({
   completeClassroomInvoice: vi.fn(),
   createClassroomInvoiceAdhoc: vi.fn(),
   createClassroomMemberPaymentPlan: vi.fn(),
-  getAllClassroomMembers: vi.fn(),
   getAllClassroomPaymentPlans: vi.fn(),
   getClassroomById: vi.fn(),
   getClassroomInvoiceById: vi.fn(),
@@ -88,5 +88,39 @@ describe("payment api helpers", () => {
     expect("generateClassroomInvoices" in api).toBe(false);
     const sdk = await import("@/generated/sdk.gen");
     expect(vi.mocked(sdk.generateClassroomInvoices)).not.toHaveBeenCalled();
+  });
+
+  it("activeStudents keeps ACTIVE STUDENT only", () => {
+    expect(
+      activeStudents([
+        {
+          id: "m1",
+          classroomId: "c1",
+          accountId: "a1",
+          name: "Ann",
+          email: "a@x.com",
+          role: "STUDENT",
+          status: "ACTIVE",
+        },
+        {
+          id: "m2",
+          classroomId: "c1",
+          accountId: "a2",
+          name: "Bob",
+          email: "b@x.com",
+          role: "STUDENT",
+          status: "REMOVED",
+        },
+        {
+          id: "m3",
+          classroomId: "c1",
+          accountId: "a3",
+          name: "Cara",
+          email: "c@x.com",
+          role: "TEACHER",
+          status: "ACTIVE",
+        },
+      ]).map((m) => m.id),
+    ).toEqual(["m1"]);
   });
 });

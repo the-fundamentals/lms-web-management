@@ -1,31 +1,20 @@
 import { useEffect, useRef, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Link, useBlocker } from "@tanstack/react-router";
-import { ArrowLeft, CircleAlert, Trash2 } from "lucide-react";
+import { ArrowLeft, CircleAlert } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { RecurrenceByDay } from "@/generated/types.gen";
 import { requestFailedMessage } from "@/shared/ui/request-status";
-import { RequestStatus } from "@/shared/ui/request-status";
-import {
-  createRecurrence,
-  deleteRecurrence,
-  recurrencesQueryOptions,
-} from "../lib/session-api";
-import { formatSessionClockRange, sessionDateParts } from "../lib/session-time";
-
-function recurrenceDayShort(byDay: RecurrenceByDay): string {
-  return byDay.charAt(0) + byDay.slice(1, 3).toLowerCase();
-}
+import { createRecurrence } from "../lib/session-api";
+import { civilDateToByDay } from "../lib/truncate-calendar";
 
 type WeeklyScheduleProps = {
   classroomId: string;
   /** Form-only — used inside SessionComposeSheet. */
   embedded?: boolean;
-  /** When embedded, pause the query until the recurring panel is shown. */
-  active?: boolean;
   /** Prefill recurrence start date (e.g. from calendar day). */
   initialStartDate?: string;
   initialStartTime?: string;
@@ -48,18 +37,16 @@ const DAYS: RecurrenceByDay[] = [
 export function WeeklySchedule({
   classroomId,
   embedded = false,
-  active = true,
   initialStartDate,
   initialStartTime,
   initialEndTime,
   onDirtyChange,
   onSaved,
 }: WeeklyScheduleProps) {
-  const query = useQuery({
-    ...recurrencesQueryOptions(classroomId),
-    enabled: active,
-  });
-  const [byDays, setByDays] = useState<RecurrenceByDay[]>([]);
+  // Calendar “+” prefills start date — also select that weekday for the series.
+  const [byDays, setByDays] = useState<RecurrenceByDay[]>(() =>
+    initialStartDate ? [civilDateToByDay(initialStartDate)] : [],
+  );
   const [startDate, setStartDate] = useState(initialStartDate ?? "");
   const [startTime, setStartTime] = useState(initialStartTime ?? "09:00");
   const [endTime, setEndTime] = useState(initialEndTime ?? "10:00");
@@ -90,13 +77,12 @@ export function WeeklySchedule({
         startTime,
         endTime,
       }),
-    onSuccess: async () => {
-      setByDays([]);
-      setStartDate("");
+    onSuccess: () => {
+      setByDays(initialStartDate ? [civilDateToByDay(initialStartDate)] : []);
+      setStartDate(initialStartDate ?? "");
       setFailure(null);
       savingRef.current = false;
       setSaving(false);
-      await query.refetch();
       onSaved?.();
     },
     onError: (error) => {
@@ -114,82 +100,6 @@ export function WeeklySchedule({
 
   const body = (
     <div className="flex flex-col gap-4" data-testid="weekly-schedule-body">
-      <div
-        className={
-          embedded
-            ? "rounded-2xl border border-border bg-card p-4 shadow-sm"
-            : undefined
-        }
-      >
-        <RequestStatus
-          error={query.error}
-          onRetry={() => {
-            void query.refetch();
-          }}
-          status={query.isPending ? "pending" : query.isError ? "error" : "success"}
-        >
-          {embedded ? (
-            <div className="mb-3 space-y-1">
-              <p className="type-body font-medium text-foreground">Saved patterns</p>
-              <p className="type-secondary text-muted-foreground">
-                Existing weekly rows for this classroom.
-              </p>
-            </div>
-          ) : null}
-          <ul className="flex flex-col gap-2" data-testid="weekly-list">
-            {(query.data ?? []).length === 0 ? (
-              <li className="rounded-xl border border-dashed border-border/80 bg-muted/20 px-3 py-4 text-center type-secondary text-muted-foreground">
-                No weekly times yet.
-              </li>
-            ) : (
-              (query.data ?? []).map((row) => {
-                const start = sessionDateParts(row.recurrenceStartDate);
-                const clock = formatSessionClockRange(
-                  row.recurrenceStartDate,
-                  row.startTime,
-                  row.endTime,
-                );
-                return (
-                  <li
-                    className="group flex items-center gap-3 rounded-xl border border-border/80 bg-background px-2.5 py-2 shadow-sm"
-                    data-testid={`weekly-row-${row.id}`}
-                    key={row.id}
-                  >
-                    <span
-                      aria-hidden
-                      className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 type-body font-medium text-primary"
-                    >
-                      {recurrenceDayShort(row.byDay)}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block type-body font-medium tabular-nums text-foreground">
-                        {clock}
-                      </span>
-                      <span className="mt-0.5 block type-secondary text-muted-foreground">
-                        Every week · from {start.day} {start.month}
-                      </span>
-                    </span>
-                    <Button
-                      className="shrink-0 text-muted-foreground opacity-70 transition-opacity hover:bg-destructive/10 hover:text-destructive hover:opacity-100 group-hover:opacity-100"
-                      data-testid={`weekly-delete-${row.id}`}
-                      onClick={() => {
-                        void deleteRecurrence(classroomId, row.id).then(() => query.refetch());
-                      }}
-                      size="icon-sm"
-                      type="button"
-                      variant="ghost"
-                    >
-                      <Trash2 aria-hidden />
-                      <span className="sr-only">Delete weekly time</span>
-                    </Button>
-                  </li>
-                );
-              })
-            )}
-          </ul>
-        </RequestStatus>
-      </div>
-
       <form
         className={
           embedded
@@ -287,9 +197,7 @@ export function WeeklySchedule({
     </div>
   );
 
-  if (embedded) {
-    return body;
-  }
+  if (embedded) return body;
 
   return (
     <div className="flex flex-col gap-4" data-testid="weekly-schedule">

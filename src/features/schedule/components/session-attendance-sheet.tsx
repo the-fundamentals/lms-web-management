@@ -1,16 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Ban, ClipboardCheck, MoreHorizontal, XIcon } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ClipboardCheck, Pencil, XIcon } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,24 +12,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/shared/lib/cn";
+import { requestFailedMessage } from "@/shared/ui/request-status";
 import {
   sessionStatusBadgeClass,
   sessionStatusLabel,
   sessionTypeLabel,
 } from "../lib/session-buckets";
-import { cancelSession, sessionQueryOptions } from "../lib/session-api";
+import { sessionQueryOptions, updateSession } from "../lib/session-api";
 import {
-  formatSessionWhen,
+  formatSessionClockRange,
   sessionDateParts,
 } from "../lib/session-time";
 import { SessionAttendance } from "./session-attendance";
+import { SessionCancelDialog } from "./session-cancel-dialog";
 
 type SessionAttendanceSheetProps = {
   classroomId: string;
@@ -48,9 +37,11 @@ type SessionAttendanceSheetProps = {
 };
 
 /**
- * Session attendance — centered modal (filename kept for import stability).
- * Keeps Sessions overview visible underneath.
- * Header chrome: ⋯ (Cancel session) then X (dismiss) — matches dialog close cluster.
+ * Session attendance modal.
+ *
+ * Hierarchy (top → bottom, left → right):
+ * 1. Full-width header — name (edit-on-demand) + when / type / status
+ * 2. Body columns — notes + complete (left) | roster marks (right)
  */
 export function SessionAttendanceSheet({
   classroomId,
@@ -64,30 +55,46 @@ export function SessionAttendanceSheet({
   });
   const session = sessionQuery.data;
   const canCancel = session?.status === "OPEN";
-  const name = session?.name?.trim();
+  const canEditName = session?.status === "OPEN";
+  const persistedName = session?.name?.trim() ?? "";
   const dateParts = session ? sessionDateParts(session.sessionDate) : null;
-  // Title = session name only; date lives in Session details. Unnamed → civil date.
-  const title = session
-    ? name || `${dateParts!.label} ${session.sessionDate.slice(0, 4)}`
-    : "Session";
-  const sessionLabel =
-    name ||
-    (session
-      ? formatSessionWhen(session.sessionDate, session.startTime, session.endTime)
-      : "this session");
+  const clock = session
+    ? formatSessionClockRange(session.sessionDate, session.startTime, session.endTime)
+    : null;
+  const title = session ? persistedName || "Untitled Session" : "Session";
 
   const [confirmCancel, setConfirmCancel] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(persistedName);
+  const [nameSaving, setNameSaving] = useState(false);
+  const [nameFailure, setNameFailure] = useState<unknown>(null);
 
-  async function runCancel() {
-    if (cancelling) return;
-    setCancelling(true);
+  useEffect(() => {
+    if (!editingName) setNameDraft(persistedName);
+  }, [editingName, persistedName]);
+
+  useEffect(() => {
+    setEditingName(false);
+    setNameFailure(null);
+  }, [sessionId, open]);
+
+  async function saveName() {
+    if (!session || nameSaving) return;
+    setNameSaving(true);
+    setNameFailure(null);
     try {
-      await cancelSession(classroomId, sessionId);
-      setConfirmCancel(false);
+      const next = nameDraft.trim();
+      // Omit clears — keep description when renaming.
+      await updateSession(classroomId, session.id, {
+        name: next || null,
+        description: session.description?.trim() ? session.description : null,
+      });
+      setEditingName(false);
       await sessionQuery.refetch();
+    } catch (error) {
+      setNameFailure(error);
     } finally {
-      setCancelling(false);
+      setNameSaving(false);
     }
   }
 
@@ -95,131 +102,181 @@ export function SessionAttendanceSheet({
     <>
       <Dialog onOpenChange={onOpenChange} open={open}>
         <DialogContent
-          className="flex h-[75dvh] max-h-[75dvh] w-[min(100%-2rem,50vw)] min-w-0 flex-col gap-0 overflow-hidden p-0 sm:min-w-[32rem] sm:max-w-[50vw]"
+          className={cn(
+            "flex h-[75dvh] max-h-[75dvh] w-[min(100%-2rem,56rem)] min-w-0 flex-col gap-0 overflow-hidden p-0 sm:min-w-[44rem] sm:max-w-[56rem]",
+          )}
           data-testid="session-attendance-sheet"
           onCloseAutoFocus={(event) => event.preventDefault()}
           onOpenAutoFocus={(event) => event.preventDefault()}
           showCloseButton={false}
         >
-          {/* ⋯ then X — same corner as default Dialog close */}
-          <div className="absolute top-3.5 right-3.5 z-10 flex items-center gap-0.5">
-            {canCancel ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    className="size-8 text-muted-foreground opacity-70 hover:opacity-100"
-                    data-testid="session-actions-menu"
-                    size="icon-sm"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <MoreHorizontal aria-hidden className="size-4" />
-                    <span className="sr-only">Session actions</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    data-testid="session-cancel"
-                    onSelect={() => setConfirmCancel(true)}
-                    variant="destructive"
-                  >
-                    <Ban aria-hidden />
-                    Cancel session
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : null}
-            <DialogClose
-              className="rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
-              data-testid="session-attendance-close"
-            >
-              <span className="flex size-8 items-center justify-center">
-                <XIcon />
-              </span>
-              <span className="sr-only">Close</span>
-            </DialogClose>
-          </div>
-
-          <DialogHeader className="shrink-0 border-b border-border/80 bg-muted/20 px-5 py-5 pr-24 text-left">
-            <div className="flex items-start gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <ClipboardCheck aria-hidden className="size-5" />
-              </span>
-              <div className="min-w-0 flex-1 space-y-1.5">
-                <DialogTitle className="type-section">{title}</DialogTitle>
-                <DialogDescription asChild>
-                  <div
-                    className="flex flex-wrap items-center gap-2"
-                    data-testid="session-header-meta"
-                  >
-                    {session ? (
-                      <>
-                        <span>{sessionTypeLabel(session.type)}</span>
-                        <span aria-hidden className="text-muted-foreground/40">
-                          ·
-                        </span>
-                        <Badge
-                          className={cn(
-                            "px-2 py-0 text-[0.65rem] font-semibold tracking-wide uppercase",
-                            sessionStatusBadgeClass(session.status),
-                          )}
-                          data-testid="session-status-banner"
-                          variant="outline"
-                        >
-                          {sessionStatusLabel(session.status)}
-                        </Badge>
-                      </>
-                    ) : (
-                      <span>Take attendance or complete the session</span>
-                    )}
-                  </div>
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-
           {open ? (
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <>
+              <div className="relative shrink-0 border-b border-border/80 bg-muted/20">
+                <DialogClose
+                  className="absolute top-3 right-3 z-10 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+                  data-testid="session-attendance-close"
+                >
+                  <span className="flex size-8 items-center justify-center">
+                    <XIcon />
+                  </span>
+                  <span className="sr-only">Close</span>
+                </DialogClose>
+
+                <DialogHeader className="gap-0 px-5 py-3.5 pr-14 text-left">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <ClipboardCheck aria-hidden className="size-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      {editingName && canEditName ? (
+                        <div
+                          className="flex flex-col gap-2 sm:flex-row sm:items-center"
+                          data-testid="session-title-block"
+                        >
+                          <Label
+                            className="sr-only"
+                            htmlFor={`session-sheet-name-${sessionId}`}
+                          >
+                            Session name
+                          </Label>
+                          <Input
+                            className="h-8 min-w-0 flex-1"
+                            data-testid="session-title-input"
+                            id={`session-sheet-name-${sessionId}`}
+                            onChange={(e) => setNameDraft(e.target.value)}
+                            placeholder="Session name"
+                            value={nameDraft}
+                          />
+                          <div className="flex shrink-0 gap-1">
+                            <Button
+                              data-testid="session-title-cancel"
+                              disabled={nameSaving}
+                              onClick={() => {
+                                setEditingName(false);
+                                setNameDraft(persistedName);
+                                setNameFailure(null);
+                              }}
+                              size="sm"
+                              type="button"
+                              variant="ghost"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              data-testid="session-title-save"
+                              disabled={nameSaving}
+                              onClick={() => void saveName()}
+                              size="sm"
+                              type="button"
+                            >
+                              {nameSaving ? "Saving…" : "Save"}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          className="group/title flex min-w-0 items-center gap-1"
+                          data-testid="session-title-block"
+                        >
+                          <DialogTitle
+                            className={cn(
+                              "min-w-0 truncate type-section leading-none",
+                              !persistedName && "text-muted-foreground",
+                            )}
+                            data-testid="session-title-display"
+                          >
+                            {title}
+                          </DialogTitle>
+                          {canEditName ? (
+                            <Button
+                              aria-label="Edit session name"
+                              className="size-7 shrink-0 p-0 opacity-0 transition-opacity group-hover/title:opacity-100 focus-visible:opacity-100"
+                              data-testid="session-edit-title"
+                              onClick={() => {
+                                setNameDraft(persistedName);
+                                setEditingName(true);
+                                setNameFailure(null);
+                              }}
+                              size="icon-sm"
+                              type="button"
+                              variant="ghost"
+                            >
+                              <Pencil aria-hidden className="size-3.5" />
+                            </Button>
+                          ) : null}
+                        </div>
+                      )}
+
+                      <DialogDescription asChild>
+                        <div
+                          className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 leading-none"
+                          data-testid="session-header-meta"
+                        >
+                          {session && dateParts && clock ? (
+                            <>
+                              <span>
+                                {dateParts.label} · {clock}
+                              </span>
+                              <span aria-hidden className="text-muted-foreground/40">
+                                ·
+                              </span>
+                              <span>{sessionTypeLabel(session.type)}</span>
+                              <span aria-hidden className="text-muted-foreground/40">
+                                ·
+                              </span>
+                              <Badge
+                                className={cn(
+                                  "px-1.5 py-0 text-[0.65rem] font-semibold tracking-wide uppercase",
+                                  sessionStatusBadgeClass(session.status),
+                                )}
+                                data-testid="session-status-banner"
+                                variant="outline"
+                              >
+                                {sessionStatusLabel(session.status)}
+                              </Badge>
+                            </>
+                          ) : (
+                            <span>Take attendance or complete the session</span>
+                          )}
+                        </div>
+                      </DialogDescription>
+
+                      {nameFailure ? (
+                        <Alert
+                          className="mt-2"
+                          data-testid="session-meta-error"
+                          variant="destructive"
+                        >
+                          <AlertDescription>
+                            {requestFailedMessage(nameFailure)}
+                          </AlertDescription>
+                        </Alert>
+                      ) : null}
+                    </div>
+                  </div>
+                </DialogHeader>
+              </div>
+
               <SessionAttendance
                 classroomId={classroomId}
                 key={sessionId}
+                onRequestCancel={
+                  canCancel ? () => setConfirmCancel(true) : undefined
+                }
                 sessionId={sessionId}
               />
-            </div>
+            </>
           ) : null}
         </DialogContent>
       </Dialog>
 
-      <AlertDialog
-        onOpenChange={(next) => {
-          if (!next) setConfirmCancel(false);
-        }}
+      <SessionCancelDialog
+        classroomId={classroomId}
+        onOpenChange={setConfirmCancel}
         open={confirmCancel}
-      >
-        <AlertDialogContent data-testid="session-lifecycle-dialog">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel {sessionLabel}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This cancels the session. Attendance can no longer change.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel data-testid="session-lifecycle-dismiss" disabled={cancelling}>
-              Back
-            </AlertDialogCancel>
-            <AlertDialogAction
-              data-testid="session-lifecycle-confirm"
-              disabled={cancelling}
-              onClick={(event) => {
-                event.preventDefault();
-                void runCancel();
-              }}
-            >
-              Confirm
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        session={session ?? null}
+      />
     </>
   );
 }

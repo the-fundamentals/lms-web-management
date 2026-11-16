@@ -7,6 +7,7 @@ const fetchSession = vi.hoisted(() => vi.fn());
 const cancelSession = vi.hoisted(() => vi.fn());
 const listAttendances = vi.hoisted(() => vi.fn());
 const listMembers = vi.hoisted(() => vi.fn());
+const updateSession = vi.hoisted(() => vi.fn());
 
 vi.mock("../lib/session-api", async () => {
   const actual = await vi.importActual<typeof import("../lib/session-api")>("../lib/session-api");
@@ -22,6 +23,7 @@ vi.mock("../lib/session-api", async () => {
     }),
     listActiveMembersForAttendance: (...args: unknown[]) => listMembers(...args),
     cancelSession: (...args: unknown[]) => cancelSession(...args),
+    updateSession: (...args: unknown[]) => updateSession(...args),
     completeSession: vi.fn(),
     saveAttendanceStatuses: vi.fn(),
   };
@@ -44,10 +46,11 @@ describe("session attendance sheet", () => {
     cancelSession.mockReset();
     listAttendances.mockReset();
     listMembers.mockReset();
+    updateSession.mockReset();
   });
   afterEach(() => cleanup());
 
-  it("puts Cancel session in the header ⋯ menu next to close", async () => {
+  it("puts Cancel session in a ⋯ menu next to Complete", async () => {
     fetchSession.mockResolvedValue(openSession);
     listAttendances.mockResolvedValue([]);
     listMembers.mockResolvedValue([]);
@@ -63,13 +66,17 @@ describe("session attendance sheet", () => {
       </QueryClientProvider>,
     );
     await waitFor(() => expect(screen.getByTestId("session-actions-menu")).toBeTruthy());
+    expect(screen.getByTestId("session-complete")).toBeTruthy();
     expect(screen.getByTestId("session-attendance-close")).toBeTruthy();
     fireEvent.pointerDown(screen.getByTestId("session-actions-menu"));
     await waitFor(() => expect(screen.getByTestId("session-cancel")).toBeTruthy());
     expect(screen.getByTestId("session-cancel").textContent).toMatch(/Cancel session/i);
     fireEvent.click(screen.getByTestId("session-cancel"));
-    await waitFor(() => expect(screen.getByTestId("session-lifecycle-dialog")).toBeTruthy());
-    expect(screen.getByTestId("session-lifecycle-dialog").textContent).toMatch(/Morning/i);
+    await waitFor(() => expect(screen.getByTestId("session-cancel-dialog-s1")).toBeTruthy());
+    expect(screen.getByTestId("session-cancel-dialog-s1").textContent).toMatch(/Morning/i);
+    expect(screen.getByTestId("session-cancel-dialog-s1").textContent).toMatch(
+      /Cancel this session/i,
+    );
   });
 
   it("hides the ⋯ menu when the session is not open", async () => {
@@ -89,14 +96,18 @@ describe("session attendance sheet", () => {
     );
     await waitFor(() => expect(screen.getByTestId("session-attendance-sheet")).toBeTruthy());
     expect(screen.queryByTestId("session-actions-menu")).toBeNull();
+    expect(screen.queryByTestId("session-complete")).toBeNull();
     expect(screen.getByTestId("session-attendance-close")).toBeTruthy();
   });
 
-  it("title uses session name only; subtitle shows type and status", async () => {
+  it("header holds name + when / type / status; left column is notes", async () => {
     fetchSession.mockResolvedValue({
       ...openSession,
       name: "Make-up Lesson for 13/11/2026",
       sessionDate: "2026-11-18",
+      startTime: "21:00:00",
+      endTime: "22:30:00",
+      description: "Bring worksheets",
     });
     listAttendances.mockResolvedValue([]);
     listMembers.mockResolvedValue([]);
@@ -115,7 +126,46 @@ describe("session attendance sheet", () => {
     expect(screen.getByRole("heading", { level: 2 }).textContent).toBe(
       "Make-up Lesson for 13/11/2026",
     );
-    expect(screen.getByTestId("session-header-meta").textContent).toMatch(/Adhoc/i);
+    const meta = screen.getByTestId("session-header-meta").textContent ?? "";
+    expect(meta).toMatch(/Adhoc/i);
+    expect(meta).toMatch(/21:00/);
     expect(screen.getByTestId("session-status-banner").textContent).toMatch(/Open/i);
+    expect(screen.getByTestId("session-edit-title")).toBeTruthy();
+    expect(screen.getByTestId("session-details").textContent).not.toMatch(
+      /Make-up Lesson/,
+    );
+    expect(screen.getByTestId("session-notes-display").textContent).toMatch(
+      /Bring worksheets/,
+    );
+  });
+
+  it("edits session name from the modal header", async () => {
+    fetchSession.mockResolvedValue(openSession);
+    listAttendances.mockResolvedValue([]);
+    listMembers.mockResolvedValue([]);
+    updateSession.mockResolvedValue({ ...openSession, name: "Renamed" });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <SessionAttendanceSheet
+          classroomId="c1"
+          onOpenChange={() => undefined}
+          open
+          sessionId="s1"
+        />
+      </QueryClientProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId("session-edit-title")).toBeTruthy());
+    fireEvent.click(screen.getByTestId("session-edit-title"));
+    fireEvent.change(screen.getByTestId("session-title-input"), {
+      target: { value: "Renamed" },
+    });
+    fireEvent.click(screen.getByTestId("session-title-save"));
+    await waitFor(() =>
+      expect(updateSession).toHaveBeenCalledWith("c1", "s1", {
+        name: "Renamed",
+        description: null,
+      }),
+    );
   });
 });

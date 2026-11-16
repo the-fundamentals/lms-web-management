@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { InvoiceDetail } from "./invoice-detail";
 
 const fetchInvoice = vi.hoisted(() => vi.fn());
-const listActiveStudents = vi.hoisted(() => vi.fn());
+const listClassroomMembers = vi.hoisted(() => vi.fn());
 const approveInvoice = vi.hoisted(() => vi.fn());
 const completeInvoice = vi.hoisted(() => vi.fn());
 const cancelInvoice = vi.hoisted(() => vi.fn());
@@ -18,12 +18,20 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 
+vi.mock("@/shared/api/classroom-members", () => ({
+  classroomMembersQueryKey: ["classroom-members"],
+  classroomMembersQueryOptions: (classroomId: string) => ({
+    queryKey: ["classroom-members", classroomId],
+    queryFn: () => listClassroomMembers(classroomId),
+  }),
+  listClassroomMembers: (...args: unknown[]) => listClassroomMembers(...args),
+}));
+
 vi.mock("../lib/payment-api", async () => {
   const actual = await vi.importActual<typeof import("../lib/payment-api")>("../lib/payment-api");
   return {
     ...actual,
     fetchInvoice: (...args: unknown[]) => fetchInvoice(...args),
-    listActiveStudents: (...args: unknown[]) => listActiveStudents(...args),
     approveInvoice: (...args: unknown[]) => approveInvoice(...args),
     completeInvoice: (...args: unknown[]) => completeInvoice(...args),
     cancelInvoice: (...args: unknown[]) => cancelInvoice(...args),
@@ -67,13 +75,14 @@ function renderDetail() {
 describe("invoice detail", () => {
   beforeEach(() => {
     fetchInvoice.mockReset();
-    listActiveStudents.mockReset();
+    listClassroomMembers.mockReset();
     approveInvoice.mockReset();
     completeInvoice.mockReset();
     cancelInvoice.mockReset();
-    listActiveStudents.mockResolvedValue([
+    listClassroomMembers.mockResolvedValue([
       {
         id: "m1",
+        classroomId: "c1",
         accountId: "a1",
         name: "Ann",
         email: "a@x.com",
@@ -113,6 +122,11 @@ describe("invoice detail", () => {
   it("cancel confirmation names the invoice student", async () => {
     fetchInvoice.mockResolvedValue(draftInvoice());
     renderDetail();
+    await waitFor(() => expect(screen.getByTestId("invoice-more")).toBeTruthy());
+    fireEvent.pointerDown(screen.getByTestId("invoice-more"), {
+      button: 0,
+      ctrlKey: false,
+    });
     await waitFor(() => expect(screen.getByTestId("invoice-cancel")).toBeTruthy());
     fireEvent.click(screen.getByTestId("invoice-cancel"));
     await waitFor(() => expect(screen.getByTestId("invoice-cancel-confirm")).toBeTruthy());
@@ -125,6 +139,42 @@ describe("invoice detail", () => {
     await waitFor(() => expect(screen.getByTestId("invoice-readonly")).toBeTruthy());
     expect(screen.queryByTestId("invoice-approve")).toBeNull();
     expect(screen.queryByTestId("invoice-mark-paid")).toBeNull();
+    expect(screen.queryByTestId("invoice-more")).toBeNull();
     expect(screen.queryByTestId("invoice-cancel")).toBeNull();
+  });
+
+  it("formats attended ISO timestamps in GMT+7", async () => {
+    fetchInvoice.mockResolvedValue(
+      draftInvoice({
+        lines: [
+          {
+            id: "l1",
+            kind: "LESSON",
+            description:
+              "Attended dates: 2026-11-14T23:06:53.465975, 2026-11-15T01:14:55.107748",
+            unitPrice: 300000,
+            quantity: 2,
+            finalAmount: 600000,
+            createdDate: "2026-01-01T00:00:00Z",
+            lastModifiedDate: "2026-01-01T00:00:00Z",
+          },
+        ],
+      }),
+    );
+    renderDetail();
+    await waitFor(() => expect(screen.getByTestId("invoice-line-attended")).toBeTruthy());
+    const block = screen.getByTestId("invoice-line-attended");
+    expect(block.textContent).toMatch(/Attended dates/);
+    expect(block.textContent).toMatch(/15 Nov 2026/);
+    expect(block.textContent).toMatch(/06:06/);
+    expect(block.textContent).toMatch(/08:14/);
+    expect(block.textContent).not.toMatch(/T23:06/);
+  });
+
+  it("keeps plain line descriptions unchanged", async () => {
+    fetchInvoice.mockResolvedValue(draftInvoice());
+    renderDetail();
+    await waitFor(() => expect(screen.getByText("Fee")).toBeTruthy());
+    expect(screen.queryByTestId("invoice-line-attended")).toBeNull();
   });
 });

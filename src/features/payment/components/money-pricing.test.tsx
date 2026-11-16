@@ -6,7 +6,7 @@ import { MoneyPricing } from "./money-pricing";
 
 const fetchClassroomMoney = vi.hoisted(() => vi.fn());
 const listCurrentPaymentPlans = vi.hoisted(() => vi.fn());
-const listActiveStudents = vi.hoisted(() => vi.fn());
+const listClassroomMembers = vi.hoisted(() => vi.fn());
 const setClassroomPrice = vi.hoisted(() => vi.fn());
 const setStudentPrice = vi.hoisted(() => vi.fn());
 const navigate = vi.hoisted(() => vi.fn());
@@ -20,13 +20,21 @@ vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigate,
 }));
 
+vi.mock("@/shared/api/classroom-members", () => ({
+  classroomMembersQueryKey: ["classroom-members"],
+  classroomMembersQueryOptions: (classroomId: string) => ({
+    queryKey: ["classroom-members", classroomId],
+    queryFn: () => listClassroomMembers(classroomId),
+  }),
+  listClassroomMembers: (...args: unknown[]) => listClassroomMembers(...args),
+}));
+
 vi.mock("../lib/payment-api", async () => {
   const actual = await vi.importActual<typeof import("../lib/payment-api")>("../lib/payment-api");
   return {
     ...actual,
     fetchClassroomMoney: (...args: unknown[]) => fetchClassroomMoney(...args),
     listCurrentPaymentPlans: (...args: unknown[]) => listCurrentPaymentPlans(...args),
-    listActiveStudents: (...args: unknown[]) => listActiveStudents(...args),
     setClassroomPrice: (...args: unknown[]) => setClassroomPrice(...args),
     setStudentPrice: (...args: unknown[]) => setStudentPrice(...args),
   };
@@ -45,7 +53,7 @@ describe("money pricing page", () => {
   beforeEach(() => {
     fetchClassroomMoney.mockReset();
     listCurrentPaymentPlans.mockReset();
-    listActiveStudents.mockReset();
+    listClassroomMembers.mockReset();
     setClassroomPrice.mockReset();
     setStudentPrice.mockReset();
   });
@@ -58,7 +66,7 @@ describe("money pricing page", () => {
       basePaymentPlanType: "PER_SESSION",
     });
     listCurrentPaymentPlans.mockResolvedValue([]);
-    listActiveStudents.mockResolvedValue([]);
+    listClassroomMembers.mockResolvedValue([]);
     setClassroomPrice.mockResolvedValue({
       id: "c1",
       basePaymentPlanAmount: 0,
@@ -87,9 +95,10 @@ describe("money pricing page", () => {
         fromClassroomBase: true,
       },
     ]);
-    listActiveStudents.mockResolvedValue([
+    listClassroomMembers.mockResolvedValue([
       {
         id: "m1",
+        classroomId: "c1",
         accountId: "a1",
         name: "Ann",
         email: "a@x.com",
@@ -135,7 +144,7 @@ describe("money pricing page", () => {
   it("failed load uses shared error screen but keeps page chrome", async () => {
     fetchClassroomMoney.mockRejectedValue(new Error("boom"));
     listCurrentPaymentPlans.mockResolvedValue([]);
-    listActiveStudents.mockResolvedValue([]);
+    listClassroomMembers.mockResolvedValue([]);
     renderPricing();
     await waitFor(() => expect(screen.getByText(/boom|failed|retry/i)).toBeTruthy());
     expect(screen.getByTestId("money-home")).toBeTruthy();
@@ -149,7 +158,7 @@ describe("money pricing page", () => {
       basePaymentPlanType: "PER_SESSION",
     });
     listCurrentPaymentPlans.mockResolvedValue([]);
-    listActiveStudents.mockResolvedValue([]);
+    listClassroomMembers.mockResolvedValue([]);
     renderPricing();
     await waitFor(() => expect(screen.getByTestId("classroom-price")).toBeTruthy());
     expect(screen.getByTestId("money-pricing")).toBeTruthy();
@@ -180,9 +189,10 @@ describe("money pricing page", () => {
         fromClassroomBase: true,
       },
     ]);
-    listActiveStudents.mockResolvedValue([
+    listClassroomMembers.mockResolvedValue([
       {
         id: "m1",
+        classroomId: "c1",
         accountId: "a1",
         name: "Ann",
         email: "a@x.com",
@@ -191,6 +201,7 @@ describe("money pricing page", () => {
       },
       {
         id: "m2",
+        classroomId: "c1",
         accountId: "a2",
         name: "Bob",
         email: "b@x.com",
@@ -199,6 +210,7 @@ describe("money pricing page", () => {
       },
       {
         id: "m3",
+        classroomId: "c1",
         accountId: "a3",
         name: "Cara",
         email: "c@x.com",
